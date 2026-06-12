@@ -33,6 +33,8 @@ class RecordingStudioExportableTest < Minitest::Test
 
     assert_includes tailwind_source, "../../../vendor/bundle/**/flatpack/app/components/**/*.{rb,erb}"
     assert_includes tailwind_source, "flatpack-*/app/components/**/*.{rb,erb}"
+    assert_includes tailwind_source, "../../../vendor/bundle/**/flat_pack/app/components/**/*.{rb,erb}"
+    assert_includes tailwind_source, "flat_pack-*/app/components/**/*.{rb,erb}"
     assert_includes tailwind_source, "../../../vendor/bundle/**/recording_studio/app/views/**/*.erb"
     assert_includes tailwind_source, "recordingstudio-*/app/views/**/*.erb"
     refute_includes tailwind_source, "@theme"

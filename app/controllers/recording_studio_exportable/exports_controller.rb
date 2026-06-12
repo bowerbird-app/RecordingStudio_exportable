@@ -2,9 +2,8 @@
 
 module RecordingStudioExportable
   class ExportsController < ApplicationController
-    rescue_from RecordingStudioExportable::NotAuthorized, with: :render_forbidden
-    rescue_from RecordingStudioExportable::Error, ActiveRecord::RecordNotFound, ActionController::ParameterMissing,
-                with: :render_bad_request
+    rescue_from RecordingStudioExportable::Error, ActionController::ParameterMissing, with: :render_bad_request
+    rescue_from RecordingStudioExportable::NotAuthorized, ActiveRecord::RecordNotFound, with: :render_forbidden
 
     def create
       result = RecordingStudioExportable.export(
@@ -36,17 +35,17 @@ module RecordingStudioExportable
         :export_key,
         :format,
         :filename,
-        attributes: {},
+        attributes: [:screen_key, { columns: [] }],
         filters: {}
       )
     end
 
-    def render_forbidden(exception)
-      render plain: exception.message, status: :forbidden
+    def render_forbidden(_exception)
+      render plain: "Export is not available", status: :forbidden
     end
 
-    def render_bad_request(exception)
-      render plain: exception.message, status: :bad_request
+    def render_bad_request(_exception)
+      render plain: "Export request is invalid", status: :bad_request
     end
   end
 end

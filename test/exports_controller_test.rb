@@ -7,6 +7,11 @@ class ExportsControllerTest < Minitest::Test
     handlers = RecordingStudioExportable::ExportsController.rescue_handlers
 
     assert handlers.any? { |exception_name, handler| exception_name == "RecordingStudioExportable::NotAuthorized" && handler == :render_forbidden }
+    assert handlers.any? { |exception_name, handler| exception_name == "ActiveRecord::RecordNotFound" && handler == :render_forbidden }
+
+    generic_index = handlers.index { |exception_name, _handler| exception_name == "RecordingStudioExportable::Error" }
+    unauthorized_index = handlers.index { |exception_name, _handler| exception_name == "RecordingStudioExportable::NotAuthorized" }
+    assert_operator generic_index, :<, unauthorized_index
   end
 
   def test_controller_does_not_render_unexpected_internal_errors
@@ -18,8 +23,16 @@ class ExportsControllerTest < Minitest::Test
   def test_controller_permits_nested_attributes_and_filters
     source = File.read(File.expand_path("../app/controllers/recording_studio_exportable/exports_controller.rb", __dir__))
 
-    assert_includes source, "attributes: {}"
+    assert_includes source, "attributes: [:screen_key, { columns: [] }]"
     assert_includes source, "filters: {}"
     assert_includes source, "context_recording_id"
+  end
+
+  def test_controller_renders_generic_export_errors
+    source = File.read(File.expand_path("../app/controllers/recording_studio_exportable/exports_controller.rb", __dir__))
+
+    assert_includes source, '"Export is not available"'
+    assert_includes source, '"Export request is invalid"'
+    refute_includes source, "exception.message"
   end
 end

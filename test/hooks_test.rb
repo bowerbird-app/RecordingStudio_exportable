@@ -301,7 +301,8 @@ class HooksTest < Minitest::Test
       @hooks.run(:after_initialize)
     end
 
-    assert_includes logger.messages.first, "logged error"
+    assert_includes logger.messages.first, "RuntimeError"
+    refute_includes logger.messages.first, "logged error"
     assert_equal "line1\nline2\nline3\nline4\nline5", logger.messages.last
   end
 

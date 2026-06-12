@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "monitor"
+require "active_support/parameter_filter"
 require "active_support/core_ext/object/blank"
 require_relative "hooks"
 
@@ -24,7 +25,7 @@ module RecordingStudioExportable
       @max_rows = DEFAULT_MAX_ROWS
       @include_bom = false
       @allow_request_filename_override = false
-      @filter_log_sanitizer = ->(filters) { filters }
+      @filter_log_sanitizer = method(:default_filter_log_sanitizer)
       @context_export_keys_resolver = method(:default_context_export_keys_for)
       @export_definitions = {}
       @hooks = Hooks.new
@@ -88,13 +89,20 @@ module RecordingStudioExportable
     end
 
     def export_enabled_for_recording?(key, recording)
-      context_export_keys_for(recording).include?(normalize_key(key))
+      capability_export_keys_for(recording).include?(normalize_key(key))
     end
 
     def export_keys_for(recording:, actor:, context: nil)
-      context_export_keys_for(recording).select do |key|
+      capability_export_keys_for(recording).select do |key|
         definition = export_definition_for(key)
-        definition&.available_for?(context_recording: recording, actor: actor, screen_key: context)
+        next false unless definition&.valid_context?(recording, screen_key: context)
+        next false unless actor.present?
+
+        RecordingStudioAccessible.authorized?(
+          actor: actor,
+          recording: recording,
+          role: effective_required_role(definition, recording)
+        )
       end.sort
     end
 
@@ -140,6 +148,32 @@ module RecordingStudioExportable
       keys ||= context_recording.recordable.exportable_export_keys if context_recording.respond_to?(:recordable) &&
                                                                      context_recording.recordable.respond_to?(:exportable_export_keys)
       Array(keys)
+    end
+
+    def capability_export_keys_for(context_recording)
+      options = capability_options_for(context_recording)
+      return [] unless options.present?
+
+      keys = options.values_at(:export_keys, "export_keys", :exports, "exports").compact.first if options.respond_to?(:values_at)
+      Array(keys).map { |key| normalize_key(key) }.uniq
+    end
+
+    def default_filter_log_sanitizer(filters)
+      ActiveSupport::ParameterFilter.new(filter_parameters).filter(filters || {})
+    end
+
+    def filter_parameters
+      rails_filters = if defined?(Rails) && Rails.respond_to?(:application) && Rails.application&.config
+                        Rails.application.config.filter_parameters
+                      end
+      Array(rails_filters).presence || %i[
+        password passphrase secret token api_key access_key authorization credential
+      ]
+    end
+
+    def effective_required_role(definition, context_recording)
+      options = capability_options_for(context_recording)
+      (options&.values_at(:required_role, "required_role")&.compact&.first || definition.required_role).to_sym
     end
 
     def capability_options_for(context_recording)

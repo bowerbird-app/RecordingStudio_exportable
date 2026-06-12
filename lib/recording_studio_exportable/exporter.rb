@@ -33,10 +33,10 @@ module RecordingStudioExportable
 
       begin
         @capability_options = validate_capability!(definition)
+        validate_authorization!(definition)
         definition.validate_context!(@context_recording, screen_key: screen_key)
         validate_format!(definition)
         selected_columns = definition.columns_for(@attributes)
-        validate_authorization!(definition)
 
         max_rows = effective_max_rows(definition)
         export_log = create_export_log(definition)
@@ -84,11 +84,11 @@ module RecordingStudioExportable
     end
 
     def validate_capability!(definition)
-      allowed_keys = configuration.context_export_keys_for(@context_recording)
       options = capability_options
       unless options.present?
         raise ExportNotAllowedForContext, "exportable capability is not enabled for this context"
       end
+      allowed_keys = capability_export_keys(options)
       unless allowed_keys.include?(definition.key)
         raise ExportNotAllowedForContext, "export #{definition.key} is not enabled for this context"
       end
@@ -102,6 +102,11 @@ module RecordingStudioExportable
       RecordingStudio.capability_options(:exportable, for: @context_recording.recordable_type) || {}
     rescue StandardError
       {}
+    end
+
+    def capability_export_keys(options)
+      keys = options.values_at(:export_keys, "export_keys", :exports, "exports").compact.first if options.respond_to?(:values_at)
+      Array(keys).map { |key| configuration.normalize_key(key) }.uniq
     end
 
     def validate_format!(definition)
@@ -208,8 +213,8 @@ module RecordingStudioExportable
       cleaned = basename.each_char.map { |char| filename_character?(char) ? char : "-" }.join
       cleaned = cleaned.gsub(/-+/, "-").delete_prefix(".").delete_prefix("-").delete_suffix(".").delete_suffix("-")
       cleaned = ExportDefinition::DEFAULT_FILENAME if cleaned.blank?
-      cleaned = "#{cleaned}.csv" unless cleaned.downcase.end_with?(".csv")
-      cleaned.first(120)
+      cleaned = cleaned.sub(/\.csv\z/i, "") if cleaned.downcase.end_with?(".csv")
+      "#{cleaned.first(116)}.csv"
     end
 
     def filename_character?(char)
@@ -250,7 +255,7 @@ module RecordingStudioExportable
       export_log.update!(
         status: :failed,
         error_class: exception.class.name,
-        error_message: exception.message.to_s.first(500)
+        error_message: sanitized_error_message(exception)
       )
     rescue ActiveRecord::ActiveRecordError
       nil
@@ -303,6 +308,12 @@ module RecordingStudioExportable
       sanitizer.respond_to?(:call) ? sanitizer.call(@filters) : @filters
     rescue StandardError
       {}
+    end
+
+    def sanitized_error_message(exception)
+      return exception.message.to_s.first(500) if exception.is_a?(RecordingStudioExportable::Error)
+
+      "Export failed"
     end
 
     def deep_hash(value)

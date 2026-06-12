@@ -81,6 +81,54 @@ class ExporterTest < Minitest::Test
     end
   end
 
+  def test_authorization_runs_before_column_validation
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
+      RecordingStudioAccessible.stub(:authorized?, false) do
+        assert_raises(RecordingStudioExportable::NotAuthorized) do
+          RecordingStudioExportable.export(
+            context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+            actor: Object.new,
+            attributes: { columns: ["missing"] }
+          )
+        end
+      end
+    end
+  end
+
+  def test_export_requires_enabled_capability_even_when_recordable_exposes_keys
+    recordable = Struct.new(:export_keys).new(["demo.people"])
+    context = FakeContext.new("DemoDashboard", recordable)
+
+    RecordingStudio.stub(:capability_options, {}) do
+      RecordingStudioAccessible.stub(:authorized?, true) do
+        assert_raises(RecordingStudioExportable::ExportNotAllowedForContext) do
+          RecordingStudioExportable.export(
+            context_recording: context,
+            actor: Object.new,
+            export_key: "demo.people"
+          )
+        end
+      end
+    end
+  end
+
+  def test_export_requires_capability_to_declare_export_keys
+    recordable = Struct.new(:export_keys).new(["demo.people"])
+    context = FakeContext.new("DemoDashboard", recordable)
+
+    RecordingStudio.stub(:capability_options, { required_role: :view }) do
+      RecordingStudioAccessible.stub(:authorized?, true) do
+        assert_raises(RecordingStudioExportable::ExportNotAllowedForContext) do
+          RecordingStudioExportable.export(
+            context_recording: context,
+            actor: Object.new,
+            export_key: "demo.people"
+          )
+        end
+      end
+    end
+  end
+
   def test_csv_formula_guard_handles_line_feed_prefix
     RecordingStudioExportable.configuration.register_export(
       "demo.linefeed",
@@ -98,6 +146,44 @@ class ExporterTest < Minitest::Test
         )
 
         assert_includes result.data, "\"'\n=1+1\""
+      end
+    end
+  end
+
+  def test_hash_style_column_definitions_are_supported
+    RecordingStudioExportable.configuration.register_export(
+      "demo.hash_columns",
+      context_types: ["DemoDashboard"],
+      columns: { payload: { label: "Payload", value: :payload } },
+      replace: true
+    ) { [{ payload: "safe" }] }
+    RecordingStudioExportable.configuration.context_export_keys_resolver = ->(_context) { ["demo.hash_columns"] }
+
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.hash_columns"] }) do
+      RecordingStudioAccessible.stub(:authorized?, true) do
+        result = RecordingStudioExportable.export(
+          context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+          actor: Object.new
+        )
+
+        assert_equal "Payload\nsafe\n", result.data
+      end
+    end
+  end
+
+  def test_long_filename_preserves_csv_extension
+    RecordingStudioExportable.configuration.allow_request_filename_override = true
+
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
+      RecordingStudioAccessible.stub(:authorized?, true) do
+        result = RecordingStudioExportable.export(
+          context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+          actor: Object.new,
+          filename: "#{"a" * 200}.csv"
+        )
+
+        assert_equal 120, result.filename.length
+        assert result.filename.end_with?(".csv")
       end
     end
   end

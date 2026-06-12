@@ -95,10 +95,10 @@ class RenameVerificationTest < Minitest::Test
            "Expected controllers directory at #{controllers_dir}"
   end
 
-  def test_views_directory_exists
-    views_dir = File.join(@root, "app", "views", @gem_name)
-    assert Dir.exist?(views_dir),
-           "Expected views directory at #{views_dir}"
+  def test_export_engine_does_not_require_engine_views_directory
+    exports_controller = File.join(@root, "app", "controllers", @gem_name, "exports_controller.rb")
+    assert File.exist?(exports_controller),
+           "Expected API-style exports controller at #{exports_controller}"
   end
 
   # ============================================================
@@ -205,17 +205,17 @@ class RenameVerificationTest < Minitest::Test
                  "Application controller should be in module #{@pascal_name}")
   end
 
-  def test_home_controller_exists
-    path = File.join(@root, "app", "controllers", @gem_name, "home_controller.rb")
+  def test_exports_controller_exists
+    path = File.join(@root, "app", "controllers", @gem_name, "exports_controller.rb")
     assert File.exist?(path),
-           "Home controller should exist at #{path}"
+           "Exports controller should exist at #{path}"
   end
 
-  def test_home_controller_has_correct_module
-    path = File.join(@root, "app", "controllers", @gem_name, "home_controller.rb")
+  def test_exports_controller_has_correct_module
+    path = File.join(@root, "app", "controllers", @gem_name, "exports_controller.rb")
     content = File.read(path)
     assert_match(/^module #{@pascal_name}$/, content,
-                 "Home controller should be in module #{@pascal_name}")
+                 "Exports controller should be in module #{@pascal_name}")
   end
 
   # ============================================================

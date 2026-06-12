@@ -113,6 +113,10 @@ module RecordingStudioExportable
       value.presence || DEFAULT_FILENAME
     end
 
+    def valid_context?(context_recording, screen_key: nil)
+      valid_for_context?(context_recording, screen_key: screen_key)
+    end
+
     private
 
     def validate!
@@ -149,7 +153,14 @@ module RecordingStudioExportable
     end
 
     def normalize_columns!(definitions)
-      Array(definitions).map { |definition| normalize_column(definition) }
+      case definitions
+      when Hash
+        return [normalize_hash_column(definitions)] if column_options_hash?(definitions)
+
+        definitions.map { |key, definition| normalize_named_column(key, definition) }
+      else
+        Array(definitions).map { |definition| normalize_column(definition) }
+      end
     end
 
     def normalize_column(definition)
@@ -168,8 +179,9 @@ module RecordingStudioExportable
       hash = definition.transform_keys(&:to_sym)
       if hash.key?(:label) || hash.key?(:value) || hash.key?(:key)
         value = hash.fetch(:value, hash[:key])
-        label = hash[:label].presence || hash.fetch(:key).to_s.titleize
-        key = normalize_column_key(hash[:key] || label)
+        label_source = hash[:key] || hash[:value]
+        label = hash[:label].presence || label_source.to_s.titleize
+        key = normalize_column_key(hash[:key] || label_source || label)
       elsif definition.size == 1
         label, value = definition.first
         key = normalize_column_key(value.is_a?(Symbol) ? value : label)
@@ -182,6 +194,15 @@ module RecordingStudioExportable
       end
 
       Column.new(key: key, label: label.to_s, value: value.is_a?(String) ? value.to_sym : value)
+    end
+
+    def normalize_named_column(key, definition)
+      options = definition.is_a?(Hash) ? definition : { value: definition }
+      normalize_hash_column({ key: key }.merge(options))
+    end
+
+    def column_options_hash?(definition)
+      definition.keys.map { |key| key.to_s }.intersect?(%w[key label value])
     end
 
     def normalize_default_columns(values)

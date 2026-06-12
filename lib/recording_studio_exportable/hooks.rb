@@ -237,7 +237,7 @@ module RecordingStudioExportable
     def log_hook_error(error, event_name, _hook)
       return unless defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger
 
-      Rails.logger.error "[RecordingStudioExportable::Hooks] Error in #{event_name} hook: #{error.message}"
+      Rails.logger.error "[RecordingStudioExportable::Hooks] Error in #{event_name} hook: #{error.class.name}"
       Rails.logger.error error.backtrace.first(5).join("\n") if error.backtrace
     end
 

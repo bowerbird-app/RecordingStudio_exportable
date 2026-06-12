@@ -60,13 +60,56 @@ class ConfigurationTest < Minitest::Test
     @configuration.export("demo.visible", columns: [:name], screen_keys: [:dashboard]) { [] }
     @configuration.export("demo.hidden", columns: [:name], screen_keys: [:other]) { [] }
 
-    RecordingStudioAccessible.stub(:authorized?, true) do
-      assert_equal ["demo.visible"], @configuration.export_keys_for(
-        recording: recording,
-        actor: actor,
-        context: :dashboard
-      )
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.visible", "demo.hidden"] }) do
+      RecordingStudioAccessible.stub(:authorized?, true) do
+        assert_equal ["demo.visible"], @configuration.export_keys_for(
+          recording: recording,
+          actor: actor,
+          context: :dashboard
+        )
+      end
     end
+  end
+
+  def test_export_keys_for_uses_capability_required_role
+    recording = Struct.new(:recordable_type).new("DemoDashboard")
+    actor = Object.new
+    roles = []
+
+    @configuration.context_export_keys_resolver = ->(_recording) { ["demo.admin"] }
+    @configuration.export("demo.admin", columns: [:name]) { [] }
+
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.admin"], required_role: :admin }) do
+      RecordingStudioAccessible.stub(:authorized?, ->(**kwargs) {
+        roles << kwargs.fetch(:role)
+        true
+      }) do
+        assert_equal ["demo.admin"], @configuration.export_keys_for(recording: recording, actor: actor)
+      end
+    end
+
+    assert_equal [:admin], roles
+  end
+
+  def test_export_enabled_for_recording_requires_capability_export_keys
+    recordable = Struct.new(:export_keys).new(["demo.people"])
+    recording = Struct.new(:recordable_type, :recordable).new("DemoDashboard", recordable)
+
+    RecordingStudio.stub(:capability_options, { required_role: :view }) do
+      refute @configuration.export_enabled_for_recording?("demo.people", recording)
+    end
+  end
+
+  def test_default_filter_log_sanitizer_redacts_sensitive_values
+    filtered = @configuration.filter_log_sanitizer.call(
+      "password" => "secret",
+      "token" => "abc",
+      "status" => "active"
+    )
+
+    assert_equal "[FILTERED]", filtered["password"]
+    assert_equal "[FILTERED]", filtered["token"]
+    assert_equal "active", filtered["status"]
   end
 
   def test_configure_without_block_is_safe
