@@ -1,0 +1,7 @@
+development:
+  default_row_limit: 10000
+  default_required_role: view
+
+production:
+  default_row_limit: 10000
+  default_required_role: view

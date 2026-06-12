@@ -1,12 +1,14 @@
-# GemTemplate
+# RecordingStudioExportable
 
-Internal template for building Rails engine addons on top of RecordingStudio.
+CSV export capability addon for RecordingStudio. Host apps register namespaced export definitions, enable the
+`:exportable` capability on supported recordables, and stream authorized in-memory CSV downloads.
 
 ## What's Included
 
 - **RecordingStudio** gem installed and configured
 - **Devise** authentication with a pre-seeded admin user
-- **Workspace**, **Folder**, and **Page** recordables seeded into the dummy host app
+- **Workspace**, **Folder**, **Page**, **DemoDashboard**, and **DemoApiRequest** recordables seeded into the dummy host app
+- **RecordingStudioExportable** export registry, capability wiring, engine POST endpoint, helper, and export logs
 - **FlatPack** UI component library for all views
 - **Dummy app** (`test/dummy/`) with a FlatPack-based sign-in screen, a simple home page, mounted RecordingStudio routes, and FlatPack's built-in rounded theme enabled by default
 
@@ -42,6 +44,7 @@ The login form is prefilled with these credentials for fast access.
 - `/` — dummy app home page
 - `/users/sign_in` — Devise sign-in page
 - `/recording_studio` — redirect to `/` while the mounted RecordingStudio engine remains data/API-focused
+- `/recording_studio_exportable/exports` — engine POST endpoint used by the demo CSV export button
 - `/docs/install` — install guide rendered inside the dummy app
 - `/docs/config`, `/docs/recordable_types`, `/docs/recordings_tree`, `/docs/gem_views`, `/docs/methods` — starter sidebar pages to customize for your gem
 
@@ -58,6 +61,31 @@ This template follows RecordingStudio's root recording pattern:
 - Each configured recordable declares `recording_studio_recordable(...)`; strict declaration validation stays enabled
 - A root `RecordingStudio::Recording` wraps the Workspace
 - `Current.actor` is set from `current_user` (Devise) in `ApplicationController`
+
+### Registering exports
+
+```ruby
+RecordingStudioExportable.configure do |config|
+  config.export(
+    "reports.example",
+    headers: ["Name", "Type"],
+    filename: "example.csv",
+    row_limit: 1_000
+  ) do |recording:, actor:, params:, context:|
+    [{ "Name" => RecordingStudio.recordable_name(recording.recordable), "Type" => recording.recordable_type }]
+  end
+end
+
+RecordingStudio::Exportable::Capabilities::Exportable.enabled(
+  on: "Workspace",
+  exports: ["reports.example"]
+)
+```
+
+`RecordingStudioExportable.export("reports.example", actor:, recording:)` returns result data,
+filename, content type, row count, and the created `RecordingStudioExportable::ExportLog`.
+Authorization is checked with `RecordingStudioAccessible.authorized?`; rows over the configured limit fail closed.
+Only in-memory CSV generation is supported.
 
 ### Extending RecordingStudio
 
@@ -136,4 +164,4 @@ See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full do
 
 ## Documentation
 
-The original gem template documentation is preserved in `docs/gem_template/` as architectural reference material. Use it as background on the engine conventions; the README and dummy app are the source of truth for the Recording Studio addon workflow.
+The original gem template documentation is preserved in `docs/recording_studio_exportable/` as architectural reference material. Use it as background on the engine conventions; the README and dummy app are the source of truth for the Recording Studio addon workflow.

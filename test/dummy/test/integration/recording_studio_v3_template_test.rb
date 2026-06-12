@@ -11,15 +11,16 @@ class RecordingStudioV3TemplateTest < ActiveSupport::TestCase
 
   test "dummy app validates v3 recordable declarations" do
     assert RecordingStudio.validate_recordable_declarations!
-    assert_equal [ "Workspace" ], RecordingStudio.root_recordable_types
+    assert_equal [ "DemoDashboard", "Workspace" ], RecordingStudio.root_recordable_types
     assert_equal [ "Workspace", "Folder" ], RecordingStudio.allowed_parent_types_for("Page")
   end
 
-  test "dummy app schema excludes removed access control tables" do
+  test "dummy app schema includes extracted access and export tables" do
     connection = ActiveRecord::Base.connection
 
     assert connection.column_exists?(:recording_studio_recordings, :root_recording_id)
-    refute connection.table_exists?(:recording_studio_accesses)
+    assert connection.table_exists?(:recording_studio_accesses)
+    assert connection.table_exists?(:recording_studio_exportable_export_logs)
     refute connection.table_exists?(:recording_studio_access_boundaries)
     refute connection.table_exists?(:recording_studio_device_sessions)
   end
@@ -34,20 +35,24 @@ class RecordingStudioV3TemplateTest < ActiveSupport::TestCase
     private_workspace = Workspace.find_by!(name: "Private Workspace")
     folder = Folder.find_by!(name: "Product Docs")
     page = Page.find_by!(title: "Getting Started")
+    demo_dashboard = DemoDashboard.find_by!(name: "Export Demo Dashboard")
     root_recording = RecordingStudio::Recording.find_by!(recordable: workspace)
     accessible_root_recording = RecordingStudio::Recording.find_by!(recordable: accessible_workspace)
     private_root_recording = RecordingStudio::Recording.find_by!(recordable: private_workspace)
     folder_recording = RecordingStudio::Recording.find_by!(recordable: folder)
     page_recording = RecordingStudio::Recording.find_by!(recordable: page)
+    demo_dashboard_recording = RecordingStudio::Recording.find_by!(recordable: demo_dashboard)
 
     assert_nil Current.actor
     assert_nil root_recording.parent_recording_id
     assert_nil accessible_root_recording.parent_recording_id
     assert_nil private_root_recording.parent_recording_id
+    assert_nil demo_dashboard_recording.parent_recording_id
     assert_equal root_recording, folder_recording.parent_recording
     assert_equal root_recording, folder_recording.root_recording
     assert_equal folder_recording, page_recording.parent_recording
     assert_equal root_recording, page_recording.root_recording
+    assert_equal 3, demo_dashboard.demo_api_requests.count
     assert_equal 3, Workspace.count
 
     assert_no_difference -> { User.count } do

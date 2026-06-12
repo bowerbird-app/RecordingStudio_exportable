@@ -9,9 +9,20 @@ require "rails/test_help"
 class RecordingStudioV3Test < ActiveSupport::TestCase
   test "dummy recordable declarations validate and expose v3 introspection" do
     assert RecordingStudio.validate_recordable_declarations!
-    assert_equal ["Workspace"], RecordingStudio.root_recordable_types
+    assert_equal ["DemoDashboard", "Workspace"], RecordingStudio.root_recordable_types
     assert_equal %w[Workspace Folder], RecordingStudio.allowed_parent_types_for("Folder")
     assert_equal %w[Workspace Folder], RecordingStudio.allowed_parent_types_for(Page)
+  end
+
+  test "demo api requests can be recorded under demo dashboard root" do
+    dashboard = DemoDashboard.create!(name: unique_name("Export Dashboard"))
+    root_recording = RecordingStudio.root_recording_for(dashboard)
+    request = DemoApiRequest.new(demo_dashboard: dashboard, path: "/api/demo", status: 200, duration_ms: 12)
+
+    recording = record_child(request, root_recording, root_recording)
+
+    assert_equal request, recording.recordable
+    assert_equal root_recording, recording.parent_recording
   end
 
   test "root recordable creates a root recording" do

@@ -9,20 +9,31 @@
     <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
       <% card.header do %>
         <%= render FlatPack::PageTitle::Component.new(
-          title: "What's working",
-          subtitle: "Core template capabilities already wired into the dummy app.",
+          title: "Export demo",
+          subtitle: "Generate an authorized CSV from an in-memory Recording Studio export definition.",
           variant: :h3,
           class: "mb-0 pb-0"
         ) %>
       <% end %>
 
       <% card.body do %>
-        <ul class="space-y-3 text-sm leading-6">
-          <li>Rails engine routes are mounted and responding.</li>
-          <li>PostgreSQL UUID-oriented migrations are included in the engine.</li>
-          <li>Tailwind sources can be wired into a host app through the install generator.</li>
-          <li>The dummy app exercises authentication, FlatPack layouts, and Recording Studio setup.</li>
-        </ul>
+        <% if @demo_dashboard && @demo_recording %>
+          <div class="space-y-4">
+            <p class="text-sm leading-6 text-(--surface-content-color)">
+              The export is registered as <code>demo.dashboard_requests</code>, authorized through
+              <code>RecordingStudioAccessible.authorized?</code>, and streamed from memory as CSV.
+            </p>
+
+            <%= recording_studio_export_button(
+              export_key: "demo.dashboard_requests",
+              recording: @demo_recording,
+              label: "Export API requests",
+              button_options: { style: :primary, size: :md }
+            ) %>
+          </div>
+        <% else %>
+          <p class="text-sm leading-6">Run <code>bin/rails db:seed</code> to create demo export data.</p>
+        <% end %>
       <% end %>
     <% end %>
 
@@ -38,11 +49,40 @@
 
       <% card.body do %>
         <ol class="space-y-3 text-sm leading-6 list-decimal pl-5">
-          <li>Run <code>bin/rename_gem your_addon_name</code> when you are ready to rename the engine.</li>
-          <li>Replace the sample migration with your addon tables and install them into the host app.</li>
-          <li>Configure Recording Studio recordable types and capabilities in the host app initializer.</li>
-          <li>Use the dummy app to validate layout, asset scanning, and authentication flows.</li>
+          <li>Register export definitions with stable namespaced keys.</li>
+          <li>Enable <code>:exportable</code> on each supported Recording Studio recordable type.</li>
+          <li>Use the engine POST endpoint to stream sanitized CSV downloads.</li>
+          <li>Inspect export logs to confirm file name, row count, and actor metadata.</li>
         </ol>
+      <% end %>
+    <% end %>
+
+    <%= render FlatPack::Card::Component.new(style: :outlined) do |card| %>
+      <% card.header do %>
+        <%= render FlatPack::PageTitle::Component.new(
+          title: "Demo API requests",
+          subtitle: "Rows included in the sample export.",
+          variant: :h3,
+          class: "mb-0 pb-0"
+        ) %>
+      <% end %>
+
+      <% card.body do %>
+        <% rows = Array(@demo_dashboard&.demo_api_requests).map do |request|
+             {
+               path: request.path,
+               method: request.http_method,
+               status: request.status,
+               duration: "#{request.duration_ms} ms"
+             }
+           end %>
+
+        <%= render FlatPack::Table::Component.new(data: rows, class: "text-sm") do |table| %>
+          <% table.column(title: "Path") { |row| row[:path] } %>
+          <% table.column(title: "Method") { |row| row[:method] } %>
+          <% table.column(title: "Status") { |row| row[:status] } %>
+          <% table.column(title: "Duration") { |row| row[:duration] } %>
+        <% end %>
       <% end %>
     <% end %>
 
@@ -89,8 +129,8 @@
       <% card.body do %>
         <ul class="space-y-3 text-sm leading-6">
           <li>Add the gem to your host app and run <code>bundle install</code>.</li>
-          <li>Run <code>rails generate gem_template:install</code> to mount the engine and add configuration.</li>
-          <li>Run <code>rails generate gem_template:migrations</code> to copy engine migrations into the host app.</li>
+          <li>Run <code>rails generate recording_studio_exportable:install</code> to mount the engine and add configuration.</li>
+          <li>Run <code>rails generate recording_studio_exportable:migrations</code> to copy engine migrations into the host app.</li>
           <li>Rebuild Tailwind if needed with <code>bin/rails tailwindcss:build</code>.</li>
         </ul>
       <% end %>

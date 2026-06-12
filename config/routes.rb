@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
-GemTemplate::Engine.routes.draw do
-  root "home#index"
+RecordingStudioExportable::Engine.routes.draw do
+  resources :exports, only: :create
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_12_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_12_000004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -19,6 +19,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_12_000000) do
     t.datetime "created_at", null: false
     t.string "name"
     t.datetime "updated_at", null: false
+  end
+
+  create_table "demo_dashboards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "demo_api_requests", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "demo_dashboard_id", null: false
+    t.integer "duration_ms", null: false
+    t.string "http_method", default: "GET", null: false
+    t.string "path", null: false
+    t.integer "status", null: false
+    t.datetime "updated_at", null: false
+    t.index ["demo_dashboard_id"], name: "index_demo_api_requests_on_demo_dashboard_id"
   end
 
   create_table "pages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -44,6 +61,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_12_000000) do
     t.uuid "recording_id", null: false
     t.index ["recording_id", "idempotency_key"], name: "index_recording_studio_events_on_recording_and_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["recording_id"], name: "index_recording_studio_events_on_recording_id"
+  end
+
+  create_table "recording_studio_accesses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "actor_type", null: false
+    t.uuid "actor_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "role", default: 0, null: false
+    t.index ["actor_type", "actor_id"], name: "index_recording_studio_accesses_on_actor"
+    t.index ["actor_type", "actor_id", "role"], name: "index_recording_studio_accesses_on_actor_and_role"
+  end
+
+  create_table "recording_studio_exportable_export_logs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "actor_type"
+    t.datetime "created_at", null: false
+    t.string "content_type", null: false
+    t.string "export_key", null: false
+    t.string "filename", null: false
+    t.uuid "actor_id"
+    t.uuid "recording_id", null: false
+    t.integer "row_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_type", "actor_id"], name: "idx_rs_exportable_logs_on_actor"
+    t.index ["created_at"], name: "idx_rs_exportable_logs_on_created_at"
+    t.index ["export_key"], name: "idx_rs_exportable_logs_on_export_key"
+    t.index ["recording_id"], name: "idx_rs_exportable_logs_on_recording_id"
   end
 
   create_table "recording_studio_recordings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -98,6 +140,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_12_000000) do
   end
 
   add_foreign_key "recording_studio_events", "recording_studio_recordings", column: "recording_id"
+  add_foreign_key "demo_api_requests", "demo_dashboards"
+  add_foreign_key "recording_studio_exportable_export_logs", "recording_studio_recordings", column: "recording_id"
   add_foreign_key "recording_studio_recordings", "recording_studio_recordings", column: "parent_recording_id"
   add_foreign_key "recording_studio_recordings", "recording_studio_recordings", column: "root_recording_id"
 end

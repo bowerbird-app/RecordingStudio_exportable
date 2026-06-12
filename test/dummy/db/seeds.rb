@@ -28,6 +28,18 @@ accessible_workspace = Workspace.find_or_create_by!(name: "Client Workspace")
 private_workspace = Workspace.find_or_create_by!(name: "Private Workspace")
 folder = Folder.find_or_create_by!(name: "Product Docs")
 page = Page.find_or_create_by!(title: "Getting Started")
+demo_dashboard = DemoDashboard.find_or_create_by!(name: "Export Demo Dashboard")
+
+[
+  ["/api/pages", "GET", 200, 42],
+  ["/api/folders", "GET", 200, 31],
+  ["/api/recordings", "POST", 201, 87]
+].each do |path, http_method, status, duration_ms|
+  demo_dashboard.demo_api_requests.find_or_create_by!(path: path, http_method: http_method) do |request|
+    request.status = status
+    request.duration_ms = duration_ms
+  end
+end
 
 previous_actor = Current.actor
 Current.actor = user
@@ -37,10 +49,15 @@ begin
   root_recording = RecordingStudio.root_recording_for(workspace)
   accessible_root_recording = RecordingStudio.root_recording_for(accessible_workspace)
   private_root_recording = RecordingStudio.root_recording_for(private_workspace)
+  demo_dashboard_recording = RecordingStudio.root_recording_for(demo_dashboard)
+  RecordingStudioAccessible.grant_access(recording: demo_dashboard_recording, actor: user, role: :admin)
 
   folder_recording = find_or_record_child.call(folder, root_recording, root_recording)
 
   find_or_record_child.call(page, root_recording, folder_recording)
+  demo_dashboard.demo_api_requests.find_each do |request|
+    find_or_record_child.call(request, demo_dashboard_recording, demo_dashboard_recording)
+  end
 ensure
   Current.actor = previous_actor
 end
@@ -50,3 +67,4 @@ puts "Seeded: Workspace '#{workspace.name}' with root recording ##{root_recordin
 puts "Seeded: Workspace '#{accessible_workspace.name}' with root recording ##{accessible_root_recording.id}"
 puts "Seeded: Workspace '#{private_workspace.name}' with root recording ##{private_root_recording.id}"
 puts "Seeded: Folder '#{folder.name}' and page '#{page.title}'"
+puts "Seeded: Demo dashboard '#{demo_dashboard.name}' with exportable API request rows"
