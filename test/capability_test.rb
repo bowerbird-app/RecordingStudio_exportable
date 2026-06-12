@@ -6,7 +6,7 @@ class CapabilityTest < Minitest::Test
   def setup
     @original_configuration = RecordingStudioExportable.instance_variable_get(:@configuration)
     RecordingStudioExportable.instance_variable_set(:@configuration, RecordingStudioExportable::Configuration.new)
-    RecordingStudioExportable.configuration.export("demo.people", headers: ["Name"]) { [] }
+    RecordingStudioExportable.configuration.export("demo.people", columns: [:name]) { [] }
   end
 
   def teardown
@@ -24,20 +24,23 @@ class CapabilityTest < Minitest::Test
         }) do
           assert RecordingStudio::Exportable::Capabilities::Exportable.enabled(
             on: "Workspace",
-            exports: ["demo/people"]
+            export_keys: ["demo/people"],
+            required_role: :view,
+            max_rows: 25,
+            formats: [:csv]
           )
         end
       end
     end
 
     assert_equal [[:exportable, "Workspace"]], enabled_calls
-    assert_equal [[:exportable, "Workspace", { export_keys: ["demo.people"] }]], option_calls
+    assert_equal [[:exportable, "Workspace", { export_keys: ["demo.people"], required_role: :view, max_rows: 25, formats: [:csv] }]], option_calls
   end
 
-  def test_enabled_rejects_unknown_export_key
+  def test_enabled_validates_only_exportable_options
     RecordingStudio.stub(:recordable_type_name, "Workspace") do
-      assert_raises(RecordingStudioExportable::UnknownExportDefinition) do
-        RecordingStudio::Exportable::Capabilities::Exportable.enabled(on: "Workspace", exports: ["missing"])
+      assert_raises(ArgumentError) do
+        RecordingStudio::Exportable::Capabilities::Exportable.enabled(on: "Workspace", max_rows: "many")
       end
     end
   end

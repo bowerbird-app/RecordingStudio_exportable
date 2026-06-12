@@ -2,6 +2,7 @@
 
 require "recording_studio"
 require "recording_studio_accessible"
+require "flat_pack"
 require "recording_studio_exportable/version"
 require "recording_studio_exportable/errors"
 require "recording_studio_exportable/export_definition"
@@ -22,8 +23,18 @@ module RecordingStudioExportable
       yield(configuration) if block_given?
     end
 
-    def export(key, actor:, recording:, params: {}, context: nil)
-      Exporter.call(key: key, actor: actor, recording: recording, params: params, context: context)
+    def export(context_recording:, actor:, export_key: nil, attributes: nil, filters: {}, format: :csv,
+               filename: nil, controller: nil)
+      Exporter.call(
+        context_recording: context_recording,
+        actor: actor,
+        export_key: export_key,
+        attributes: attributes,
+        filters: filters,
+        format: format,
+        filename: filename,
+        controller: controller
+      )
     end
   end
 end

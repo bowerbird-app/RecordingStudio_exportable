@@ -2,13 +2,13 @@
 
 RecordingStudioExportable.configure do |config|
   # Fail closed if an export returns more rows than expected.
-  # config.default_row_limit = 10_000
+  # config.max_rows = 10_000
 
   # Default role checked through RecordingStudioAccessible.authorized?.
   # config.default_required_role = :view
 
   # Register exports with stable namespaced keys.
-  # config.export "reports.example", headers: ["Name"], filename: "example.csv" do |recording:, actor:, params:, context:|
-  #   [{ "Name" => RecordingStudio.recordable_name(recording.recordable) }]
+  # config.register_export "reports.example", columns: [{ key: :name, label: "Name", value: :name }], filename: "example.csv" do |context_recording:, **|
+  #   [{ name: RecordingStudio.recordable_name(context_recording.recordable) }]
   # end
 end

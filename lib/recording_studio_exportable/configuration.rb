@@ -6,24 +6,45 @@ require_relative "hooks"
 
 module RecordingStudioExportable
   class Configuration
-    DEFAULT_ROW_LIMIT = 10_000
+    DEFAULT_MAX_ROWS = 10_000
 
-    attr_accessor :default_row_limit, :default_required_role
+    attr_accessor :current_actor, :current_impersonator, :default_format, :default_required_role,
+                  :max_rows, :include_bom, :allow_request_filename_override,
+                  :filter_log_sanitizer, :context_export_keys_resolver
     attr_reader :export_definitions, :hooks
 
     def initialize
-      @default_row_limit = DEFAULT_ROW_LIMIT
+      @current_actor = lambda do |controller: nil|
+        (controller&.send(:current_user) if controller&.respond_to?(:current_user, true)) ||
+          (defined?(Current) && Current.respond_to?(:actor) ? Current.actor : nil)
+      end
+      @current_impersonator = ->(*) { defined?(Current) && Current.respond_to?(:impersonator) ? Current.impersonator : nil }
+      @default_format = :csv
       @default_required_role = :view
+      @max_rows = DEFAULT_MAX_ROWS
+      @include_bom = false
+      @allow_request_filename_override = false
+      @filter_log_sanitizer = ->(filters) { filters }
+      @context_export_keys_resolver = method(:default_context_export_keys_for)
       @export_definitions = {}
       @hooks = Hooks.new
       @mutex = Monitor.new
     end
 
+    def default_row_limit
+      max_rows
+    end
+
+    def default_row_limit=(value)
+      self.max_rows = value
+    end
+
     def register_export(key, replace: false, **options, &block)
       definition = ExportDefinition.new(
         key: normalize_key(key),
-        row_limit: default_row_limit,
         required_role: default_required_role,
+        max_rows: max_rows,
+        formats: [default_format],
         **options,
         &block
       )
@@ -33,7 +54,7 @@ module RecordingStudioExportable
           existing = @export_definitions.fetch(definition.key)
           return existing if existing.equivalent_to?(definition)
 
-          raise DuplicateExportDefinition, "export definition #{definition.key.inspect} is already registered"
+          warn "RecordingStudioExportable export #{definition.key.inspect} replaced duplicate registration" unless test_environment?
         end
 
         @export_definitions[definition.key] = definition
@@ -47,28 +68,34 @@ module RecordingStudioExportable
       register_export(key, replace: true, **options, &block)
     end
 
-    def export_definition(key)
+    def export_definition_for(key)
       @mutex.synchronize { @export_definitions[normalize_key(key)] }
     end
+    alias export_definition export_definition_for
 
     def fetch_export_definition!(key)
-      export_definition(key) || raise(UnknownExportDefinition, "unknown export definition #{normalize_key(key).inspect}")
+      export_definition_for(key) || raise(UnknownExportKey, "unknown export key #{normalize_key(key).inspect}")
+    end
+
+    def context_export_keys_for(context_recording)
+      keys = if context_export_keys_resolver.respond_to?(:call)
+               context_export_keys_resolver.call(context_recording)
+             end
+
+      Array(keys).map { |key| normalize_key(key) }.uniq
+    rescue StandardError
+      []
     end
 
     def export_enabled_for_recording?(key, recording)
-      keys = enabled_export_keys_for(recording)
-      keys.nil? || keys.include?(normalize_key(key))
+      context_export_keys_for(recording).include?(normalize_key(key))
     end
 
     def export_keys_for(recording:, actor:, context: nil)
-      keys = enabled_export_keys_for(recording)
-      @mutex.synchronize do
-        @export_definitions.values.select do |definition|
-          next false if keys && !keys.include?(definition.key)
-
-          definition.available_for?(recording: recording, actor: actor, context: context)
-        end.map(&:key).sort
-      end
+      context_export_keys_for(recording).select do |key|
+        definition = export_definition_for(key)
+        definition&.available_for?(context_recording: recording, actor: actor, screen_key: context)
+      end.sort
     end
 
     def normalize_key(key)
@@ -91,8 +118,11 @@ module RecordingStudioExportable
 
     def to_h
       {
-        default_row_limit: default_row_limit,
+        default_format: default_format,
         default_required_role: default_required_role,
+        max_rows: max_rows,
+        include_bom: include_bom,
+        allow_request_filename_override: allow_request_filename_override,
         export_definitions: @export_definitions.keys.sort,
         hooks_registered: hooks.instance_variable_get(:@registry).transform_values(&:size)
       }
@@ -100,18 +130,27 @@ module RecordingStudioExportable
 
     private
 
-    def enabled_export_keys_for(recording)
-      return unless recording
+    def default_context_export_keys_for(context_recording)
+      return [] unless context_recording
 
-      type_name = recording.respond_to?(:recordable_type) ? recording.recordable_type : nil
-      return if type_name.blank?
+      options = capability_options_for(context_recording)
+      keys = options.values_at(:export_keys, "export_keys", :exports, "exports").compact.first if options.respond_to?(:values_at)
+      keys ||= context_recording.recordable.export_keys if context_recording.respond_to?(:recordable) &&
+                                                          context_recording.recordable.respond_to?(:export_keys)
+      keys ||= context_recording.recordable.exportable_export_keys if context_recording.respond_to?(:recordable) &&
+                                                                     context_recording.recordable.respond_to?(:exportable_export_keys)
+      Array(keys)
+    end
 
-      options = RecordingStudio.capability_options(:exportable, for: type_name)
-      return [] unless options
+    def capability_options_for(context_recording)
+      type_name = context_recording.respond_to?(:recordable_type) ? context_recording.recordable_type : nil
+      return if type_name.blank? || !RecordingStudio.respond_to?(:capability_options)
 
-      Array(options.fetch(:export_keys, nil)).map { |key| normalize_key(key) }
-    rescue StandardError
-      []
+      RecordingStudio.capability_options(:exportable, for: type_name)
+    end
+
+    def test_environment?
+      defined?(Rails) && Rails.respond_to?(:env) && Rails.env.test?
     end
   end
 end

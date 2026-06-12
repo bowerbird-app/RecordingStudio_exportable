@@ -1,143 +1,195 @@
 # frozen_string_literal: true
 
-require "csv"
 require "active_support/core_ext/object/blank"
+require "active_support/core_ext/enumerable"
 require "active_support/core_ext/string/inflections"
 
 module RecordingStudioExportable
   class ExportDefinition
+    Column = Struct.new(:key, :label, :value, keyword_init: true)
+
     CONTENT_TYPE = "text/csv; charset=utf-8"
     DEFAULT_FILENAME = "recording-export.csv"
 
-    attr_reader :key, :label, :description, :headers, :row_limit, :required_role, :filename, :context_key
+    attr_reader :key, :label, :description, :context_types, :screen_keys, :columns,
+                :default_columns, :filename, :required_role, :max_rows, :formats,
+                :resolver, :context_predicate
 
-    def initialize(key:, label: nil, description: nil, headers: nil, row_limit: nil, required_role: :view,
-                   filename: nil, context_key: nil, exporter: nil, &block)
+    def initialize(key:, label: nil, description: nil, context_types: nil, screen_keys: nil,
+                   columns: nil, default_columns: nil, headers: nil, filename: nil,
+                   required_role: :view, max_rows: nil, row_limit: nil, formats: [:csv],
+                   resolver: nil, context_predicate: nil, context_key: nil, exporter: nil, &block)
       @key = normalize_key!(key)
       @label = label.presence || @key.titleize
       @description = description.to_s
-      @headers = normalize_headers!(headers)
-      @row_limit = normalize_row_limit!(row_limit)
+      @context_types = normalize_strings(context_types)
+      @screen_keys = normalize_strings(screen_keys || context_key).map(&:underscore)
+      @columns = normalize_columns!(columns || headers)
+      @default_columns = normalize_default_columns(default_columns)
+      @filename = filename
       @required_role = normalize_required_role!(required_role)
-      @filename = filename.presence || DEFAULT_FILENAME
-      @context_key = normalize_context_key(context_key)
-      @exporter = exporter || block
+      @max_rows = normalize_max_rows!(max_rows || row_limit || Configuration::DEFAULT_MAX_ROWS)
+      @formats = Array(formats.presence || :csv).map { |format| normalize_format(format) }.uniq
+      @resolver = resolver || exporter || block
+      @context_predicate = context_predicate
 
       validate!
+    end
+
+    def headers
+      columns.map(&:label)
+    end
+
+    def row_limit
+      max_rows
     end
 
     def equivalent_to?(other)
       other.is_a?(self.class) &&
         key == other.key &&
-        label == other.label &&
-        description == other.description &&
-        headers == other.headers &&
-        row_limit == other.row_limit &&
-        required_role == other.required_role &&
+        context_types == other.context_types &&
+        screen_keys == other.screen_keys &&
+        columns.map(&:to_h) == other.columns.map(&:to_h) &&
+        default_columns == other.default_columns &&
         filename == other.filename &&
-        context_key == other.context_key &&
-        @exporter == other.instance_variable_get(:@exporter)
+        required_role == other.required_role &&
+        max_rows == other.max_rows &&
+        formats == other.formats &&
+        resolver == other.resolver &&
+        context_predicate == other.context_predicate
     end
 
-    def available_for?(recording:, actor:, context: nil)
-      context_matches?(context) && authorized?(actor: actor, recording: recording)
+    def available_for?(context_recording:, actor:, screen_key: nil)
+      valid_for_context?(context_recording, screen_key: screen_key) &&
+        actor.present? &&
+        RecordingStudioAccessible.authorized?(actor: actor, recording: context_recording, role: required_role)
     end
 
-    def authorized?(actor:, recording:)
-      actor.present? &&
-        recording.present? &&
-        RecordingStudioAccessible.authorized?(actor: actor, recording: recording, role: required_role)
+    def validate_context!(context_recording, screen_key: nil)
+      return true if valid_for_context?(context_recording, screen_key: screen_key)
+
+      raise ExportNotAllowedForContext, "export #{key} is not allowed for this context"
     end
 
-    def render(recording:, actor:, params: {}, context: nil)
-      raise AuthorizationError, "not authorized to export #{key}" unless available_for?(
-        recording: recording,
+    def columns_for(attributes)
+      keys = requested_column_keys(attributes)
+      keys = default_columns if keys.empty?
+
+      by_key = columns.index_by(&:key)
+      unknown = keys - by_key.keys
+      raise InvalidExportColumns, "unknown export columns: #{unknown.join(', ')}" if unknown.any?
+
+      keys.map { |column_key| by_key.fetch(column_key) }
+    end
+
+    def resolve_rows(context_recording:, actor:, attributes:, filters:, format:, controller: nil)
+      resolver.call(
+        context_recording: context_recording,
+        recording: context_recording,
         actor: actor,
-        context: context
+        attributes: attributes,
+        filters: filters,
+        params: { attributes: attributes, filters: filters },
+        format: format,
+        context: nil,
+        controller: controller
       )
+    end
 
-      rows = rows_for(recording: recording, actor: actor, params: params, context: context)
-      csv_rows = []
-      enumerable_rows(rows).each_with_index do |row, index|
-        raise RowLimitExceeded, "export #{key} exceeded row limit of #{row_limit}" if index >= row_limit
+    def filename_for(context_recording:, actor:, attributes:, filters:, format:)
+      value = if filename.respond_to?(:call)
+                filename.call(
+                  context_recording: context_recording,
+                  recording: context_recording,
+                  actor: actor,
+                  attributes: attributes,
+                  filters: filters,
+                  format: format
+                )
+              else
+                filename
+              end
 
-        csv_rows << normalize_row(row)
-      end
-
-      data = CSV.generate do |csv|
-        csv << headers
-        csv_rows.each { |row| csv << row }
-      end
-
-      {
-        data: data,
-        filename: sanitized_filename(recording: recording, params: params),
-        content_type: CONTENT_TYPE,
-        row_count: csv_rows.size
-      }
+      value.presence || DEFAULT_FILENAME
     end
 
     private
 
     def validate!
-      raise InvalidExportDefinition, "exporter must respond to call" unless @exporter.respond_to?(:call)
-      raise InvalidExportDefinition, "headers are required" if headers.empty?
+      raise InvalidExportDefinition, "resolver must respond to call" unless resolver.respond_to?(:call)
+      raise InvalidExportDefinition, "columns are required" if columns.empty?
+      raise InvalidExportDefinition, "formats are required" if formats.empty?
+      raise InvalidExportDefinition, "context_predicate must respond to call" if context_predicate && !context_predicate.respond_to?(:call)
     end
 
-    def context_matches?(context)
-      context_key.nil? || normalize_context_key(context) == context_key
+    def valid_for_context?(context_recording, screen_key:)
+      return false unless context_recording
+
+      context_type = context_recording.respond_to?(:recordable_type) ? context_recording.recordable_type : context_recording.class.name
+      return false if context_types.any? && !context_types.include?(context_type)
+
+      normalized_screen_key = screen_key.to_s.strip.underscore
+      return false if screen_keys.any? && !screen_keys.include?(normalized_screen_key)
+
+      return true unless context_predicate
+
+      context_predicate.call(context_recording)
     end
 
-    def rows_for(recording:, actor:, params:, context:)
-      @exporter.call(recording: recording, actor: actor, params: params.to_h, context: context)
+    def requested_column_keys(attributes)
+      case attributes
+      when nil
+        []
+      when Hash
+        values = attributes[:columns] || attributes["columns"]
+        values.is_a?(Hash) ? values.values : Array(values)
+      else
+        Array(attributes)
+      end.map { |value| normalize_column_key(value) }.reject(&:blank?)
     end
 
-    def normalize_row(row)
-      return headers.map { |header| row[header] || row[header.to_s] || row[header.to_sym] } if row.is_a?(Hash)
-
-      Array(row)
+    def normalize_columns!(definitions)
+      Array(definitions).map { |definition| normalize_column(definition) }
     end
 
-    def enumerable_rows(rows)
-      return [] if rows.nil?
-      return rows if rows.respond_to?(:each)
-
-      Array(rows)
-    end
-
-    def sanitized_filename(recording:, params:)
-      value = if filename.respond_to?(:call)
-                filename.call(recording: recording, params: params.to_h)
-              else
-                filename
-              end
-      basename = value.to_s.presence || DEFAULT_FILENAME
-      basename = clean_filename(basename)
-      basename = DEFAULT_FILENAME if basename.blank?
-      basename = "#{basename}.csv" unless basename.downcase.end_with?(".csv")
-      basename.first(120)
-    end
-
-    def clean_filename(value)
-      cleaned = +""
-      previous_dash = false
-      value.each_char do |char|
-        if filename_character?(char)
-          cleaned << char
-          previous_dash = char == "-"
-        elsif !previous_dash
-          cleaned << "-"
-          previous_dash = true
-        end
+    def normalize_column(definition)
+      case definition
+      when Symbol, String
+        key = normalize_column_key(definition)
+        Column.new(key: key, label: key.to_s.titleize, value: definition.to_sym)
+      when Hash
+        normalize_hash_column(definition)
+      else
+        raise InvalidExportDefinition, "column definitions must be symbols, strings, or hashes"
       end
-      cleaned.delete_prefix(".").delete_prefix("-").delete_suffix(".").delete_suffix("-")
     end
 
-    def filename_character?(char)
-      char.between?("A", "Z") ||
-        char.between?("a", "z") ||
-        char.between?("0", "9") ||
-        [".", "_", "-"].include?(char)
+    def normalize_hash_column(definition)
+      hash = definition.transform_keys(&:to_sym)
+      if hash.key?(:label) || hash.key?(:value) || hash.key?(:key)
+        value = hash.fetch(:value, hash[:key])
+        label = hash[:label].presence || hash.fetch(:key).to_s.titleize
+        key = normalize_column_key(hash[:key] || label)
+      elsif definition.size == 1
+        label, value = definition.first
+        key = normalize_column_key(value.is_a?(Symbol) ? value : label)
+      else
+        raise InvalidExportDefinition, "hash column definitions require label/value"
+      end
+
+      unless value.is_a?(Symbol) || value.respond_to?(:call) || value.is_a?(String)
+        raise InvalidExportDefinition, "column value must be a symbol, string, or proc"
+      end
+
+      Column.new(key: key, label: label.to_s, value: value.is_a?(String) ? value.to_sym : value)
+    end
+
+    def normalize_default_columns(values)
+      keys = Array(values.presence || columns.map(&:key)).map { |value| normalize_column_key(value) }
+      unknown = keys - columns.map(&:key)
+      raise InvalidExportDefinition, "default columns must be registered columns" if unknown.any?
+
+      keys
     end
 
     def normalize_key!(value)
@@ -148,17 +200,12 @@ module RecordingStudioExportable
       normalized
     end
 
-    def normalize_headers!(values)
-      Array(values).map { |value| value.to_s.strip }.reject(&:blank?)
+    def normalize_column_key(value)
+      value.to_s.strip.downcase.tr("-", "_").gsub(/[^a-z0-9_]+/, "_").gsub(/\A_+|_+\z/, "")
     end
 
-    def normalize_row_limit!(value)
-      integer = Integer(value || Configuration::DEFAULT_ROW_LIMIT)
-      raise InvalidExportDefinition, "row_limit must be positive" unless integer.positive?
-
-      integer
-    rescue ArgumentError, TypeError
-      raise InvalidExportDefinition, "row_limit must be an integer"
+    def normalize_strings(values)
+      Array(values).flatten.compact.map(&:to_s).map(&:strip).reject(&:blank?)
     end
 
     def normalize_required_role!(value)
@@ -168,8 +215,20 @@ module RecordingStudioExportable
       role.to_sym
     end
 
-    def normalize_context_key(value)
-      value.to_s.strip.presence&.underscore
+    def normalize_max_rows!(value)
+      integer = Integer(value)
+      raise InvalidExportDefinition, "max_rows must be positive" unless integer.positive?
+
+      integer
+    rescue ArgumentError, TypeError
+      raise InvalidExportDefinition, "max_rows must be an integer"
+    end
+
+    def normalize_format(value)
+      format = value.to_s.strip.downcase
+      raise InvalidExportDefinition, "format is required" if format.blank?
+
+      format.to_sym
     end
   end
 end

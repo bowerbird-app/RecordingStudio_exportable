@@ -25,10 +25,11 @@
             </p>
 
             <%= recording_studio_export_button(
+              context_recording: @demo_recording,
               export_key: "demo.dashboard_requests",
-              recording: @demo_recording,
-              label: "Export API requests",
-              button_options: { style: :primary, size: :md }
+              text: "Export API requests",
+              style: :primary,
+              size: :md
             ) %>
           </div>
         <% else %>

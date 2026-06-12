@@ -76,16 +76,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_12_000004) do
     t.string "actor_type"
     t.datetime "created_at", null: false
     t.string "content_type", null: false
+    t.string "error_class"
+    t.string "error_message"
     t.string "export_key", null: false
-    t.string "filename", null: false
+    t.json "filters", default: {}, null: false
+    t.string "filename"
     t.uuid "actor_id"
-    t.uuid "recording_id", null: false
+    t.uuid "context_recording_id", null: false
+    t.uuid "impersonator_id"
+    t.string "impersonator_type"
     t.integer "row_count", default: 0, null: false
+    t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
     t.index ["actor_type", "actor_id"], name: "idx_rs_exportable_logs_on_actor"
+    t.index ["context_recording_id"], name: "idx_rs_exportable_logs_on_context_recording_id"
     t.index ["created_at"], name: "idx_rs_exportable_logs_on_created_at"
     t.index ["export_key"], name: "idx_rs_exportable_logs_on_export_key"
-    t.index ["recording_id"], name: "idx_rs_exportable_logs_on_recording_id"
+    t.index ["impersonator_type", "impersonator_id"], name: "idx_rs_exportable_logs_on_impersonator"
+    t.index ["status"], name: "idx_rs_exportable_logs_on_status"
   end
 
   create_table "recording_studio_recordings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -141,7 +149,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_12_000004) do
 
   add_foreign_key "recording_studio_events", "recording_studio_recordings", column: "recording_id"
   add_foreign_key "demo_api_requests", "demo_dashboards"
-  add_foreign_key "recording_studio_exportable_export_logs", "recording_studio_recordings", column: "recording_id"
+  add_foreign_key "recording_studio_exportable_export_logs", "recording_studio_recordings", column: "context_recording_id"
   add_foreign_key "recording_studio_recordings", "recording_studio_recordings", column: "parent_recording_id"
   add_foreign_key "recording_studio_recordings", "recording_studio_recordings", column: "root_recording_id"
 end

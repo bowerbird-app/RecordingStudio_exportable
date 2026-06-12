@@ -66,26 +66,59 @@ This template follows RecordingStudio's root recording pattern:
 
 ```ruby
 RecordingStudioExportable.configure do |config|
-  config.export(
+  config.register_export(
     "reports.example",
-    headers: ["Name", "Type"],
+    context_types: ["Workspace"],
+    columns: [
+      { key: :name, label: "Name", value: ->(row) { row[:name] } },
+      { key: :type, label: "Type", value: :type }
+    ],
     filename: "example.csv",
-    row_limit: 1_000
-  ) do |recording:, actor:, params:, context:|
-    [{ "Name" => RecordingStudio.recordable_name(recording.recordable), "Type" => recording.recordable_type }]
+    max_rows: 1_000
+  ) do |context_recording:, actor:, attributes:, filters:, **|
+    [{ name: RecordingStudio.recordable_name(context_recording.recordable), type: context_recording.recordable_type }]
   end
 end
 
 RecordingStudio::Exportable::Capabilities::Exportable.enabled(
   on: "Workspace",
-  exports: ["reports.example"]
+  export_keys: ["reports.example"],
+  required_role: :view,
+  max_rows: 1_000,
+  formats: [:csv]
 )
 ```
 
-`RecordingStudioExportable.export("reports.example", actor:, recording:)` returns result data,
-filename, content type, row count, and the created `RecordingStudioExportable::ExportLog`.
+`RecordingStudioExportable.export(context_recording:, actor:, export_key: "reports.example")` returns result
+data, filename, content type, row count, and the created `RecordingStudioExportable::ExportLog`.
 Authorization is checked with `RecordingStudioAccessible.authorized?`; rows over the configured limit fail closed.
 Only in-memory CSV generation is supported.
+
+### Runtime API and configuration
+
+```ruby
+RecordingStudioExportable.export(
+  context_recording: recording,
+  actor: current_user,
+  export_key: "reports.example", # optional only when exactly one key is allowed
+  attributes: { columns: ["name"] },
+  filters: { status: "active" },
+  format: :csv,
+  filename: "custom.csv",
+  controller: self
+)
+```
+
+Configuration supports `current_actor`, `current_impersonator`, `default_format`, `default_required_role`,
+`max_rows`, `include_bom`, `allow_request_filename_override`, `filter_log_sanitizer`, and
+`context_export_keys_resolver`.
+
+### Security notes
+
+- Only registered columns can be selected; request attributes cannot expose unapproved data.
+- CSV cells and headers beginning with `=`, `+`, `-`, `@`, tab, or carriage return are prefixed with a single quote to reduce spreadsheet formula-injection risk.
+- Request filename overrides are ignored unless `allow_request_filename_override` is explicitly enabled, and all filenames are sanitized.
+- Export logs store metadata and status only, never CSV contents.
 
 ### Extending RecordingStudio
 
