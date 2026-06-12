@@ -201,7 +201,10 @@ module RecordingStudioExportable
     end
 
     def normalize_column_key(value)
-      value.to_s.strip.downcase.tr("-", "_").gsub(/[^a-z0-9_]+/, "_").gsub(/\A_+|_+\z/, "")
+      normalized = value.to_s.strip.downcase.tr("-", "_").gsub(/[^a-z0-9_]/, "_")
+      normalized = normalized.delete_prefix("_") while normalized.start_with?("_")
+      normalized = normalized.delete_suffix("_") while normalized.end_with?("_")
+      normalized
     end
 
     def normalize_strings(values)
