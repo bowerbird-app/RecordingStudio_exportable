@@ -94,6 +94,44 @@ data, filename, content type, row count, and the created `RecordingStudioExporta
 Authorization is checked with `RecordingStudioAccessible.authorized?`; rows over the configured limit fail closed.
 Only in-memory CSV generation is supported.
 
+### Instance-level allowed export keys
+
+Definitions are global, but each context instance controls which export keys it allows.
+By default, `context_export_keys_resolver` reads `recordable.export_keys` or `recordable.export_key`.
+An explicit `export_key` must be allowed by that context instance.
+
+### Third-party and host-app overrides
+
+Third-party gems can register exports through `RecordingStudioExportable.configure`.
+Host apps can replace definitions safely using `replace: true`:
+
+```ruby
+RecordingStudioExportable.configure do |config|
+  config.register_export("reports.users", columns: [:email]) { User.limit(10) }
+  config.register_export("reports.users", replace: true, columns: [:name, :email]) { User.limit(10) }
+end
+```
+
+### FlatPack helper
+
+Use `recording_studio_export_button` to render a POST form and FlatPack submit button:
+
+```erb
+<%= recording_studio_export_button(
+  context_recording: @dashboard_recording,
+  export_key: "demo.dashboard_requests",
+  attributes: { columns: ["requested_at", "status"] },
+  filters: { status: "200" },
+  text: "Export CSV",
+  style: :primary
+) %>
+```
+
+### Attributes vs columns
+
+`columns:` are definition-time allowed columns.
+`attributes:` in requests represent selected export columns and must be a subset of definition columns.
+
 ### Runtime API and configuration
 
 ```ruby
@@ -119,6 +157,15 @@ Configuration supports `current_actor`, `current_impersonator`, `default_format`
 - CSV cells and headers beginning with `=`, `+`, `-`, `@`, tab, or carriage return are prefixed with a single quote to reduce spreadsheet formula-injection risk.
 - Request filename overrides are ignored unless `allow_request_filename_override` is explicitly enabled, and all filenames are sanitized.
 - Export logs store metadata and status only, never CSV contents.
+
+### Explicitly out of scope in v1
+
+- Persistent exported files
+- Exporting recordings or recordables as first-class export entities
+- Background jobs, scheduled exports, emailed exports
+- XLSX/PDF formats (CSV only)
+- Admin UI, admin routes/controllers, admin dashboards
+- Admin-specific authorization/policy layers
 
 ### Extending RecordingStudio
 
@@ -192,7 +239,7 @@ See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full do
 | PostgreSQL      | 16      |
 | TailwindCSS     | 4       |
 | RecordingStudio | v3.0.0 (pinned to `recording_studio/v3.0.0` in `test/dummy/Gemfile`) |
-| FlatPack        | v0.1.84 (pinned in `test/dummy/Gemfile`) |
+| FlatPack        | v0.1.95 (pinned in `test/dummy/Gemfile`) |
 | Devise          | latest  |
 
 ## Documentation
