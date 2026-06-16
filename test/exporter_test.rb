@@ -129,6 +129,22 @@ class ExporterTest < Minitest::Test
     end
   end
 
+  def test_explicit_export_key_must_be_allowed_by_context_instance
+    RecordingStudioExportable.configuration.context_export_keys_resolver = ->(_context) { ["demo.other"] }
+
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
+      RecordingStudioAccessible.stub(:authorized?, true) do
+        assert_raises(RecordingStudioExportable::ExportNotAllowedForContext) do
+          RecordingStudioExportable.export(
+            context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+            actor: Object.new,
+            export_key: "demo.people"
+          )
+        end
+      end
+    end
+  end
+
   def test_csv_formula_guard_handles_line_feed_prefix
     RecordingStudioExportable.configuration.register_export(
       "demo.linefeed",
@@ -217,24 +233,34 @@ class ExporterTest < Minitest::Test
     assert_operator source.index("validate_authorization!(definition)"), :<, source.index("create_export_log(definition)")
   end
 
-  def test_capability_options_can_tighten_authorization_and_row_limits
+  def test_definition_precedence_wins_over_capability_role_and_max_rows
     calls = []
+
+    RecordingStudioExportable.configuration.replace_export(
+      "demo.people",
+      context_types: ["DemoDashboard"],
+      required_role: :view,
+      max_rows: 2,
+      columns: [
+        { key: :name, label: "Name", value: :name }
+      ]
+    ) { [{ name: "Ada" }, { name: "Grace" }] }
 
     RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"], required_role: :admin, max_rows: 1 }) do
       RecordingStudioAccessible.stub(:authorized?, ->(**kwargs) {
         calls << kwargs
         true
       }) do
-        assert_raises(RecordingStudioExportable::ExportTooLarge) do
-          RecordingStudioExportable.export(
-            context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
-            actor: Object.new
-          )
-        end
+        result = RecordingStudioExportable.export(
+          context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+          actor: Object.new
+        )
+
+        assert_equal 2, result.row_count
       end
     end
 
-    assert_equal :admin, calls.first.fetch(:role)
+    assert_equal :view, calls.first.fetch(:role)
   end
 
   def test_omitted_export_key_requires_exactly_one_allowed_key
@@ -246,5 +272,84 @@ class ExporterTest < Minitest::Test
         actor: Object.new
       )
     end
+  end
+
+  def test_export_log_and_event_include_runtime_metadata_on_success
+    created_attrs = nil
+    event_attrs = nil
+    logged_event = nil
+    fake_log = Struct.new(:updates) do
+      def id
+        "log-1"
+      end
+
+      def update!(**kwargs)
+        updates << kwargs
+      end
+    end.new([])
+
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
+      RecordingStudioAccessible.stub(:authorized?, true) do
+        RecordingStudioExportable::ExportLog.stub(:create!, ->(**kwargs) {
+          created_attrs = kwargs
+          fake_log
+        }) do
+          logger = Object.new
+          logger.define_singleton_method(:log_event) do |context_recording, **kwargs|
+            logged_event = kwargs.merge(context_recording: context_recording)
+          end
+
+          RecordingStudio.stub(:root_recording_or_self, logger) do
+            RecordingStudio::Event.stub(:create!, ->(**kwargs) { event_attrs = kwargs }) do
+              RecordingStudioExportable.export(
+                context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+                actor: Struct.new(:id).new("actor-1"),
+                filters: { status: "ok" },
+                attributes: { columns: ["name"] }
+              )
+            end
+          end
+        end
+      end
+    end
+
+    metadata = (logged_event || event_attrs).fetch(:metadata)
+
+    assert_equal :running, created_attrs.fetch(:status)
+    assert_equal :csv, created_attrs.fetch(:format)
+    assert_equal ["name"], fake_log.updates.last.fetch(:attributes)
+    assert_equal :completed, fake_log.updates.last.fetch(:status)
+    assert_equal "demo.people", metadata.fetch(:export_key)
+    assert_equal "log-1", metadata.fetch(:export_log_id)
+    assert_equal [:name], metadata.fetch(:attributes).map(&:to_sym)
+  end
+
+  def test_export_log_is_marked_failed_when_validation_raises_after_log_creation
+    created_attrs = nil
+    fake_log = Struct.new(:updates) do
+      def update!(**kwargs)
+        updates << kwargs
+      end
+    end.new([])
+
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
+      RecordingStudioAccessible.stub(:authorized?, false) do
+        RecordingStudioExportable::ExportLog.stub(:create!, ->(**kwargs) {
+          created_attrs = kwargs
+          fake_log
+        }) do
+          assert_raises(RecordingStudioExportable::NotAuthorized) do
+            RecordingStudioExportable.export(
+              context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+              actor: Object.new
+            )
+          end
+        end
+      end
+    end
+
+    assert_equal :running, created_attrs.fetch(:status)
+    assert_equal :failed, fake_log.updates.last.fetch(:status)
+    assert_equal "RecordingStudioExportable::NotAuthorized", fake_log.updates.last.fetch(:error_class)
   end
 end

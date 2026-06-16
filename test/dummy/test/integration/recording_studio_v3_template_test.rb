@@ -11,8 +11,9 @@ class RecordingStudioV3TemplateTest < ActiveSupport::TestCase
 
   test "dummy app validates v3 recordable declarations" do
     assert RecordingStudio.validate_recordable_declarations!
-    assert_equal [ "DemoDashboard", "Workspace" ], RecordingStudio.root_recordable_types
+    assert_equal [ "DemoDashboard", "Workspace" ], RecordingStudio.root_recordable_types.sort
     assert_equal [ "Workspace", "Folder" ], RecordingStudio.allowed_parent_types_for("Page")
+    assert_includes RecordingStudio.allowed_parent_types_for("RecordingStudio::Access"), "DemoDashboard"
   end
 
   test "dummy app schema includes extracted access and export tables" do
@@ -36,6 +37,7 @@ class RecordingStudioV3TemplateTest < ActiveSupport::TestCase
     folder = Folder.find_by!(name: "Product Docs")
     page = Page.find_by!(title: "Getting Started")
     demo_dashboard = DemoDashboard.find_by!(name: "Export Demo Dashboard")
+    user = User.find_by!(email: "admin@admin.com")
     root_recording = RecordingStudio::Recording.find_by!(recordable: workspace)
     accessible_root_recording = RecordingStudio::Recording.find_by!(recordable: accessible_workspace)
     private_root_recording = RecordingStudio::Recording.find_by!(recordable: private_workspace)
@@ -54,6 +56,8 @@ class RecordingStudioV3TemplateTest < ActiveSupport::TestCase
     assert_equal root_recording, page_recording.root_recording
     assert_equal 3, demo_dashboard.demo_api_requests.count
     assert_equal 3, Workspace.count
+    assert RecordingStudioAccessible.authorized?(actor: user, recording: demo_dashboard_recording, role: :view)
+    assert_equal 1, RecordingStudioAccessible.access_recordings_for_actor(recording: demo_dashboard_recording, actor: user).count
 
     assert_no_difference -> { User.count } do
       assert_no_difference -> { RecordingStudio::Recording.count } do

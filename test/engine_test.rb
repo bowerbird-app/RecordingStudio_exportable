@@ -83,7 +83,7 @@ class EngineTest < Minitest::Test
       find_initializer("recording_studio_exportable.load_config").block.call(app)
     end
 
-    assert_equal 10_000, RecordingStudioExportable.configuration.default_row_limit
+    assert_equal 50_000, RecordingStudioExportable.configuration.default_row_limit
     assert_equal :view, RecordingStudioExportable.configuration.default_required_role
   end
 

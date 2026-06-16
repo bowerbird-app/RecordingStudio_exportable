@@ -11,8 +11,16 @@ class ConfigurationTest < Minitest::Test
     definition = @configuration.export("Demo/Export-Key", columns: [:name]) { [] }
 
     assert_equal "demo.export_key", definition.key
-    assert_equal 10_000, definition.max_rows
+    assert_equal 50_000, definition.max_rows
     assert_equal :view, definition.required_role
+  end
+
+  def test_default_context_export_keys_resolver_supports_export_key_and_export_keys
+    recording_with_many = Struct.new(:recordable).new(Struct.new(:export_keys).new(["demo.people"]))
+    recording_with_one = Struct.new(:recordable).new(Struct.new(:export_key).new("demo.single"))
+
+    assert_equal ["demo.people"], @configuration.context_export_keys_for(recording_with_many)
+    assert_equal ["demo.single"], @configuration.context_export_keys_for(recording_with_one)
   end
 
   def test_idempotent_registration_returns_existing_equivalent_definition

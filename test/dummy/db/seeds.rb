@@ -50,7 +50,13 @@ begin
   accessible_root_recording = RecordingStudio.root_recording_for(accessible_workspace)
   private_root_recording = RecordingStudio.root_recording_for(private_workspace)
   demo_dashboard_recording = RecordingStudio.root_recording_for(demo_dashboard)
-  RecordingStudioAccessible.grant_access(recording: demo_dashboard_recording, actor: user, role: :admin)
+  grant_result = RecordingStudioAccessible.grant_access(
+    recording: demo_dashboard_recording,
+    actor: user,
+    role: :admin,
+    manager_actor: user
+  )
+  raise grant_result.error if grant_result.failure?
 
   folder_recording = find_or_record_child.call(folder, root_recording, root_recording)
 
