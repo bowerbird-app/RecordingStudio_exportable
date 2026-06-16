@@ -9,7 +9,7 @@ module RecordingStudioExportable
     Column = Struct.new(:key, :label, :value, keyword_init: true)
 
     CONTENT_TYPE = "text/csv; charset=utf-8"
-    DEFAULT_FILENAME = "recording-export.csv"
+    DEFAULT_FILENAME = "export.csv"
 
     attr_reader :key, :label, :description, :context_types, :screen_keys, :columns,
                 :default_columns, :filename, :required_role, :max_rows, :formats,

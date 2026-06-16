@@ -29,25 +29,49 @@ module RecordingStudioExportable
 
     def call
       definition = resolved_definition
-      export_log = nil
+      logged_filters = sanitized_filters_for_log
+      export_log = create_export_log(definition: definition, filters: logged_filters)
 
       begin
         @capability_options = validate_capability!(definition)
-        validate_authorization!(definition)
+        validate_context_export_key!(definition)
         definition.validate_context!(@context_recording, screen_key: screen_key)
         validate_format!(definition)
         selected_columns = definition.columns_for(@attributes)
+        validate_authorization!(definition)
 
         max_rows = effective_max_rows(definition)
-        export_log = create_export_log(definition)
         rows = materialized_rows(definition, max_rows: max_rows)
         raise ExportTooLarge, "export #{definition.key} exceeded row limit of #{max_rows}" if rows.size > max_rows
 
         data = csv_for(rows, selected_columns)
         filename = resolved_filename(definition)
+        selected_attributes = selected_columns.map(&:key)
+        metadata = {
+          export_key: definition.key,
+          format: @format,
+          attributes: selected_attributes,
+          filters: logged_filters,
+          row_count: rows.size,
+          filename: filename
+        }
 
-        mark_completed(export_log, filename: filename, row_count: rows.size)
-        create_recording_studio_event(definition, filename: filename, row_count: rows.size)
+        mark_completed(
+          export_log,
+          filename: filename,
+          row_count: rows.size,
+          byte_size: data.bytesize,
+          selected_attributes: selected_attributes,
+          metadata: metadata
+        )
+        create_recording_studio_event(
+          definition,
+          export_log: export_log,
+          filename: filename,
+          row_count: rows.size,
+          selected_attributes: selected_attributes,
+          logged_filters: logged_filters
+        )
 
         Result.new(
           data: data,
@@ -95,6 +119,13 @@ module RecordingStudioExportable
       options
     end
 
+    def validate_context_export_key!(definition)
+      allowed_keys = configuration.context_export_keys_for(@context_recording)
+      unless allowed_keys.include?(definition.key)
+        raise ExportNotAllowedForContext, "export #{definition.key} is not allowed for this context"
+      end
+    end
+
     def capability_options
       return {} unless RecordingStudio.respond_to?(:capability_options)
       return {} unless @context_recording&.respond_to?(:recordable_type)
@@ -123,12 +154,23 @@ module RecordingStudioExportable
     end
 
     def effective_required_role(definition)
-      (@capability_options[:required_role] || @capability_options["required_role"] || definition.required_role).to_sym
+      (
+        definition.required_role ||
+        @capability_options[:required_role] ||
+        @capability_options["required_role"] ||
+        configuration.default_required_role ||
+        :view
+      ).to_sym
     end
 
     def effective_max_rows(definition)
-      values = [definition.max_rows, configuration.max_rows, @capability_options[:max_rows], @capability_options["max_rows"]].compact
-      values.map { |value| Integer(value) }.min
+      Integer(
+        definition.max_rows ||
+        @capability_options[:max_rows] ||
+        @capability_options["max_rows"] ||
+        configuration.max_rows ||
+        Configuration::DEFAULT_MAX_ROWS
+      )
     end
 
     def effective_formats(definition)
@@ -199,13 +241,24 @@ module RecordingStudioExportable
 
     def resolved_filename(definition)
       requested = @filename if configuration.allow_request_filename_override
-      sanitize_filename(requested.presence || definition.filename_for(
+      definition_name = definition.filename_for(
         context_recording: @context_recording,
         actor: @actor,
         attributes: @attributes,
         filters: @filters,
         format: @format
-      ))
+      )
+      fallback_name = context_recording_fallback_filename
+      sanitize_filename(requested.presence || definition_name.presence || fallback_name)
+    end
+
+    def context_recording_fallback_filename
+      recordable = @context_recording&.recordable
+      return unless recordable&.respond_to?(:export_filename)
+
+      recordable.export_filename(format: @format)
+    rescue StandardError
+      nil
     end
 
     def sanitize_filename(value)
@@ -224,27 +277,47 @@ module RecordingStudioExportable
         [".", "_", "-"].include?(char)
     end
 
-    def create_export_log(definition)
+    def create_export_log(definition:, filters:)
       return unless defined?(RecordingStudioExportable::ExportLog)
 
-      RecordingStudioExportable::ExportLog.create!(
+      recordable = @context_recording.respond_to?(:recordable) ? @context_recording.recordable : nil
+      attrs = {
         export_key: definition.key,
         context_recording: @context_recording,
+        context_recordable_type: recordable&.class&.name,
+        context_recordable_id: (recordable.id if recordable&.respond_to?(:id)),
+        screen_key: screen_key,
+        format: @format,
+        attributes: [],
+        metadata: {},
         actor: @actor,
         impersonator: @impersonator,
         status: :running,
         content_type: ExportDefinition::CONTENT_TYPE,
         row_count: 0,
-        filters: sanitized_filters_for_log
-      )
+        byte_size: 0,
+        filters: filters,
+        started_at: Time.current
+      }
+
+      RecordingStudioExportable::ExportLog.create!(filter_known_log_attributes(attrs))
     rescue ActiveRecord::StatementInvalid, ActiveRecord::NoDatabaseError, ActiveRecord::UnknownAttributeError
       nil
     end
 
-    def mark_completed(export_log, filename:, row_count:)
+    def mark_completed(export_log, filename:, row_count:, byte_size:, selected_attributes:, metadata:)
       return unless export_log
 
-      export_log.update!(status: :completed, filename: filename, row_count: row_count)
+      attrs = {
+        status: :completed,
+        filename: filename,
+        row_count: row_count,
+        byte_size: byte_size,
+        attributes: selected_attributes,
+        metadata: metadata,
+        completed_at: Time.current
+      }
+      export_log.update!(filter_known_log_attributes(attrs, record: export_log))
     rescue ActiveRecord::ActiveRecordError
       nil
     end
@@ -252,19 +325,57 @@ module RecordingStudioExportable
     def mark_failed(export_log, exception)
       return unless export_log
 
-      export_log.update!(
+      attrs = {
         status: :failed,
         error_class: exception.class.name,
-        error_message: sanitized_error_message(exception)
-      )
+        error_message: sanitized_error_message(exception),
+        failed_at: Time.current
+      }
+      export_log.update!(filter_known_log_attributes(attrs, record: export_log))
     rescue ActiveRecord::ActiveRecordError
       nil
     end
 
-    def create_recording_studio_event(definition, filename:, row_count:)
-      return unless defined?(RecordingStudio::Event) && @context_recording
+    def filter_known_log_attributes(attrs, record: nil)
+      if record
+        attrs.select { |key, _| record.has_attribute?(key) || (key == :context_recording && record.respond_to?(:context_recording=)) }
+      else
+        column_names = RecordingStudioExportable::ExportLog.column_names
+        attrs.select { |key, _| column_names.include?(key.to_s) || key == :context_recording }
+      end
+    rescue StandardError
+      attrs
+    end
+
+    def create_recording_studio_event(definition, export_log:, filename:, row_count:, selected_attributes:, logged_filters:)
+      return unless @context_recording
 
       recordable = @context_recording.respond_to?(:recordable) ? @context_recording.recordable : nil
+
+      if RecordingStudio.respond_to?(:root_recording_or_self)
+        root = RecordingStudio.root_recording_or_self(@context_recording)
+        if root.respond_to?(:log_event)
+          root.log_event(
+            @context_recording,
+            action: "exported",
+            actor: @actor,
+            impersonator: @impersonator,
+            metadata: {
+              export_log_id: export_log&.id,
+              export_key: definition.key,
+              format: @format,
+              attributes: selected_attributes,
+              filters: logged_filters,
+              filename: filename,
+              row_count: row_count
+            }
+          )
+          return
+        end
+      end
+
+      return unless defined?(RecordingStudio::Event)
+
       RecordingStudio::Event.create!(
         action: "exported",
         recording_id: @context_recording.id,
@@ -276,7 +387,11 @@ module RecordingStudioExportable
         impersonator_type: @impersonator&.class&.name,
         impersonator_id: @impersonator.respond_to?(:id) ? @impersonator.id : nil,
         metadata: {
+          export_log_id: export_log&.id,
           export_key: definition.key,
+          format: @format,
+          attributes: selected_attributes,
+          filters: logged_filters,
           filename: filename,
           row_count: row_count
         }

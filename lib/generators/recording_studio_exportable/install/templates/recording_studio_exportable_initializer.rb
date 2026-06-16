@@ -2,7 +2,7 @@
 
 RecordingStudioExportable.configure do |config|
   # Fail closed if an export returns more rows than expected.
-  # config.max_rows = 10_000
+  # config.max_rows = 50_000
 
   # Default role checked through RecordingStudioAccessible.authorized?.
   # config.default_required_role = :view

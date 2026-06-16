@@ -7,7 +7,7 @@ require_relative "hooks"
 
 module RecordingStudioExportable
   class Configuration
-    DEFAULT_MAX_ROWS = 10_000
+    DEFAULT_MAX_ROWS = 50_000
 
     attr_accessor :current_actor, :current_impersonator, :default_format, :default_required_role,
                   :max_rows, :include_bom, :allow_request_filename_override,
@@ -41,11 +41,13 @@ module RecordingStudioExportable
     end
 
     def register_export(key, replace: false, **options, &block)
+      options = options.dup
+      options[:required_role] = default_required_role unless options.key?(:required_role)
+      options[:max_rows] = max_rows unless options.key?(:max_rows) || options.key?(:row_limit)
+      options[:formats] = [default_format] unless options.key?(:formats)
+
       definition = ExportDefinition.new(
         key: normalize_key(key),
-        required_role: default_required_role,
-        max_rows: max_rows,
-        formats: [default_format],
         **options,
         &block
       )
@@ -141,12 +143,15 @@ module RecordingStudioExportable
     def default_context_export_keys_for(context_recording)
       return [] unless context_recording
 
-      options = capability_options_for(context_recording)
-      keys = options.values_at(:export_keys, "export_keys", :exports, "exports").compact.first if options.respond_to?(:values_at)
-      keys ||= context_recording.recordable.export_keys if context_recording.respond_to?(:recordable) &&
-                                                          context_recording.recordable.respond_to?(:export_keys)
-      keys ||= context_recording.recordable.exportable_export_keys if context_recording.respond_to?(:recordable) &&
-                                                                     context_recording.recordable.respond_to?(:exportable_export_keys)
+      recordable = context_recording.recordable if context_recording.respond_to?(:recordable)
+      keys = if recordable&.respond_to?(:export_keys)
+               recordable.export_keys
+             elsif recordable&.respond_to?(:export_key)
+               recordable.export_key
+             else
+               []
+             end
+
       Array(keys)
     end
 
