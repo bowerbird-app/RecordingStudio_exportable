@@ -49,7 +49,7 @@ class RecordingStudioExportableTest < Minitest::Test
     assert_includes initializer_source, "config.require_recordable_declarations = true"
     assert_includes initializer_source,
                     "config.recordable_types = [ \"Workspace\", \"Folder\", \"Page\", " \
-                    "\"DemoDashboard\", \"DemoApiRequest\" ]"
+                    "\"DemoDashboard\", \"DemoApiRequest\", \"Article\", \"Author\", \"Topic\", \"Document\", \"Item\" ]"
     refute_includes initializer_source, "config.include_children"
     refute_includes initializer_source, "config.features."
   end
@@ -87,9 +87,10 @@ class RecordingStudioExportableTest < Minitest::Test
     view_source = File.read(view_path)
 
     assert_includes view_source, 'title: "Template Demo"'
-    assert_includes view_source, 'subtitle: "This dummy app is the browser-facing demo surface for the template."'
-    assert_includes view_source, "FlatPack::Card::Component"
-    assert_includes view_source, "recording_studio_export_button"
+    assert_includes view_source,
+            'subtitle: "This dummy app is the browser-facing demo surface for the template, including access-aware export actions."'
+        refute_includes view_source, "FlatPack::Card::Component"
+    assert_includes view_source, "recording_studio_export_access_button"
     assert_includes view_source, "FlatPack::Table::Component"
     refute_includes view_source, 'title: "Demo"'
   end

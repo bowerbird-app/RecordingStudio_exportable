@@ -16,8 +16,11 @@ end
 
 ActiveSupport.on_load(:active_record) do
   Rails.application.config.to_prepare do
-    next unless defined?(DemoDashboard)
-
-    RecordingStudio.enable_capability(:accessible, on: "DemoDashboard")
+    RecordingStudio.enable_capability(:accessible, on: "DemoDashboard") if defined?(DemoDashboard)
+    RecordingStudio.enable_capability(:accessible, on: "Article") if defined?(Article)
+    RecordingStudio.enable_capability(:accessible, on: "Author") if defined?(Author)
+    RecordingStudio.enable_capability(:accessible, on: "Topic") if defined?(Topic)
+    RecordingStudio.enable_capability(:accessible, on: "Document") if defined?(Document)
+    RecordingStudio.enable_capability(:accessible, on: "Item") if defined?(Item)
   end
 end
