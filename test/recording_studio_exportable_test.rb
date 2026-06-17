@@ -63,6 +63,25 @@ class RecordingStudioExportableTest < Minitest::Test
     assert_includes readme_source, "redirects to `/`"
   end
 
+  def test_dummy_initializer_auto_registers_exports_from_services_folder
+    initializer_path = File.expand_path("dummy/config/initializers/recording_studio_exportable.rb", __dir__)
+    initializer_source = File.read(initializer_path)
+
+    assert_includes initializer_source, "RecordingStudioExportable.auto_register_exports!(config)"
+    refute_includes initializer_source, ".register(config)"
+  end
+
+  def test_dummy_export_definition_lives_under_services_exports
+    export_path = File.expand_path("dummy/services/exports/recording_studio_demo_dashboard_requests_export.rb", __dir__)
+    old_export_path = File.expand_path("dummy/app/exports/recording_studio_demo_dashboard_requests_export.rb", __dir__)
+    export_source = File.read(export_path)
+
+    assert File.exist?(export_path)
+    refute File.exist?(old_export_path)
+    assert_includes export_source, "class RecordingStudioDemoDashboardRequestsExport"
+    assert_includes export_source, "config.register_export"
+  end
+
   def test_dummy_home_page_uses_demo_title_only
     view_path = File.expand_path("dummy/app/views/home/index.html.erb", __dir__)
     view_source = File.read(view_path)

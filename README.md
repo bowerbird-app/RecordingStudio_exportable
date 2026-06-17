@@ -66,27 +66,41 @@ This template follows RecordingStudio's root recording pattern:
 
 ```ruby
 RecordingStudioExportable.configure do |config|
-  config.register_export(
-    "reports.example",
-    context_types: ["Workspace"],
-    columns: [
-      { key: :name, label: "Name", value: ->(row) { row[:name] } },
-      { key: :type, label: "Type", value: :type }
-    ],
-    filename: "example.csv",
-    max_rows: 1_000
-  ) do |context_recording:, actor:, attributes:, filters:, **|
-    [{ name: RecordingStudio.recordable_name(context_recording.recordable), type: context_recording.recordable_type }]
-  end
+  config.current_actor = ->(controller: nil) { controller&.send(:current_user) || Current.actor }
+  RecordingStudioExportable.auto_register_exports!(config)
 end
 
-RecordingStudio::Exportable::Capabilities::Exportable.enabled(
-  on: "Workspace",
-  export_keys: ["reports.example"],
-  required_role: :view,
-  max_rows: 1_000,
-  formats: [:csv]
-)
+class Workspace < ApplicationRecord
+  recording_studio_recordable label: "Workspace", root: true
+
+  RecordingStudio::Exportable::Capabilities::Exportable.enabled(
+    export_keys: ["reports.example"],
+    required_role: :view,
+    max_rows: 1_000,
+    formats: [:csv]
+  )
+end
+```
+
+Put each export definition in its own file under `services/exports/**/*_export.rb`.
+
+```ruby
+class ReportsExampleExport
+  def self.register(config)
+    config.register_export(
+      "reports.example",
+      context_types: ["Workspace"],
+      columns: [
+        { key: :name, label: "Name", value: ->(row) { row[:name] } },
+        { key: :type, label: "Type", value: :type }
+      ],
+      filename: "example.csv",
+      max_rows: 1_000
+    ) do |context_recording:, actor:, attributes:, filters:, **|
+      [{ name: RecordingStudio.recordable_name(context_recording.recordable), type: context_recording.recordable_type }]
+    end
+  end
+end
 ```
 
 `RecordingStudioExportable.export(context_recording:, actor:, export_key: "reports.example")` returns result
@@ -102,7 +116,8 @@ An explicit `export_key` must be allowed by that context instance.
 
 ### Third-party and host-app overrides
 
-Third-party gems can register exports through `RecordingStudioExportable.configure`.
+Third-party gems can expose export classes under `services/exports` and let
+`RecordingStudioExportable.auto_register_exports!` discover them.
 Host apps can replace definitions safely using `replace: true`:
 
 ```ruby
@@ -119,7 +134,7 @@ Use `recording_studio_export_button` to render a POST form and FlatPack submit b
 ```erb
 <%= recording_studio_export_button(
   context_recording: @dashboard_recording,
-  export_key: "demo.dashboard_requests",
+  export_key: "recording_studio_demo_dashboard_requests_export",
   attributes: { columns: ["requested_at", "status"] },
   filters: { status: "200" },
   text: "Export CSV",
