@@ -185,25 +185,33 @@
     language: :ruby,
     code: <<~'CODE'
       config.register_export(
-        key,                          # required
-        replace: false,               # optional, replace duplicate key
-        label: "Human label",
-        description: "Human description",
-        context_types: ["DemoDashboard"],
-        screen_keys: ["requests_table"],
-        context_key: "requests_table",    # alias for a single screen key
+        key,                          # Required unique export key. Normalized to a stable dot format.
+        replace: false,               # Optional. Replace an existing definition with the same key.
 
-        columns: [...],                    # aliases: headers:
-        default_columns: [...],
+        # Display metadata used by UI/docs
+        label: "Human label",         # Optional title shown in UI.
+        description: "Human description", # Optional longer text for users.
 
-        filename: "export.csv",           # string or callable
-        required_role: :view,
+        # Context restrictions
+        context_types: ["DemoDashboard"], # Optional allowlist of recordable types.
+        screen_keys: ["requests_table"],  # Optional allowlist of screen/section keys.
+        context_key: "requests_table",    # Alias for a single screen key.
 
-        max_rows: 50_000,                  # alias: row_limit:
-        formats: [:csv],
+        # Column definitions
+        columns: [...],                # Required in practice. Allowed export columns (alias: headers:).
+        default_columns: [...],        # Optional default subset when caller does not pick columns.
 
-        resolver: ->(**args) { ... },      # alias: exporter:
-        context_predicate: ->(context_recording) { ... }
+        # Output filename
+        filename: "export.csv",       # Optional String or callable receiving resolver args.
+
+        # Authorization + limits
+        required_role: :view,          # Optional role checked through RecordingStudioAccessible.
+        max_rows: 50_000,              # Optional row cap (alias: row_limit:).
+        formats: [:csv],               # Optional allowed formats (current addon supports csv output).
+
+        # Resolver behavior
+        resolver: ->(**args) { ... },  # Optional resolver callable (alias: exporter:).
+        context_predicate: ->(context_recording) { ... } # Optional extra context validation.
       ) do |context_recording:, actor:, attributes:, filters:, format:, controller:, **|
         # Return enumerable rows
       end
@@ -219,7 +227,43 @@
     language: :ruby,
     code: <<~'CODE'
       do |context_recording:, recording:, actor:, attributes:, filters:, params:, format:, context:, controller:|
-        # context_recording and recording currently point to the same context object
+        # context_recording:
+        #   The RecordingStudio::Recording the export runs from.
+        #   Use this to scope data safely to the current context.
+
+        # recording:
+        #   Alias of context_recording for compatibility/convenience.
+        #   Today they point to the same object.
+
+        # actor:
+        #   Current user/actor resolved from config.current_actor.
+        #   Use for actor-specific filtering or policy checks.
+
+        # attributes:
+        #   Requested export attributes (usually selected columns).
+        #   Common shape: { columns: ["name", "status"] }.
+
+        # filters:
+        #   Request filter values (date range, status, search term, etc).
+        #   Sanitize and apply to your query scope.
+
+        # params:
+        #   Combined hash payload passed to resolver, including attributes/filters.
+        #   Useful when you prefer one object over separate args.
+
+        # format:
+        #   Requested output format (currently :csv in this addon).
+        #   Keep for forward compatibility if more formats are added.
+
+        # context:
+        #   Optional screen/section context (can be nil).
+        #   Use with context_key/context_keys-aware export behavior.
+
+        # controller:
+        #   Current controller instance when export is triggered from HTTP.
+        #   Useful for request/session info; may be nil in non-controller calls.
+
+        # Return an enumerable of rows (Array, ActiveRecord::Relation, etc)
       end
     CODE
   ) %>

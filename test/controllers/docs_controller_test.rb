@@ -113,11 +113,13 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     get docs_methods_path
     assert_response :success
     assert_select "h1", text: "Methods"
-    assert_includes response.body, "Document the public methods your addon exposes."
-    assert_includes response.body, "Example method"
-    assert_includes response.body, "recordingstudio_addon.example_method"
-    assert_includes response.body, "# Explain what this method does before the example."
-    assert_includes response.body, "Provide one section title and codeblock for each method"
+    assert_includes response.body, "Public API methods exposed by RecordingStudioExportable."
+    assert_includes response.body, "RecordingStudioExportable.configure"
+    assert_includes response.body, "RecordingStudioExportable.auto_register_exports!"
+    assert_includes response.body, "RecordingStudioExportable.export"
+    assert_includes response.body, "config.register_export"
+    assert_includes response.body, "RecordingStudio::Exportable::Capabilities::Exportable.enabled"
+    assert_includes response.body, "config.export_keys_for"
   end
 
   test "components page renders successfully" do

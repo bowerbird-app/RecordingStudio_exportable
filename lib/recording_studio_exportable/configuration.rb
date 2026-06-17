@@ -19,7 +19,9 @@ module RecordingStudioExportable
         (controller&.send(:current_user) if controller&.respond_to?(:current_user, true)) ||
           (defined?(Current) && Current.respond_to?(:actor) ? Current.actor : nil)
       end
-      @current_impersonator = ->(*) { defined?(Current) && Current.respond_to?(:impersonator) ? Current.impersonator : nil }
+      @current_impersonator = lambda { |*|
+        defined?(Current) && Current.respond_to?(:impersonator) ? Current.impersonator : nil
+      }
       @default_format = :csv
       @default_required_role = :view
       @max_rows = DEFAULT_MAX_ROWS
@@ -40,7 +42,7 @@ module RecordingStudioExportable
       self.max_rows = value
     end
 
-    def register_export(key, replace: false, **options, &block)
+    def register_export(key, replace: false, **options, &)
       options = options.dup
       options[:required_role] = default_required_role unless options.key?(:required_role)
       options[:max_rows] = max_rows unless options.key?(:max_rows) || options.key?(:row_limit)
@@ -49,7 +51,7 @@ module RecordingStudioExportable
       definition = ExportDefinition.new(
         key: normalize_key(key),
         **options,
-        &block
+        &
       )
 
       @mutex.synchronize do
@@ -57,7 +59,9 @@ module RecordingStudioExportable
           existing = @export_definitions.fetch(definition.key)
           return existing if existing.equivalent_to?(definition)
 
-          warn "RecordingStudioExportable export #{definition.key.inspect} replaced duplicate registration" unless test_environment?
+          unless test_environment?
+            warn "RecordingStudioExportable export #{definition.key.inspect} replaced duplicate registration"
+          end
         end
 
         @export_definitions[definition.key] = definition
@@ -67,8 +71,8 @@ module RecordingStudioExportable
     end
     alias export register_export
 
-    def replace_export(key, **options, &block)
-      register_export(key, replace: true, **options, &block)
+    def replace_export(key, **, &)
+      register_export(key, replace: true, **, &)
     end
 
     def export_definition_for(key)
@@ -81,9 +85,7 @@ module RecordingStudioExportable
     end
 
     def context_export_keys_for(context_recording)
-      keys = if context_export_keys_resolver.respond_to?(:call)
-               context_export_keys_resolver.call(context_recording)
-             end
+      keys = (context_export_keys_resolver.call(context_recording) if context_export_keys_resolver.respond_to?(:call))
 
       Array(keys).map { |key| normalize_key(key) }.uniq
     rescue StandardError
@@ -146,6 +148,8 @@ module RecordingStudioExportable
       recordable = context_recording.recordable if context_recording.respond_to?(:recordable)
       keys = if recordable&.respond_to?(:export_keys)
                recordable.export_keys
+             elsif recordable&.class&.const_defined?(:EXPORT_KEYS)
+               recordable.class::EXPORT_KEYS
              elsif recordable&.respond_to?(:export_key)
                recordable.export_key
              else
@@ -159,7 +163,10 @@ module RecordingStudioExportable
       options = capability_options_for(context_recording)
       return [] unless options.present?
 
-      keys = options.values_at(:export_keys, "export_keys", :exports, "exports").compact.first if options.respond_to?(:values_at)
+      if options.respond_to?(:values_at)
+        keys = options.values_at(:export_keys, "export_keys", :exports,
+                                 "exports").compact.first
+      end
       Array(keys).map { |key| normalize_key(key) }.uniq
     end
 

@@ -15,7 +15,7 @@ require "recording_studio_exportable/services/example_service"
 require "recording_studio_exportable/engine"
 
 module RecordingStudioExportable
-  EXPORTS_GLOB = "services/exports/**/*_export.rb".freeze
+  EXPORTS_GLOB = "services/exports/**/*_export.rb"
 
   class << self
     def configuration

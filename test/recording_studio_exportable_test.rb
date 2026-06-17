@@ -88,8 +88,8 @@ class RecordingStudioExportableTest < Minitest::Test
 
     assert_includes view_source, 'title: "Template Demo"'
     assert_includes view_source,
-            'subtitle: "This dummy app is the browser-facing demo surface for the template, including access-aware export actions."'
-        refute_includes view_source, "FlatPack::Card::Component"
+                    'subtitle: "This dummy app is the browser-facing demo surface for the template, including access-aware export actions."'
+    refute_includes view_source, "FlatPack::Card::Component"
     assert_includes view_source, "recording_studio_export_access_button"
     assert_includes view_source, "FlatPack::Table::Component"
     refute_includes view_source, 'title: "Demo"'
