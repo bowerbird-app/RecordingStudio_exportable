@@ -2,6 +2,8 @@
 
 module RecordingStudioExportable
   module ExportsHelper
+    UNAUTHORIZED_EXPORT_BUTTON_BEHAVIORS = %i[hide disable].freeze
+
     def recording_studio_export_button(context_recording:, export_key: nil, attributes: nil, filters: {}, format: :csv,
                                        filename: nil, text: "Export CSV", icon: "arrow-down-tray", style: :secondary,
                                        size: :sm, icon_only: false, data: {}, aria: {}, **system_arguments)
@@ -32,7 +34,86 @@ module RecordingStudioExportable
       end
     end
 
+    def recording_studio_export_access_button(context_recording:, export_key: nil, attributes: nil, filters: {}, format: :csv,
+                                              filename: nil, text: "Export CSV", icon: "arrow-down-tray", style: :secondary,
+                                              size: :sm, icon_only: false, unauthorized_behavior: :hide,
+                                              unauthorized_text: nil, data: {}, aria: {}, **system_arguments)
+      behavior = unauthorized_behavior.to_sym
+      unless UNAUTHORIZED_EXPORT_BUTTON_BEHAVIORS.include?(behavior)
+        raise ArgumentError, "unauthorized_behavior must be one of: #{UNAUTHORIZED_EXPORT_BUTTON_BEHAVIORS.join(', ')}"
+      end
+
+      effective_export_key = resolved_export_key(context_recording: context_recording, export_key: export_key)
+      return if effective_export_key.nil? && behavior == :hide
+
+      authorized = export_authorized_for_actor?(context_recording: context_recording, export_key: effective_export_key)
+      return if !authorized && behavior == :hide
+
+      return recording_studio_export_button(
+        context_recording: context_recording,
+        export_key: effective_export_key,
+        attributes: attributes,
+        filters: filters,
+        format: format,
+        filename: filename,
+        text: text,
+        icon: icon,
+        style: style,
+        size: size,
+        icon_only: icon_only,
+        data: data,
+        aria: aria,
+        **system_arguments
+      ) if authorized
+
+      disabled_aria = { disabled: true }.merge(aria || {})
+
+      render(FlatPack::Button::Component.new(
+        text: unauthorized_text || text,
+        icon: icon,
+        type: "button",
+        style: style,
+        size: size,
+        icon_only: icon_only,
+        disabled: true,
+        aria: disabled_aria,
+        **system_arguments
+      ))
+    end
+
     private
+
+    def export_authorized_for_actor?(context_recording:, export_key:)
+      return false if export_key.blank?
+
+      actor = current_export_actor
+      return false if actor.blank?
+
+      allowed_keys = RecordingStudioExportable.configuration.export_keys_for(
+        recording: context_recording,
+        actor: actor
+      )
+      allowed_keys.include?(RecordingStudioExportable.configuration.normalize_key(export_key))
+    rescue StandardError
+      false
+    end
+
+    def resolved_export_key(context_recording:, export_key:)
+      return export_key if export_key.present?
+
+      keys = RecordingStudioExportable.configuration.context_export_keys_for(context_recording)
+      keys.one? ? keys.first : nil
+    end
+
+    def current_export_actor
+      resolver = RecordingStudioExportable.configuration.current_actor
+      actor = resolver.call(controller: (respond_to?(:controller) ? controller : nil)) if resolver.respond_to?(:call)
+      return actor if actor.present?
+
+      Current.actor if defined?(Current) && Current.respond_to?(:actor)
+    rescue StandardError
+      Current.actor if defined?(Current) && Current.respond_to?(:actor)
+    end
 
     def hidden_nested_fields(prefix, value)
       case value

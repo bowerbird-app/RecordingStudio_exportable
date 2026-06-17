@@ -36,6 +36,10 @@ class DocsController < ApplicationController
   def methods
   end
 
+  def components
+    @demo_recording = RecordingStudio::Recording.reorder(:id).first
+  end
+
   private
 
   def normalize_recordable_declaration(declaration)
