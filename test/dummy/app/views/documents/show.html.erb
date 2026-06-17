@@ -1,0 +1,24 @@
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-6">
+  <%= render FlatPack::PageTitle::Component.new(
+    title: @document.title,
+    subtitle: "Document detail is admin-only. Export below is configured with view role to demonstrate separation from page authorization.",
+    variant: :h1
+  ) %>
+
+  <p class="text-sm text-(--surface-muted-content-color)">Page access role: <code>admin</code> • Export role: <code>view</code></p>
+
+  <%= recording_studio_export_access_button(
+    context_recording: @document_recording,
+    export_key: "recording_studio_document_items_export",
+    text: "Export Document Items",
+    style: :secondary,
+    size: :md,
+    unauthorized_behavior: :disable,
+    unauthorized_text: "Export restricted"
+  ) %>
+
+  <%= render FlatPack::Table::Component.new(data: @items, class: "text-sm") do |table| %>
+    <% table.column(title: "Item") { |row| row.name } %>
+    <% table.column(title: "Description") { |row| row.description } %>
+  <% end %>
+</div>

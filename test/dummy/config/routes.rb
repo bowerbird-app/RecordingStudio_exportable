@@ -24,7 +24,11 @@ Rails.application.routes.draw do
   get "docs/recordings_tree", to: "docs#recordings_tree", as: :docs_recordings_tree
   get "docs/gem_views", to: "docs#gem_views", as: :docs_gem_views
   get "docs/methods", to: "docs#methods", as: :docs_methods
+  get "docs/components", to: "docs#components", as: :docs_components
 
   # Defines the root path route ("/")
   root "home#index"
+  
+  resources :documents, only: [:show]
+
 end

@@ -1,6 +1,17 @@
 <div class="fixed inset-0 p-4">
+  <% demo_accounts = begin
+       User.where(email: ["admin@admin.com", "viewer@admin.com"]).order(:email).map do |user|
+         {
+           email: user.email,
+           password: "Password"
+         }
+       end
+     rescue StandardError
+       []
+     end %>
+
   <%= render FlatPack::Grid::Component.new(cols: 1, align: :center, class: "h-full w-full place-content-center justify-items-center") do %>
-    <%= render FlatPack::Card::Component.new(style: :default, class: "w-full max-w-md h-auto") do |card| %>
+    <%= render FlatPack::Card::Component.new(style: :default, class: "w-full max-w-2xl h-auto") do |card| %>
       <% card.body do %>
         <div class="space-y-6">
           <%= render FlatPack::PageTitle::Component.new(
@@ -8,6 +19,13 @@
             variant: :h2,
             class: "mb-0 pb-0"
           ) %>
+
+          <% if demo_accounts.any? %>
+            <%= render FlatPack::Table::Component.new(data: demo_accounts, class: "text-sm") do |table| %>
+              <% table.column(title: "Email") { |row| row[:email] } %>
+              <% table.column(title: "Password") { |row| row[:password] } %>
+            <% end %>
+          <% end %>
 
           <%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
             <div class="space-y-4">
@@ -45,7 +63,7 @@
 
       <% card.footer do %>
         <%= render FlatPack::Badge::Component.new(
-          text: "Default: admin@admin.com / Password",
+          text: "Demo users: admin@admin.com and viewer@admin.com (password: Password)",
           style: :info,
           size: :sm
         ) %>
