@@ -9,20 +9,20 @@ module RecordingStudio
         CAPABILITY_NAME = :exportable
         VALID_OPTION_KEYS = %i[required_role max_rows formats export_keys exports].freeze
 
-        def self.enabled(base_or_options = nil, options = nil, on: nil, exports: nil, export_keys: nil, **legacy_options)
-          base = options.nil? && base_or_options.is_a?(Hash) ? nil : base_or_options
-          options = (options || (base.nil? ? base_or_options : {}) || {}).merge(legacy_options)
+        def self.enabled(recordable = nil, export_keys: nil, exports: nil, **options)
+          recordable ||= infer_recordable_from_caller
+          raise ArgumentError, "recordable is required" if recordable.blank?
+
+          options = options.dup
           options[:export_keys] ||= export_keys || exports if export_keys || exports
           validate_options!(options)
 
-          type_name = if on
-                        RecordingStudio.respond_to?(:recordable_type_name) ? RecordingStudio.recordable_type_name(on) : on.to_s
-                      elsif base.respond_to?(:name)
-                        base.name
-                      elsif options[:base].respond_to?(:name)
-                        options.delete(:base).name
+          type_name = if RecordingStudio.respond_to?(:recordable_type_name)
+                        RecordingStudio.recordable_type_name(recordable)
+                      elsif recordable.respond_to?(:name)
+                        recordable.name
                       else
-                        options.delete(:on)&.to_s
+                        recordable.to_s
                       end
           raise ArgumentError, "recordable type is required" if type_name.blank?
 
@@ -32,8 +32,20 @@ module RecordingStudio
           true
         end
 
+        def self.infer_recordable_from_caller
+          location = caller_locations(2, 10)&.find { |entry| entry.label.to_s.start_with?("<class:") }
+          return if location.nil?
+
+          class_name = location.label[/\A<class:(.+)>\z/, 1]
+          return if class_name.nil? || class_name.start_with?("#<")
+
+          Object.const_get(class_name)
+        rescue NameError
+          nil
+        end
+
         def self.validate_options!(options)
-          unknown = options.keys.map(&:to_sym) - VALID_OPTION_KEYS - %i[base on]
+          unknown = options.keys.map(&:to_sym) - VALID_OPTION_KEYS
           raise ArgumentError, "unknown exportable option(s): #{unknown.join(', ')}" if unknown.any?
 
           if options.key?(:max_rows)
@@ -43,17 +55,30 @@ module RecordingStudio
               raise ArgumentError, "max_rows must be an integer"
             end
           end
-          Array(options[:formats]).each { |format| raise ArgumentError, "formats cannot be blank" if format.blank? } if options.key?(:formats)
-          raise ArgumentError, "required_role cannot be blank" if options.key?(:required_role) && options[:required_role].blank?
+          if options.key?(:formats)
+            Array(options[:formats]).each do |format|
+              raise ArgumentError, "formats cannot be blank" if format.blank?
+            end
+          end
+          return unless options.key?(:required_role) && options[:required_role].blank?
+
+          raise ArgumentError,
+                "required_role cannot be blank"
         end
 
         def self.normalize_options(options)
           options = options.dup
           options[:export_keys] ||= options.delete(:exports) if options.key?(:exports)
-          options[:export_keys] = Array(options[:export_keys]).map do |key|
-            RecordingStudioExportable.configuration.normalize_key(key)
-          end if options.key?(:export_keys)
-          options[:formats] = Array(options[:formats]).map { |format| format.to_s.downcase.to_sym } if options.key?(:formats)
+          if options.key?(:export_keys)
+            options[:export_keys] = Array(options[:export_keys]).map do |key|
+              RecordingStudioExportable.configuration.normalize_key(key)
+            end
+          end
+          if options.key?(:formats)
+            options[:formats] = Array(options[:formats]).map do |format|
+              format.to_s.downcase.to_sym
+            end
+          end
           options[:required_role] = options[:required_role].to_sym if options.key?(:required_role)
           options[:max_rows] = Integer(options[:max_rows]) if options.key?(:max_rows)
           options
