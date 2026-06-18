@@ -15,6 +15,17 @@ class RecordingStudioArticleTopicsAuthorsExport
         { key: :author_name, label: "Author", value: ->(row) { row[:author_name] } },
         { key: :topic_name, label: "Topic", value: ->(row) { row[:topic_name] } }
       ],
+      allowed_attributes: {
+        articles: [
+          { key: :title, label: "Article", value: :title }
+        ],
+        authors: [
+          { key: :name, label: "Author", value: :name }
+        ],
+        topics: [
+          { key: :name, label: "Topic", value: :name }
+        ]
+      },
       filename: method(:filename)
     ) do |context_recording:, **|
       rows_for(context_recording)

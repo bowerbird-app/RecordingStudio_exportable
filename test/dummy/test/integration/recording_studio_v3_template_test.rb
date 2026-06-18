@@ -113,6 +113,16 @@ class RecordingStudioV3TemplateTest < ActiveSupport::TestCase
       actor: user,
       export_key: "recording_studio_topics_articles_export"
     )
+    topics_with_article_author_attribute = RecordingStudioExportable.export(
+      context_recording: demo_dashboard_recording,
+      actor: user,
+      export_key: "recording_studio_topics_articles_export",
+      attributes: {
+        columns: ["topic_name", "article_titles"],
+        topics: ["name"],
+        articles: ["title_with_author"]
+      }
+    )
     filtered_topics_export = RecordingStudioExportable.export(
       context_recording: demo_dashboard_recording,
       actor: user,
@@ -127,12 +137,23 @@ class RecordingStudioV3TemplateTest < ActiveSupport::TestCase
     assert_equal "articles-topics-authors.csv", article_topics_export.filename
     assert_equal 90, topics_export.row_count
     assert_equal "topics-articles.csv", topics_export.filename
+    assert_equal 90, topics_with_article_author_attribute.row_count
     assert_equal 1, filtered_topics_export.row_count
     assert_equal 3, CSV.parse(article_export.data, headers: true).headers.count
     assert_equal 8, CSV.parse(document_items_export.data, headers: true).length
     assert_equal 100, CSV.parse(article_topics_export.data, headers: true).length
     assert_equal 90, CSV.parse(topics_export.data, headers: true).length
+    assert_includes CSV.parse(topics_export.data, headers: true).first.fetch("Articles"), " - "
     assert_equal 1, CSV.parse(filtered_topics_export.data, headers: true).length
+
+    assert_raises(RecordingStudioExportable::InvalidExportColumns) do
+      RecordingStudioExportable.export(
+        context_recording: demo_dashboard_recording,
+        actor: user,
+        export_key: "recording_studio_topics_articles_export",
+        attributes: { columns: ["topic_name", "topic_created_at"] }
+      )
+    end
 
     assert_raises(RecordingStudioExportable::NotAuthorized) do
       RecordingStudioExportable.export(

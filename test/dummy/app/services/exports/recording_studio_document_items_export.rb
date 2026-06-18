@@ -12,6 +12,12 @@ class RecordingStudioDocumentItemsExport
         { key: :item_name, label: "Item", value: :name },
         { key: :item_description, label: "Description", value: :description }
       ],
+      allowed_attributes: {
+        items: [
+          { key: :name, label: "Item", value: :name },
+          { key: :description, label: "Description", value: :description }
+        ]
+      },
       filename: method(:filename)
     ) do |context_recording:, **|
       context_recording.recordable.items.order(:name)

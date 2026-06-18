@@ -14,6 +14,14 @@ class RecordingStudioDemoDashboardRequestsExport
         { key: :status, label: "Status", value: :status },
         { key: :duration_ms, label: "Duration (ms)", value: :duration_ms }
       ],
+      allowed_attributes: {
+        demo_api_requests: [
+          { key: :path, label: "Path", value: :path },
+          { key: :http_method, label: "Method", value: :http_method },
+          { key: :status, label: "Status", value: :status },
+          { key: :duration_ms, label: "Duration (ms)", value: :duration_ms }
+        ]
+      },
       filename: method(:filename)
     ) do |context_recording:, filters:, **|
       resolve_rows(context_recording: context_recording, filters: filters)

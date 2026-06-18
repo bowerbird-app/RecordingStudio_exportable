@@ -15,6 +15,13 @@ class RecordingStudioArticleExport
         { key: :body, label: "Body", value: :body },
         { key: :word_count, label: "Word count", value: ->(article) { word_count(article) } }
       ],
+      allowed_attributes: {
+        articles: [
+          { key: :title, label: "Title", value: :title },
+          { key: :body, label: "Body", value: :body },
+          { key: :word_count, label: "Word count", value: ->(article) { word_count(article) } }
+        ]
+      },
       filename: method(:filename)
     ) do |context_recording:, **|
       records_for(context_recording)

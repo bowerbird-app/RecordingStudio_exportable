@@ -155,13 +155,77 @@
           <input type="text" name="article" value="<%= @article_filter %>" class="rounded-md border border-(--surface-border-color) bg-(--surface-base-color) px-3 py-2 text-sm" placeholder="article title" />
         </label>
 
+        <div class="md:col-span-3">
+          <%= render FlatPack::DateRangeInput::Component.new(
+            start_name: "topics_created_at_start",
+            end_name: "topics_created_at_end",
+            label: "Created at",
+            placeholder: "Filter created at range",
+            start_value: @topics_created_at_start,
+            end_value: @topics_created_at_end,
+            class: "md:max-w-md"
+          ) %>
+        </div>
+
         <div class="flex items-end gap-2">
+          <% @topics_selected_columns.each do |column_key| %>
+            <%= hidden_field_tag "topics_columns[]", column_key %>
+          <% end %>
           <%= render FlatPack::Button::Component.new(text: "Apply filters", type: "submit", style: :primary, size: :md) %>
           <%= link_to "Reset", root_path, class: "text-sm text-(--surface-muted-content-color) underline" %>
         </div>
       <% end %>
 
       <% if @topic_article_rows.any? && @demo_recording %>
+        <div class="flex items-center gap-2">
+          <%= render FlatPack::Button::Component.new(
+            text: "Columns",
+            type: "button",
+            style: :secondary,
+            size: :sm,
+            data: { action: "click->flat-pack--modal#open", "modal-id": "topics-columns-modal" }
+          ) %>
+
+          <span class="text-xs text-(--surface-muted-content-color)">
+            Created at is visible in the table but not exportable.
+          </span>
+        </div>
+
+        <%= render FlatPack::Modal::Component.new(id: "topics-columns-modal", title: "Choose Topic Columns", size: :md) do |modal| %>
+          <% modal.body do %>
+            <p class="mb-3 text-sm text-(--surface-muted-content-color)">Checked columns are shown in the table and sent as export columns.</p>
+
+            <%= form_with url: root_path, method: :get, local: true, class: "space-y-3" do %>
+              <%= hidden_field_tag :topic, @topic_filter %>
+              <%= hidden_field_tag :article, @article_filter %>
+              <%= hidden_field_tag :topics_created_at_start, @topics_created_at_start %>
+              <%= hidden_field_tag :topics_created_at_end, @topics_created_at_end %>
+
+              <div class="space-y-2">
+                <% @topics_column_options.each do |column| %>
+                  <%= render FlatPack::Checkbox::Component.new(
+                    name: "topics_columns[]",
+                    label: column[:title],
+                    value: column[:key],
+                    checked: @topics_selected_columns.include?(column[:key])
+                  ) %>
+                <% end %>
+              </div>
+
+              <div class="flex items-center justify-end gap-2 pt-2">
+                <%= render FlatPack::Button::Component.new(
+                  text: "Cancel",
+                  type: "button",
+                  style: :ghost,
+                  size: :sm,
+                  data: { action: "click->flat-pack--modal#close" }
+                ) %>
+                <%= render FlatPack::Button::Component.new(text: "Apply columns", type: "submit", style: :primary, size: :sm) %>
+              </div>
+            <% end %>
+          <% end %>
+        <% end %>
+
         <p class="text-xs text-(--surface-muted-content-color)">
           Showing <%= @topic_article_rows_page.length %> of <%= @topics_total_rows %> rows on page <%= @topics_page %> of <%= @topics_total_pages %>. Export includes all matching rows, not just this page.
         </p>
@@ -169,6 +233,7 @@
         <%= recording_studio_export_access_button(
           context_recording: @demo_recording,
           export_key: "recording_studio_topics_articles_export",
+          columns: @topics_selected_columns,
           filters: { topic: @topic_filter, article: @article_filter },
           text: "Export Topics",
           style: :secondary,
@@ -178,17 +243,25 @@
         ) %>
 
         <%= render FlatPack::Table::Component.new(data: @topic_article_rows_page, class: "text-sm") do |table| %>
-          <% table.column(title: "Topic") { |row| row[:topic_name] } %>
-          <% table.column(title: "Articles") { |row| row[:article_titles] } %>
+          <% if @topics_selected_columns.include?("topic_name") %>
+            <% table.column(title: "Topic") { |row| row[:topic_name] } %>
+          <% end %>
+          <% if @topics_selected_columns.include?("article_titles") %>
+            <% table.column(title: "Articles") { |row| row[:article_titles] } %>
+          <% end %>
+          <% if @topics_selected_columns.include?("topic_created_at") %>
+            <% table.column(title: "Created at") { |row| row[:topic_created_at] } %>
+          <% end %>
         <% end %>
 
         <% if @topics_total_pages > 1 %>
+          <% topics_query = request.query_parameters.merge(topics_columns: @topics_selected_columns) %>
           <div class="flex items-center gap-3 text-sm">
             <% previous_page = @topics_page - 1 %>
             <% next_page = @topics_page + 1 %>
 
             <% if @topics_page > 1 %>
-              <%= link_to "Previous", url_for(request.query_parameters.merge(topics_page: previous_page)), class: "underline" %>
+              <%= link_to "Previous", url_for(topics_query.merge(topics_page: previous_page)), class: "underline" %>
             <% else %>
               <span class="text-(--surface-muted-content-color)">Previous</span>
             <% end %>
@@ -196,7 +269,7 @@
             <span class="text-(--surface-muted-content-color)">Page <%= @topics_page %> / <%= @topics_total_pages %></span>
 
             <% if @topics_page < @topics_total_pages %>
-              <%= link_to "Next", url_for(request.query_parameters.merge(topics_page: next_page)), class: "underline" %>
+              <%= link_to "Next", url_for(topics_query.merge(topics_page: next_page)), class: "underline" %>
             <% else %>
               <span class="text-(--surface-muted-content-color)">Next</span>
             <% end %>

@@ -1,6 +1,8 @@
 class HomeController < ApplicationController
   ARTICLE_TOPICS_PER_PAGE = 20
   TOPICS_PER_PAGE = 20
+  TOPICS_TABLE_COLUMNS = ["topic_name", "article_titles", "topic_created_at"].freeze
+  DEFAULT_TOPICS_TABLE_COLUMNS = TOPICS_TABLE_COLUMNS.freeze
 
   def index
     @demo_dashboard = DemoDashboard.includes(:demo_api_requests).order(:name).first
@@ -54,15 +56,26 @@ class HomeController < ApplicationController
 
     @topic_filter = params[:topic].to_s.strip
     @article_filter = params[:article].to_s.strip
+    @topics_created_at_start = normalize_topics_created_at(params[:topics_created_at_start])
+    @topics_created_at_end = normalize_topics_created_at(params[:topics_created_at_end])
+    @topics_selected_columns = normalize_topics_columns(params[:topics_columns])
+    @topics_column_options = [
+      { key: "topic_name", title: "Topic" },
+      { key: "article_titles", title: "Articles" },
+      { key: "topic_created_at", title: "Created at" }
+    ]
 
-    topic_scope = Topic.includes(:article).order(:name)
+    topic_scope = Topic.includes(article: :author).order(:name)
     topic_scope = topic_scope.where("topics.name ILIKE ?", "%#{@topic_filter}%") if @topic_filter.present?
     topic_scope = topic_scope.joins(:article).where("articles.title ILIKE ?", "%#{@article_filter}%") if @article_filter.present?
+    topic_scope = topic_scope.where("topics.created_at >= ?", @topics_created_at_start.beginning_of_day) if @topics_created_at_start
+    topic_scope = topic_scope.where("topics.created_at <= ?", @topics_created_at_end.end_of_day) if @topics_created_at_end
 
     grouped_topic_rows = topic_scope.group_by(&:name).map do |topic_name, topics|
       {
         topic_name: topic_name,
-        article_titles: topics.filter_map { |topic| topic.article&.title }.uniq.sort.join(", ")
+        article_titles: topics.filter_map { |topic| topic.article&.title_with_author }.uniq.sort.join(", "),
+        topic_created_at: topics.filter_map(&:formatted_created_at).uniq.sort.join(", ")
       }
     end
     @topic_article_rows = grouped_topic_rows.sort_by { |row| row[:topic_name].to_s.downcase }
@@ -75,5 +88,21 @@ class HomeController < ApplicationController
 
     topics_offset = (@topics_page - 1) * TOPICS_PER_PAGE
     @topic_article_rows_page = @topic_article_rows.slice(topics_offset, TOPICS_PER_PAGE) || []
+  end
+
+  private
+
+  def normalize_topics_columns(raw_columns)
+    normalized = Array(raw_columns).map(&:to_s).map(&:strip).reject(&:blank?).uniq
+    selected = normalized & TOPICS_TABLE_COLUMNS
+    selected.presence || DEFAULT_TOPICS_TABLE_COLUMNS
+  end
+
+  def normalize_topics_created_at(value)
+    return if value.blank?
+
+    Date.iso8601(value.to_s)
+  rescue ArgumentError
+    nil
   end
 end
