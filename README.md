@@ -82,7 +82,7 @@ class Workspace < ApplicationRecord
 end
 ```
 
-Put each export definition in its own file under `services/exports/**/*_export.rb`.
+Put each export definition in its own file under `app/services/exports/**/*_export.rb`.
 
 ```ruby
 class ReportsExampleExport
@@ -94,6 +94,12 @@ class ReportsExampleExport
         { key: :name, label: "Name", value: ->(row) { row[:name] } },
         { key: :type, label: "Type", value: :type }
       ],
+      allowed_attributes: {
+        reports: [
+          { key: :name, label: "Name" },
+          { key: :type, label: "Type" }
+        ]
+      },
       filename: "example.csv",
       max_rows: 1_000
     ) do |context_recording:, actor:, attributes:, filters:, **|
@@ -116,7 +122,7 @@ An explicit `export_key` must be allowed by that context instance.
 
 ### Third-party and host-app overrides
 
-Third-party gems can expose export classes under `services/exports` and let
+Third-party gems can expose export classes under `app/services/exports` and let
 `RecordingStudioExportable.auto_register_exports!` discover them.
 Host apps can replace definitions safely using `replace: true`:
 
@@ -146,6 +152,8 @@ Use `recording_studio_export_button` to render a POST form and FlatPack submit b
 
 `columns:` are definition-time allowed columns.
 `attributes:` in requests represent selected export columns and must be a subset of definition columns.
+`allowed_attributes:` optionally defines scoped request attributes that the resolver may use for query building.
+When present, scoped request attributes must match the export definition's allowed keys or export fails closed.
 
 ### Runtime API and configuration
 

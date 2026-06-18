@@ -71,9 +71,9 @@ class RecordingStudioExportableTest < Minitest::Test
     refute_includes initializer_source, ".register(config)"
   end
 
-  def test_dummy_export_definition_lives_under_services_exports
-    export_path = File.expand_path("dummy/services/exports/recording_studio_demo_dashboard_requests_export.rb", __dir__)
-    old_export_path = File.expand_path("dummy/app/exports/recording_studio_demo_dashboard_requests_export.rb", __dir__)
+  def test_dummy_export_definition_lives_under_app_services_exports
+    export_path = File.expand_path("dummy/app/services/exports/recording_studio_demo_dashboard_requests_export.rb", __dir__)
+    old_export_path = File.expand_path("dummy/services/exports/recording_studio_demo_dashboard_requests_export.rb", __dir__)
     export_source = File.read(export_path)
 
     assert File.exist?(export_path)
@@ -93,6 +93,30 @@ class RecordingStudioExportableTest < Minitest::Test
     assert_includes view_source, "recording_studio_export_access_button"
     assert_includes view_source, "FlatPack::Table::Component"
     refute_includes view_source, 'title: "Demo"'
+  end
+
+  def test_dummy_topics_export_uses_columns_helper_payload
+    view_path = File.expand_path("dummy/app/views/home/index.html.erb", __dir__)
+    view_source = File.read(view_path)
+
+    assert_includes view_source, 'columns: @topics_selected_columns'
+    refute_includes view_source, 'attributes: { columns: @topics_selected_columns }'
+  end
+
+  def test_dummy_components_docs_show_columns_payload
+    view_path = File.expand_path("dummy/app/views/docs/components.html.erb", __dir__)
+    view_source = File.read(view_path)
+
+    assert_includes view_source, 'columns: ["topic_name", "article_titles"]'
+    assert_includes view_source, 'filters: {'
+  end
+
+  def test_export_button_helper_accepts_columns_argument
+    helper_source = File.read(File.expand_path("../app/helpers/recording_studio_exportable/exports_helper.rb", __dir__))
+
+    assert_includes helper_source, 'columns: nil, attributes: nil'
+    assert_includes helper_source, 'attributes = merge_export_columns(attributes, columns)'
+    assert_includes helper_source, 'def merge_export_columns(attributes, columns)'
   end
 
   def test_dummy_docs_pages_use_minimal_flatpack_documentation_components

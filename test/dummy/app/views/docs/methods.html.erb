@@ -1,136 +1,91 @@
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
     title: "Methods",
-    subtitle: "Public API methods exposed by RecordingStudioExportable.",
+    subtitle: "Recordable-level export capability methods. export_key(key_here) returns the export definition object.",
     variant: :h1
   ) %>
 
   <%= render FlatPack::SectionTitle::Component.new(
-    title: "RecordingStudioExportable.configure",
-    subtitle: "Set global addon behavior and register exports.",
+    title: "Recordable.export_keys",
+    subtitle: "Read export keys enabled for the current recordable instance.",
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
     language: :ruby,
     code: <<~'CODE'
-      RecordingStudioExportable.configure do |config|
-        config.current_actor = ->(controller: nil) { controller&.send(:current_user) || Current.actor }
-        config.default_required_role = :view
-        config.max_rows = 50_000
-      end
+      recordable = context_recording.recordable
 
-      # Returns the current configuration object
-      RecordingStudioExportable.configuration
+      recordable.export_keys
+      # => [
+      #      "recording_studio_article_export",
+      #      "recording_studio_article_topics_authors_export"
+      #    ]
+
+      # Compatibility fallback for single-key recordables
+      recordable.export_key
+      # => "recording_studio_article_export"
     CODE
   ) %>
 
   <%= render FlatPack::SectionTitle::Component.new(
-    title: "RecordingStudioExportable.auto_register_exports!",
-    subtitle: "Load and register export classes from services/exports/**/*_export.rb.",
+    title: "Recordable.export_key(key_here)",
+    subtitle: "Resolve an export definition object and inspect any registered params.",
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
     language: :ruby,
     code: <<~'CODE'
-      RecordingStudioExportable.configure do |config|
-        RecordingStudioExportable.auto_register_exports!(config)
-      end
+      recordable = context_recording.recordable
+      export_key = recordable.export_keys.first
 
-      # Each export class should implement:
-      # def self.register(config)
-      #   config.register_export(...)
-      # end
+      definition = recordable.export_key(export_key)
+
+      definition.key
+      # => "recording_studio_topics_articles_export"
+
+      definition.label
+      # => "Topics with articles"
+
+      definition.description
+      # => "Exports topic names and matching article titles with author names."
+
+      definition.required_role
+      # => :admin
+
+      definition.filename
+      definition.context_types
+      definition.formats
+
+      definition.allowed_attributes
+      # => {
+      #      "topics"   => [#<Column key="name" ...>],
+      #      "articles" => [#<Column key="title_with_author" ...>]
+      #    }
+
+      definition.allowed_attribute_keys_for(:topics)
+      # => ["name"]
+
+      definition.allowed_attribute_keys_for(:articles)
+      # => ["title_with_author"]
     CODE
   ) %>
 
   <%= render FlatPack::SectionTitle::Component.new(
-    title: "RecordingStudioExportable.export",
-    subtitle: "Run an export and get CSV data plus metadata.",
+    title: "Recordable.export_key(key_here).columns",
+    subtitle: "Inspect export column keys used by attributes[:columns] in requests.",
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
     language: :ruby,
     code: <<~'CODE'
-      result = RecordingStudioExportable.export(
-        context_recording: recording,
-        actor: Current.actor,
-        export_key: "recording_studio_demo_dashboard_requests_export",
-        filters: { status: 200 },
-        attributes: { columns: [:path, :status] },
-        format: :csv
-      )
+      recordable = context_recording.recordable
+      definition = recordable.export_key("recording_studio_topics_articles_export")
 
-      result.filename     # => "...csv"
-      result.row_count    # => Integer
-      result.data         # => CSV string
-      result.content_type # => "text/csv; charset=utf-8"
-    CODE
-  ) %>
+      definition.columns.map(&:key)
+      # => ["topic_name", "article_titles"]
 
-  <%= render FlatPack::SectionTitle::Component.new(
-    title: "config.register_export / config.replace_export",
-    subtitle: "Define or replace a named export definition.",
-  ) %>
-
-  <%= render FlatPack::CodeBlock::Component.new(
-    language: :ruby,
-    code: <<~'CODE'
-      RecordingStudioExportable.configure do |config|
-        config.register_export(
-          "reports.requests",
-          context_types: ["DemoDashboard"],
-          columns: [
-            { key: :path, label: "Path", value: :path },
-            { key: :status, label: "Status", value: :status }
-          ]
-        ) do |context_recording:, filters:, **|
-          scope = context_recording.recordable.demo_api_requests.order(:created_at)
-          scope = scope.where(status: filters[:status]) if filters[:status].present?
-          scope
-        end
-
-        # Replace existing definition with same key
-        config.replace_export("reports.requests", columns: [{ key: :path, label: "Path", value: :path }]) { [] }
-      end
-    CODE
-  ) %>
-
-  <%= render FlatPack::SectionTitle::Component.new(
-    title: "RecordingStudio::Exportable::Capabilities::Exportable.enabled",
-    subtitle: "Enable export keys on a recordable type.",
-  ) %>
-
-  <%= render FlatPack::CodeBlock::Component.new(
-    language: :ruby,
-    code: <<~'CODE'
-      class DemoDashboard < ApplicationRecord
-        recording_studio_recordable label: "Demo Dashboard", root: true
-
-        RecordingStudio::Exportable::Capabilities::Exportable.enabled(
-          export_keys: ["reports.requests"],
-          required_role: :view,
-          max_rows: 50_000,
-          formats: [:csv]
-        )
-      end
-    CODE
-  ) %>
-
-  <%= render FlatPack::SectionTitle::Component.new(
-    title: "config.export_keys_for",
-    subtitle: "Resolve allowed export keys for an actor/context.",
-  ) %>
-
-  <%= render FlatPack::CodeBlock::Component.new(
-    language: :ruby,
-    code: <<~'CODE'
-      keys = RecordingStudioExportable.configuration.export_keys_for(
-        recording: context_recording,
-        actor: Current.actor,
-        context: :dashboard
-      )
-
-      # => ["reports.requests", ...]
+      # Request attributes must use these exact column keys
+      attributes = { columns: ["topic_name", "article_titles"] }
     CODE
   ) %>
 </div>

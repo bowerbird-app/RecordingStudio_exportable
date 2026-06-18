@@ -100,7 +100,9 @@
         RecordingStudio::Exportable::Capabilities::Exportable.enabled(
           export_keys: [
             "recording_studio_demo_dashboard_requests_export",
-            "recording_studio_article_export"
+            "recording_studio_article_export",
+            "recording_studio_article_topics_authors_export",
+            "recording_studio_topics_articles_export"
           ],
           required_role: :view,
           max_rows: 50_000,
@@ -109,7 +111,12 @@
 
         # Optional fallback for apps using recordable.export_keys directly.
         def export_keys
-          ["recording_studio_demo_dashboard_requests_export", "recording_studio_article_export"]
+          [
+            "recording_studio_demo_dashboard_requests_export",
+            "recording_studio_article_export",
+            "recording_studio_article_topics_authors_export",
+            "recording_studio_topics_articles_export"
+          ]
         end
       end
     CODE
@@ -200,6 +207,14 @@
         # Column definitions
         columns: [...],                # Required in practice. Allowed export columns (alias: headers:).
         default_columns: [...],        # Optional default subset when caller does not pick columns.
+        allowed_attributes: {          # Optional scoped request attributes used by resolvers.
+          topics: [
+            { key: :name, label: "Topic", value: :name }
+          ],
+          articles: [
+            { key: :title_with_author, label: "Article with author", value: :title_with_author }
+          ]
+        },
 
         # Output filename
         filename: "export.csv",       # Optional String or callable receiving resolver args.
@@ -240,8 +255,9 @@
         #   Use for actor-specific filtering or policy checks.
 
         # attributes:
-        #   Requested export attributes (usually selected columns).
+        #   Requested export attributes (usually selected columns and scoped attributes).
         #   Common shape: { columns: ["name", "status"] }.
+        #   The helper-level columns: [...] option is serialized as attributes[:columns].
 
         # filters:
         #   Request filter values (date range, status, search term, etc).

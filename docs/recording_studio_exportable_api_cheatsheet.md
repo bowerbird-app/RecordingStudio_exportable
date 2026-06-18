@@ -7,7 +7,7 @@ This note explains the two main APIs used in the dummy app configuration:
 
 It also explains how `context_recording`, `context_types`, and `required_role` fit into the access model.
 
-In the current convention, export definitions live in `services/exports/**/*_export.rb` and the initializer calls `RecordingStudioExportable.auto_register_exports!(config)`.
+In the current convention, export definitions live in `app/services/exports/**/*_export.rb` and the initializer calls `RecordingStudioExportable.auto_register_exports!(config)`.
 
 ## 1. `config.register_export(...)`
 

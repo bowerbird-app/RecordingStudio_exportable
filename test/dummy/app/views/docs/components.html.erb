@@ -42,7 +42,7 @@
 
   <%= render FlatPack::SectionTitle::Component.new(
     title: "Customize button style and payload",
-    subtitle: "Adjust text, icon, style, size, filename, and outgoing filters/attributes.",
+    subtitle: "Adjust text, icon, style, size, filename, and outgoing filters/columns.",
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
@@ -61,6 +61,7 @@
           topic: params[:topic],
           article: params[:article]
         },
+        columns: ["topic_name", "article_titles"],
         attributes: {
           source: "sidebar",
           requested_by: Current.actor&.email
