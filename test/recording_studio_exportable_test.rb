@@ -82,6 +82,25 @@ class RecordingStudioExportableTest < Minitest::Test
     assert_includes export_source, "config.register_export"
   end
 
+  def test_export_class_resolution_uses_export_roots
+    app_export_root = Pathname.new(File.expand_path("dummy/app/services/exports", __dir__))
+    legacy_export_root = Pathname.new(File.expand_path("dummy/services/exports", __dir__))
+    outside_export_path = File.expand_path("dummy/tmp/recording_studio_article_export.rb", __dir__)
+    original_export_roots = RecordingStudioExportable.method(:export_roots)
+    singleton_class = class << RecordingStudioExportable; self; end
+
+    load app_export_root.join("recording_studio_article_export.rb").to_s
+    singleton_class.send(:define_method, :export_roots) { [app_export_root, legacy_export_root] }
+
+    assert_equal RecordingStudioArticleExport,
+                 RecordingStudioExportable.send(:export_class_for, app_export_root.join("recording_studio_article_export.rb"))
+    assert_equal RecordingStudioArticleExport,
+                 RecordingStudioExportable.send(:export_class_for, legacy_export_root.join("recording_studio_article_export.rb"))
+    assert_nil RecordingStudioExportable.send(:export_class_for, outside_export_path)
+  ensure
+    singleton_class&.send(:define_method, :export_roots) { original_export_roots.call }
+  end
+
   def test_dummy_home_page_uses_demo_title_only
     view_path = File.expand_path("dummy/app/views/home/index.html.erb", __dir__)
     view_source = File.read(view_path)

@@ -13,11 +13,16 @@ require "recording_studio_exportable/capabilities/exportable"
 require "recording_studio_exportable/services/base_service"
 require "recording_studio_exportable/services/example_service"
 require "recording_studio_exportable/engine"
+require "pathname"
 
 module RecordingStudioExportable
   EXPORTS_GLOBS = [
     "app/services/exports/**/*_export.rb",
     "services/exports/**/*_export.rb"
+  ].freeze
+  EXPORTS_LOAD_PATHS = [
+    Pathname.new("app/services/exports"),
+    Pathname.new("services/exports")
   ].freeze
 
   class << self
@@ -79,11 +84,38 @@ module RecordingStudioExportable
     end
 
     def export_class_for(file_path)
-      relative_path = file_path.to_s.split("/services/exports/").last
+      relative_path = export_relative_path_for(file_path)
       return if relative_path.blank?
 
       class_name = relative_path.delete_suffix(".rb").split("/").map(&:camelize).join("::")
       class_name.safe_constantize
+    end
+
+    def export_relative_path_for(file_path)
+      path = Pathname.new(file_path).expand_path
+
+      export_roots.each do |root|
+        relative_path = path.relative_path_from(root)
+        next unless relative_export_path?(relative_path)
+
+        return relative_path.to_s
+      rescue ArgumentError
+        next
+      end
+
+      nil
+    end
+
+    def export_roots
+      [Rails.root, *engine_roots].compact.uniq.flat_map do |root|
+        root_path = Pathname.new(root).expand_path
+        EXPORTS_LOAD_PATHS.map { |load_path| root_path.join(load_path) }
+      end
+    end
+
+    def relative_export_path?(relative_path)
+      parts = relative_path.each_filename.to_a
+      parts.any? && parts.exclude?("..")
     end
   end
 end
