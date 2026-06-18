@@ -4,11 +4,13 @@ module RecordingStudioExportable
   module ExportsHelper
     UNAUTHORIZED_EXPORT_BUTTON_BEHAVIORS = %i[hide disable].freeze
 
-    def recording_studio_export_button(context_recording:, export_key: nil, attributes: nil, filters: {}, format: :csv,
+    def recording_studio_export_button(context_recording:, export_key: nil, columns: nil, attributes: nil, filters: {}, format: :csv,
                                        filename: nil, text: "Export CSV", icon: "arrow-down-tray", style: :secondary,
                                        size: :sm, icon_only: false, data: {}, aria: {}, **system_arguments)
       raise ArgumentError, "context_recording is required" unless context_recording.respond_to?(:id)
       raise ArgumentError, "FlatPack::Button::Component is required" unless defined?(FlatPack::Button::Component)
+
+      attributes = merge_export_columns(attributes, columns)
 
       tag.form(action: recording_studio_exportable_exports_path, method: :post, data: data, aria: aria) do
         safe_join(
@@ -34,7 +36,7 @@ module RecordingStudioExportable
       end
     end
 
-    def recording_studio_export_access_button(context_recording:, export_key: nil, attributes: nil, filters: {}, format: :csv,
+    def recording_studio_export_access_button(context_recording:, export_key: nil, columns: nil, attributes: nil, filters: {}, format: :csv,
                                               filename: nil, text: "Export CSV", icon: "arrow-down-tray", style: :secondary,
                                               size: :sm, icon_only: false, unauthorized_behavior: :hide,
                                               unauthorized_text: nil, data: {}, aria: {}, **system_arguments)
@@ -52,6 +54,7 @@ module RecordingStudioExportable
       return recording_studio_export_button(
         context_recording: context_recording,
         export_key: effective_export_key,
+        columns: columns,
         attributes: attributes,
         filters: filters,
         format: format,
@@ -122,10 +125,18 @@ module RecordingStudioExportable
       when Hash
         safe_join(value.flat_map { |key, child| hidden_nested_fields("#{prefix}[#{key}]", child) })
       when Array
-        safe_join(value.each_with_index.map { |child, index| hidden_nested_fields("#{prefix}[#{index}]", child) })
+        safe_join(value.map { |child| hidden_nested_fields("#{prefix}[]", child) })
       else
         hidden_field_tag(prefix, value)
       end
+    end
+
+    def merge_export_columns(attributes, columns)
+      return attributes if columns.blank?
+
+      attributes_hash = attributes.is_a?(Hash) ? attributes.dup : {}
+      attributes_hash[:columns] = columns
+      attributes_hash
     end
 
     def recording_studio_exportable_exports_path

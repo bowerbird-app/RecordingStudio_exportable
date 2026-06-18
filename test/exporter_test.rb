@@ -187,6 +187,55 @@ class ExporterTest < Minitest::Test
     end
   end
 
+  def test_export_validates_allowed_attributes_before_resolving_rows
+    resolved = false
+    RecordingStudioExportable.configuration.register_export(
+      "demo.allowed_attributes",
+      context_types: ["DemoDashboard"],
+      columns: [
+        { key: :name, label: "Name", value: :name }
+      ],
+      allowed_attributes: {
+        people: [
+          { key: :name, label: "Name", value: :name }
+        ]
+      },
+      replace: true
+    ) do |attributes:, **|
+      resolved = true
+      assert_equal({ columns: ["name"], people: ["name"] }, attributes)
+      [{ name: "Ada" }]
+    end
+    RecordingStudioExportable.configuration.context_export_keys_resolver = ->(_context) { ["demo.allowed_attributes"] }
+
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.allowed_attributes"] }) do
+      RecordingStudioAccessible.stub(:authorized?, true) do
+        result = RecordingStudioExportable.export(
+          context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+          actor: Object.new,
+          attributes: { columns: ["name"], people: ["name"] }
+        )
+
+        assert_equal "Name\nAda\n", result.data
+      end
+    end
+    assert resolved
+
+    resolved = false
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.allowed_attributes"] }) do
+      RecordingStudioAccessible.stub(:authorized?, true) do
+        assert_raises(RecordingStudioExportable::InvalidExportAttributes) do
+          RecordingStudioExportable.export(
+            context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+            actor: Object.new,
+            attributes: { columns: ["name"], people: ["admin"] }
+          )
+        end
+      end
+    end
+    refute resolved
+  end
+
   def test_long_filename_preserves_csv_extension
     RecordingStudioExportable.configuration.allow_request_filename_override = true
 

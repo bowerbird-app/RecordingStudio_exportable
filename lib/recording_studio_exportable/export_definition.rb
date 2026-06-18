@@ -12,13 +12,14 @@ module RecordingStudioExportable
     DEFAULT_FILENAME = "export.csv"
 
     attr_reader :key, :label, :description, :context_types, :screen_keys, :columns,
-                :default_columns, :filename, :required_role, :max_rows, :formats,
-                :resolver, :context_predicate
+          :default_columns, :filename, :required_role, :max_rows, :formats,
+          :resolver, :context_predicate, :allowed_attributes
 
     def initialize(key:, label: nil, description: nil, context_types: nil, screen_keys: nil,
-                   columns: nil, default_columns: nil, headers: nil, filename: nil,
-                   required_role: :view, max_rows: nil, row_limit: nil, formats: [:csv],
-                   resolver: nil, context_predicate: nil, context_key: nil, exporter: nil, &block)
+             columns: nil, default_columns: nil, headers: nil, filename: nil,
+             required_role: :view, max_rows: nil, row_limit: nil, formats: [:csv],
+             resolver: nil, context_predicate: nil, context_key: nil, exporter: nil,
+             allowed_attributes: nil, &block)
       @key = normalize_key!(key)
       @label = label.presence || @key.titleize
       @description = description.to_s
@@ -26,6 +27,7 @@ module RecordingStudioExportable
       @screen_keys = normalize_strings(screen_keys || context_key).map(&:underscore)
       @columns = normalize_columns!(columns || headers)
       @default_columns = normalize_default_columns(default_columns)
+      @allowed_attributes = normalize_allowed_attributes(allowed_attributes)
       @filename = filename
       @required_role = normalize_required_role!(required_role)
       @max_rows = normalize_max_rows!(max_rows || row_limit || Configuration::DEFAULT_MAX_ROWS)
@@ -51,6 +53,8 @@ module RecordingStudioExportable
         screen_keys == other.screen_keys &&
         columns.map(&:to_h) == other.columns.map(&:to_h) &&
         default_columns == other.default_columns &&
+        allowed_attributes.transform_values { |attributes| attributes.map(&:to_h) } ==
+          other.allowed_attributes.transform_values { |attributes| attributes.map(&:to_h) } &&
         filename == other.filename &&
         required_role == other.required_role &&
         max_rows == other.max_rows &&
@@ -80,6 +84,35 @@ module RecordingStudioExportable
       raise InvalidExportColumns, "unknown export columns: #{unknown.join(', ')}" if unknown.any?
 
       keys.map { |column_key| by_key.fetch(column_key) }
+    end
+
+    def allowed_attribute_scopes
+      allowed_attributes.keys
+    end
+
+    def allowed_attributes_for(scope)
+      allowed_attributes.fetch(normalize_scope(scope), [])
+    end
+
+    def allowed_attribute_keys_for(scope)
+      allowed_attributes_for(scope).map(&:key)
+    end
+
+    def validate_attributes!(attributes)
+      return true if allowed_attributes.empty? || attributes.blank?
+      return true unless attributes.is_a?(Hash)
+
+      each_requested_attribute_scope(attributes) do |scope, requested_keys|
+        allowed_keys = allowed_attribute_keys_for(scope)
+        raise InvalidExportAttributes, "unknown export attribute scope #{scope}" if allowed_keys.empty?
+
+        unknown = requested_keys - allowed_keys
+        if unknown.any?
+          raise InvalidExportAttributes, "unknown export attributes for #{scope}: #{unknown.join(', ')}"
+        end
+      end
+
+      true
     end
 
     def resolve_rows(context_recording:, actor:, attributes:, filters:, format:, controller: nil)
@@ -211,6 +244,50 @@ module RecordingStudioExportable
       raise InvalidExportDefinition, "default columns must be registered columns" if unknown.any?
 
       keys
+    end
+
+    def normalize_allowed_attributes(definitions)
+      return {} if definitions.blank?
+      unless definitions.respond_to?(:each)
+        raise InvalidExportDefinition, "allowed_attributes must be grouped by scope"
+      end
+
+      definitions.each_with_object({}) do |(scope, attributes), normalized|
+        normalized_scope = normalize_scope(scope)
+        raise InvalidExportDefinition, "allowed_attributes scope is required" if normalized_scope.blank?
+
+        normalized[normalized_scope] = normalize_columns!(attributes)
+      end
+    end
+
+    def each_requested_attribute_scope(attributes)
+      attributes.each do |scope, requested|
+        normalized_scope = normalize_scope(scope)
+        next if reserved_attribute_scope?(normalized_scope)
+
+        requested_keys = requested_attribute_keys(requested)
+        next if requested_keys.empty?
+
+        yield normalized_scope, requested_keys
+      end
+    end
+
+    def requested_attribute_keys(value)
+      case value
+      when Hash
+        requested = value[:attributes] || value["attributes"] || value[:columns] || value["columns"] || value.values
+        requested.is_a?(Hash) ? requested.values : Array(requested)
+      else
+        Array(value)
+      end.map { |attribute| normalize_column_key(attribute) }.reject(&:blank?)
+    end
+
+    def reserved_attribute_scope?(scope)
+      %w[columns screen_key].include?(scope)
+    end
+
+    def normalize_scope(value)
+      value.to_s.strip.downcase.tr("-", "_").gsub(/[^a-z0-9_]/, "_").gsub(/_+/, "_").delete_prefix("_").delete_suffix("_")
     end
 
     def normalize_key!(value)

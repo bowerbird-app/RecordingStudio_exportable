@@ -27,6 +27,7 @@ module RecordingStudio
           raise ArgumentError, "recordable type is required" if type_name.blank?
 
           normalized_options = normalize_options(options)
+          install_recordable_methods!(recordable)
           RecordingStudio.enable_capability(CAPABILITY_NAME, on: type_name)
           RecordingStudio.set_capability_options(CAPABILITY_NAME, on: type_name, **normalized_options)
           true
@@ -82,6 +83,39 @@ module RecordingStudio
           options[:required_role] = options[:required_role].to_sym if options.key?(:required_role)
           options[:max_rows] = Integer(options[:max_rows]) if options.key?(:max_rows)
           options
+        end
+
+        def self.install_recordable_methods!(recordable)
+          return unless recordable.respond_to?(:class_eval)
+
+          recordable.class_eval do
+            unless method_defined?(:export_keys)
+              define_method(:export_keys) do
+                options = if RecordingStudio.respond_to?(:capability_options)
+                            RecordingStudio.capability_options(:exportable, for: self.class.name) || {}
+                          else
+                            {}
+                          end
+
+                keys = options.values_at(:export_keys, "export_keys", :exports, "exports").compact.first if options.respond_to?(:values_at)
+                Array(keys).map { |key| RecordingStudioExportable.configuration.normalize_key(key) }.uniq
+              end
+            end
+
+            unless method_defined?(:export_key)
+              define_method(:export_key) do |key = nil|
+                if key.present?
+                  normalized_key = RecordingStudioExportable.configuration.normalize_key(key)
+                  return unless export_keys.include?(normalized_key)
+
+                  return RecordingStudioExportable.configuration.export_definition_for(normalized_key)
+                end
+
+                keys = export_keys
+                keys.one? ? keys.first : nil
+              end
+            end
+          end
         end
       end
     end

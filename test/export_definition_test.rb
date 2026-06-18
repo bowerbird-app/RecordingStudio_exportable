@@ -38,6 +38,33 @@ class ExportDefinitionTest < Minitest::Test
     end
   end
 
+  def test_allowed_attributes_are_scoped_and_validate_requested_attributes
+    word_count = ->(article) { article.body.to_s.split.size }
+    definition = RecordingStudioExportable::ExportDefinition.new(
+      key: "demo.articles",
+      columns: [:title],
+      allowed_attributes: {
+        articles: [
+          { key: :title, label: "Title", value: :title },
+          { key: :word_count, label: "Word count", value: word_count }
+        ]
+      }
+    ) { [] }
+
+    assert_equal ["articles"], definition.allowed_attribute_scopes
+    assert_equal ["title", "word_count"], definition.allowed_attribute_keys_for(:articles)
+    assert_equal ["Title", "Word count"], definition.allowed_attributes_for("articles").map(&:label)
+    assert definition.validate_attributes!(articles: [:title])
+    assert definition.validate_attributes!("articles" => { "attributes" => ["word_count"] }, columns: ["title"])
+
+    assert_raises(RecordingStudioExportable::InvalidExportAttributes) do
+      definition.validate_attributes!(articles: [:body])
+    end
+    assert_raises(RecordingStudioExportable::InvalidExportAttributes) do
+      definition.validate_attributes!(comments: [:body])
+    end
+  end
+
   def test_requires_callable_resolver_and_columns
     assert_raises(RecordingStudioExportable::InvalidExportDefinition) do
       RecordingStudioExportable::ExportDefinition.new(key: "demo.people", columns: [:name])

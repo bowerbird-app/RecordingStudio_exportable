@@ -38,6 +38,7 @@ module RecordingStudioExportable
         definition.validate_context!(@context_recording, screen_key: screen_key)
         validate_format!(definition)
         selected_columns = definition.columns_for(@attributes)
+        definition.validate_attributes!(@attributes)
         validate_authorization!(definition)
 
         max_rows = effective_max_rows(definition)

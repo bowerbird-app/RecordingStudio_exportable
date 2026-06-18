@@ -8,6 +8,7 @@ module RecordingStudioExportable
   class UnknownExportKey < Error; end
   class ExportNotAllowedForContext < Error; end
   class InvalidExportColumns < Error; end
+  class InvalidExportAttributes < Error; end
   class InvalidExportFormat < Error; end
   class ExportTooLarge < Error; end
 

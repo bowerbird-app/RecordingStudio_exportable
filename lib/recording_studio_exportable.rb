@@ -15,7 +15,10 @@ require "recording_studio_exportable/services/example_service"
 require "recording_studio_exportable/engine"
 
 module RecordingStudioExportable
-  EXPORTS_GLOB = "services/exports/**/*_export.rb"
+  EXPORTS_GLOBS = [
+    "app/services/exports/**/*_export.rb",
+    "services/exports/**/*_export.rb"
+  ].freeze
 
   class << self
     def configuration
@@ -54,7 +57,9 @@ module RecordingStudioExportable
 
     def export_file_paths
       roots = [Rails.root, *engine_roots].compact.uniq
-      roots.flat_map { |root| Dir[root.join(EXPORTS_GLOB)] }.uniq.sort
+      roots.flat_map do |root|
+        EXPORTS_GLOBS.flat_map { |glob| Dir[root.join(glob)] }
+      end.uniq.sort
     end
 
     def engine_roots
