@@ -17,7 +17,7 @@
   </p>
 
   <div class="space-y-8">
-    <section class="space-y-3">
+    <section id="demo-api-requests" class="space-y-3">
       <%= render FlatPack::SectionTitle::Component.new(
         title: "Demo API requests"
       ) %>
@@ -137,14 +137,14 @@
       <% end %>
     </section>
 
-    <section class="space-y-3">
+    <section id="topics" class="space-y-3">
       <%= render FlatPack::SectionTitle::Component.new(
         title: "Topics"
       ) %>
 
       <p class="text-sm text-(--surface-muted-content-color)">Required role: <code>admin</code></p>
 
-      <%= form_with url: root_path, method: :get, local: true, class: "grid gap-3 md:grid-cols-3" do %>
+      <%= form_with url: root_path(anchor: "topics"), method: :get, local: true, class: "grid gap-3 md:grid-cols-3" do %>
         <label class="flex flex-col gap-1 text-sm">
           <span class="text-(--surface-muted-content-color)">Filter by topic</span>
           <input type="text" name="topic" value="<%= @topic_filter %>" class="rounded-md border border-(--surface-border-color) bg-(--surface-base-color) px-3 py-2 text-sm" placeholder="topic name" />
@@ -172,7 +172,7 @@
             <%= hidden_field_tag "topics_columns[]", column_key %>
           <% end %>
           <%= render FlatPack::Button::Component.new(text: "Apply filters", type: "submit", style: :primary, size: :md) %>
-          <%= link_to "Reset", root_path, class: "text-sm text-(--surface-muted-content-color) underline" %>
+          <%= link_to "Reset", root_path(anchor: "topics"), class: "text-sm text-(--surface-muted-content-color) underline" %>
         </div>
       <% end %>
 
@@ -195,7 +195,7 @@
           <% modal.body do %>
             <p class="mb-3 text-sm text-(--surface-muted-content-color)">Checked columns are shown in the table and sent as export columns.</p>
 
-            <%= form_with url: root_path, method: :get, local: true, class: "space-y-3" do %>
+            <%= form_with url: root_path(anchor: "topics"), method: :get, local: true, class: "space-y-3" do %>
               <%= hidden_field_tag :topic, @topic_filter %>
               <%= hidden_field_tag :article, @article_filter %>
               <%= hidden_field_tag :topics_created_at_start, @topics_created_at_start %>
@@ -261,7 +261,7 @@
             <% next_page = @topics_page + 1 %>
 
             <% if @topics_page > 1 %>
-              <%= link_to "Previous", url_for(topics_query.merge(topics_page: previous_page)), class: "underline" %>
+              <%= link_to "Previous", url_for(topics_query.merge(topics_page: previous_page, anchor: "topics")), class: "underline" %>
             <% else %>
               <span class="text-(--surface-muted-content-color)">Previous</span>
             <% end %>
@@ -269,7 +269,7 @@
             <span class="text-(--surface-muted-content-color)">Page <%= @topics_page %> / <%= @topics_total_pages %></span>
 
             <% if @topics_page < @topics_total_pages %>
-              <%= link_to "Next", url_for(topics_query.merge(topics_page: next_page)), class: "underline" %>
+              <%= link_to "Next", url_for(topics_query.merge(topics_page: next_page, anchor: "topics")), class: "underline" %>
             <% else %>
               <span class="text-(--surface-muted-content-color)">Next</span>
             <% end %>
