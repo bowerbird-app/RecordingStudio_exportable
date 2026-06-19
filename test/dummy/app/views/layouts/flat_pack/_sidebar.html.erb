@@ -34,6 +34,12 @@
       ) %>
 
       <%= render FlatPack::Sidebar::Item::Component.new(
+        label: "Components",
+        href: main_app.docs_components_path,
+        icon: :code_bracket
+      ) %>
+
+      <%= render FlatPack::Sidebar::Item::Component.new(
         label: "Recordable types",
         href: main_app.docs_recordable_types_path,
         icon: :queue_list

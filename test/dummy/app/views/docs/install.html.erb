@@ -1,19 +1,72 @@
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
     title: "Install",
-    subtitle: "Host-app setup for the mounted GemTemplate engine and its sample migrations.",
+    subtitle: "Real host-app installation steps for RecordingStudioExportable.",
     variant: :h1
   ) %>
 
   <%= render FlatPack::SectionTitle::Component.new(
-    title: "Step 1",
-    subtitle: "Provide one section title for each step",
+    title: "Step 1: Add the gem",
+    subtitle: "Use GitHub, a local path, or RubyGems in your host app Gemfile.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~CODE
+      # Gemfile
+      gem "recording_studio_exportable", github: "bowerbird-app/recording_studio_exportable"
+
+      # Or local development path:
+      # gem "recording_studio_exportable", path: "../recording_studio_exportable"
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Step 2: Install dependencies",
+    subtitle: "Install the gem and its dependencies.",
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
     language: :bash,
     code: <<~CODE
-      # Put the step instruction here.
+      bundle install
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Step 3: Run the installer",
+    subtitle: "Mounts the engine and generates initializer/config files.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :bash,
+    code: <<~CODE
+      bin/rails generate recording_studio_exportable:install
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Step 4: Install and run migrations",
+    subtitle: "Copy engine migrations into the host app and migrate.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :bash,
+    code: <<~CODE
+      bin/rails generate recording_studio_exportable:migrations
+      bin/rails db:migrate
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Step 5: Rebuild Tailwind (if used)",
+    subtitle: "Run this after install if your host app compiles Tailwind CSS.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :bash,
+    code: <<~CODE
+      bin/rails tailwindcss:build
     CODE
   ) %>
 </div>

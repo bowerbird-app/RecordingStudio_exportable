@@ -1,12 +1,14 @@
-# GemTemplate
+# RecordingStudioExportable
 
-Internal template for building Rails engine addons on top of RecordingStudio.
+CSV export capability addon for RecordingStudio. Host apps register namespaced export definitions, enable the
+`:exportable` capability on supported recordables, and stream authorized in-memory CSV downloads.
 
 ## What's Included
 
 - **RecordingStudio** gem installed and configured
 - **Devise** authentication with a pre-seeded admin user
-- **Workspace**, **Folder**, and **Page** recordables seeded into the dummy host app
+- **Workspace**, **Folder**, **Page**, **DemoDashboard**, and **DemoApiRequest** recordables seeded into the dummy host app
+- **RecordingStudioExportable** export registry, capability wiring, engine POST endpoint, helper, and export logs
 - **FlatPack** UI component library for all views
 - **Dummy app** (`test/dummy/`) with a FlatPack-based sign-in screen, a simple home page, mounted RecordingStudio routes, and FlatPack's built-in rounded theme enabled by default
 
@@ -42,6 +44,7 @@ The login form is prefilled with these credentials for fast access.
 - `/` — dummy app home page
 - `/users/sign_in` — Devise sign-in page
 - `/recording_studio` — redirect to `/` while the mounted RecordingStudio engine remains data/API-focused
+- `/recording_studio_exportable/exports` — engine POST endpoint used by the demo CSV export button
 - `/docs/install` — install guide rendered inside the dummy app
 - `/docs/config`, `/docs/recordable_types`, `/docs/recordings_tree`, `/docs/gem_views`, `/docs/methods` — starter sidebar pages to customize for your gem
 
@@ -58,6 +61,134 @@ This template follows RecordingStudio's root recording pattern:
 - Each configured recordable declares `recording_studio_recordable(...)`; strict declaration validation stays enabled
 - A root `RecordingStudio::Recording` wraps the Workspace
 - `Current.actor` is set from `current_user` (Devise) in `ApplicationController`
+
+### Registering exports
+
+```ruby
+RecordingStudioExportable.configure do |config|
+  config.current_actor = ->(controller: nil) { controller&.send(:current_user) || Current.actor }
+  RecordingStudioExportable.auto_register_exports!(config)
+end
+
+class Workspace < ApplicationRecord
+  recording_studio_recordable label: "Workspace", root: true
+
+  RecordingStudio::Exportable::Capabilities::Exportable.enabled(
+    export_keys: ["reports.example"],
+    required_role: :view,
+    max_rows: 1_000,
+    formats: [:csv]
+  )
+end
+```
+
+Put each export definition in its own file under `app/services/exports/**/*_export.rb`.
+
+```ruby
+class ReportsExampleExport
+  def self.register(config)
+    config.register_export(
+      "reports.example",
+      context_types: ["Workspace"],
+      columns: [
+        { key: :name, label: "Name", value: ->(row) { row[:name] } },
+        { key: :type, label: "Type", value: :type }
+      ],
+      allowed_attributes: {
+        reports: [
+          { key: :name, label: "Name" },
+          { key: :type, label: "Type" }
+        ]
+      },
+      filename: "example.csv",
+      max_rows: 1_000
+    ) do |context_recording:, actor:, attributes:, filters:, **|
+      [{ name: RecordingStudio.recordable_name(context_recording.recordable), type: context_recording.recordable_type }]
+    end
+  end
+end
+```
+
+`RecordingStudioExportable.export(context_recording:, actor:, export_key: "reports.example")` returns result
+data, filename, content type, row count, and the created `RecordingStudioExportable::ExportLog`.
+Authorization is checked with `RecordingStudioAccessible.authorized?`; rows over the configured limit fail closed.
+Only in-memory CSV generation is supported.
+
+### Instance-level allowed export keys
+
+Definitions are global, but each context instance controls which export keys it allows.
+By default, `context_export_keys_resolver` reads `recordable.export_keys` or `recordable.export_key`.
+An explicit `export_key` must be allowed by that context instance.
+
+### Third-party and host-app overrides
+
+Third-party gems can expose export classes under `app/services/exports` and let
+`RecordingStudioExportable.auto_register_exports!` discover them.
+Host apps can replace definitions safely using `replace: true`:
+
+```ruby
+RecordingStudioExportable.configure do |config|
+  config.register_export("reports.users", columns: [:email]) { User.limit(10) }
+  config.register_export("reports.users", replace: true, columns: [:name, :email]) { User.limit(10) }
+end
+```
+
+### FlatPack helper
+
+Use `recording_studio_export_button` to render a POST form and FlatPack submit button:
+
+```erb
+<%= recording_studio_export_button(
+  context_recording: @dashboard_recording,
+  export_key: "recording_studio_demo_dashboard_requests_export",
+  attributes: { columns: ["requested_at", "status"] },
+  filters: { status: "200" },
+  text: "Export CSV",
+  style: :primary
+) %>
+```
+
+### Attributes vs columns
+
+`columns:` are definition-time allowed columns.
+`attributes:` in requests represent selected export columns and must be a subset of definition columns.
+`allowed_attributes:` optionally defines scoped request attributes that the resolver may use for query building.
+When present, scoped request attributes must match the export definition's allowed keys or export fails closed.
+
+### Runtime API and configuration
+
+```ruby
+RecordingStudioExportable.export(
+  context_recording: recording,
+  actor: current_user,
+  export_key: "reports.example", # optional only when exactly one key is allowed
+  attributes: { columns: ["name"] },
+  filters: { status: "active" },
+  format: :csv,
+  filename: "custom.csv",
+  controller: self
+)
+```
+
+Configuration supports `current_actor`, `current_impersonator`, `default_format`, `default_required_role`,
+`max_rows`, `include_bom`, `allow_request_filename_override`, `filter_log_sanitizer`, and
+`context_export_keys_resolver`.
+
+### Security notes
+
+- Only registered columns can be selected; request attributes cannot expose unapproved data.
+- CSV cells and headers beginning with `=`, `+`, `-`, `@`, tab, or carriage return are prefixed with a single quote to reduce spreadsheet formula-injection risk.
+- Request filename overrides are ignored unless `allow_request_filename_override` is explicitly enabled, and all filenames are sanitized.
+- Export logs store metadata and status only, never CSV contents.
+
+### Explicitly out of scope in v1
+
+- Persistent exported files
+- Exporting recordings or recordables as first-class export entities
+- Background jobs, scheduled exports, emailed exports
+- XLSX/PDF formats (CSV only)
+- Admin UI, admin routes/controllers, admin dashboards
+- Admin-specific authorization/policy layers
 
 ### Extending RecordingStudio
 
@@ -131,9 +262,9 @@ See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full do
 | PostgreSQL      | 16      |
 | TailwindCSS     | 4       |
 | RecordingStudio | v3.0.0 (pinned to `recording_studio/v3.0.0` in `test/dummy/Gemfile`) |
-| FlatPack        | v0.1.84 (pinned in `test/dummy/Gemfile`) |
+| FlatPack        | v0.1.95 (pinned in `test/dummy/Gemfile`) |
 | Devise          | latest  |
 
 ## Documentation
 
-The original gem template documentation is preserved in `docs/gem_template/` as architectural reference material. Use it as background on the engine conventions; the README and dummy app are the source of truth for the Recording Studio addon workflow.
+The original gem template documentation is preserved in `docs/recording_studio_exportable/` as architectural reference material. Use it as background on the engine conventions; the README and dummy app are the source of truth for the Recording Studio addon workflow.

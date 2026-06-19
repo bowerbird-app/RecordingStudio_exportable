@@ -25,19 +25,26 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     get docs_install_path
     assert_response :success
     assert_select "h1", text: "Install"
-    assert_includes response.body, "Step 1"
-    assert_includes response.body, "Provide one section title for each step"
-    assert_includes response.body, "# Put the step instruction here."
+    assert_includes response.body, "Step 1: Add the gem"
+    assert_includes response.body, "gem \"recording_studio_exportable\""
+    assert_includes response.body, "bin/rails generate recording_studio_exportable:install"
+    assert_includes response.body, "bin/rails generate recording_studio_exportable:migrations"
+    assert_includes response.body, "bin/rails db:migrate"
   end
 
   test "config page renders successfully" do
     get docs_config_path
     assert_response :success
     assert_select "h1", text: "Config"
-    expected_placeholder = "Replace this placeholder with the configuration settings your generated gem exposes."
-
-    assert_includes response.body, expected_placeholder
-    assert_includes response.body, "# Add the config settings for the gem here."
+    assert_includes response.body, "How to configure RecordingStudioExportable across initializer"
+    assert_includes response.body, "What goes where"
+    assert_includes response.body, "All config parameters"
+    assert_includes response.body, "enabled(...) parameters"
+    assert_includes response.body, "register_export(...) parameters"
+    assert_includes response.body, "config.current_actor"
+    assert_includes response.body, "config.context_export_keys_resolver"
+    assert_includes response.body, "RecordingStudio::Exportable::Capabilities::Exportable.enabled"
+    assert_includes response.body, "context_predicate"
   end
 
   test "recordable types page renders configured recordables dynamically" do
@@ -99,18 +106,26 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Gem Views"
     assert_select "table", minimum: 1
-    refute_includes response.body, "app/views/gem_template/home/index.html.erb"
+    refute_includes response.body, "app/views/recording_studio_exportable/home/index.html.erb"
   end
 
   test "methods page renders successfully" do
     get docs_methods_path
     assert_response :success
     assert_select "h1", text: "Methods"
-    assert_includes response.body, "Document the public methods your addon exposes."
-    assert_includes response.body, "Example method"
-    assert_includes response.body, "recordingstudio_addon.example_method"
-    assert_includes response.body, "# Explain what this method does before the example."
-    assert_includes response.body, "Provide one section title and codeblock for each method"
+    assert_includes response.body, "Recordable-level export capability methods."
+    assert_includes response.body, "Recordable.export_keys"
+    assert_includes response.body, "Recordable.export_key(key_here)"
+    assert_includes response.body, "Recordable.export_key(key_here).columns"
+  end
+
+  test "components page renders successfully" do
+    get docs_components_path
+    assert_response :success
+    assert_select "h1", text: "Components"
+    assert_includes response.body, "recording_studio_export_button"
+    assert_includes response.body, "recording_studio_export_access_button"
+    assert_includes response.body, "Customize button style and payload"
   end
 
   test "sidebar includes documentation links" do
@@ -122,6 +137,7 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_select %(a[href="#{docs_recordings_tree_path}"]), text: /Recordings tree/
     assert_select %(a[href="#{docs_gem_views_path}"]), text: /Gem Views/
     assert_select %(a[href="#{docs_methods_path}"]), text: /Methods/
+    assert_select %(a[href="#{docs_components_path}"]), text: /Components/
   end
 
   private

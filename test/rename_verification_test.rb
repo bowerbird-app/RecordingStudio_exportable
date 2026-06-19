@@ -26,8 +26,8 @@ require "minitest/autorun"
 #    - Controllers are namespaced correctly
 #
 # 3. Orphan Detection (after rename):
-#    - No old gem_template references in Ruby files
-#    - No old directories (lib/gem_template, app/controllers/gem_template, etc.)
+#    - No old recording_studio_exportable references in Ruby files
+#    - No old directories (lib/recording_studio_exportable, app/controllers/recording_studio_exportable, etc.)
 #    - No old gemspec or main lib file
 #
 # 4. Runtime Loading:
@@ -95,10 +95,10 @@ class RenameVerificationTest < Minitest::Test
            "Expected controllers directory at #{controllers_dir}"
   end
 
-  def test_views_directory_exists
-    views_dir = File.join(@root, "app", "views", @gem_name)
-    assert Dir.exist?(views_dir),
-           "Expected views directory at #{views_dir}"
+  def test_export_engine_does_not_require_engine_views_directory
+    exports_controller = File.join(@root, "app", "controllers", @gem_name, "exports_controller.rb")
+    assert File.exist?(exports_controller),
+           "Expected API-style exports controller at #{exports_controller}"
   end
 
   # ============================================================
@@ -205,29 +205,29 @@ class RenameVerificationTest < Minitest::Test
                  "Application controller should be in module #{@pascal_name}")
   end
 
-  def test_home_controller_exists
-    path = File.join(@root, "app", "controllers", @gem_name, "home_controller.rb")
+  def test_exports_controller_exists
+    path = File.join(@root, "app", "controllers", @gem_name, "exports_controller.rb")
     assert File.exist?(path),
-           "Home controller should exist at #{path}"
+           "Exports controller should exist at #{path}"
   end
 
-  def test_home_controller_has_correct_module
-    path = File.join(@root, "app", "controllers", @gem_name, "home_controller.rb")
+  def test_exports_controller_has_correct_module
+    path = File.join(@root, "app", "controllers", @gem_name, "exports_controller.rb")
     content = File.read(path)
     assert_match(/^module #{@pascal_name}$/, content,
-                 "Home controller should be in module #{@pascal_name}")
+                 "Exports controller should be in module #{@pascal_name}")
   end
 
   # ============================================================
   # No Orphaned Old Name References
   # ============================================================
 
-  # These tests check that the original "gem_template" name has been
+  # These tests check that the original "recording_studio_exportable" name has been
   # completely replaced. They only run after a rename has occurred.
 
-  def test_no_old_gem_template_references_in_ruby_files
-    # Skip if current name IS gem_template (nothing to check - hasn't been renamed yet)
-    skip if @gem_name == "gem_template"
+  def test_no_old_recording_studio_exportable_references_in_ruby_files
+    # Skip if current name IS recording_studio_exportable (nothing to check - hasn't been renamed yet)
+    skip if @gem_name == "recording_studio_exportable"
 
     ruby_files = Dir.glob(File.join(@root, "**", "*.rb"))
     # Exclude test files and this verification test itself
@@ -237,40 +237,40 @@ class RenameVerificationTest < Minitest::Test
 
     ruby_files.each do |file|
       content = File.read(file)
-      files_with_old_refs << file if content.include?("gem_template") || content.include?("GemTemplate")
+      files_with_old_refs << file if content.include?("recording_studio_exportable") || content.include?("RecordingStudioExportable")
     end
 
     assert files_with_old_refs.empty?,
-           "Found old 'gem_template' references in:\n#{files_with_old_refs.join("\n")}"
+           "Found old 'recording_studio_exportable' references in:\n#{files_with_old_refs.join("\n")}"
   end
 
-  def test_no_old_gem_template_directories
-    skip if @gem_name == "gem_template"
+  def test_no_old_recording_studio_exportable_directories
+    skip if @gem_name == "recording_studio_exportable"
 
     old_dirs = [
-      File.join(@root, "lib", "gem_template"),
-      File.join(@root, "app", "controllers", "gem_template"),
-      File.join(@root, "app", "views", "gem_template")
+      File.join(@root, "lib", "recording_studio_exportable"),
+      File.join(@root, "app", "controllers", "recording_studio_exportable"),
+      File.join(@root, "app", "views", "recording_studio_exportable")
     ]
 
     existing_old_dirs = old_dirs.select { |d| Dir.exist?(d) }
 
     assert existing_old_dirs.empty?,
-           "Found old 'gem_template' directories:\n#{existing_old_dirs.join("\n")}"
+           "Found old 'recording_studio_exportable' directories:\n#{existing_old_dirs.join("\n")}"
   end
 
   def test_no_old_gemspec_file
-    skip if @gem_name == "gem_template"
+    skip if @gem_name == "recording_studio_exportable"
 
-    old_gemspec = File.join(@root, "gem_template.gemspec")
+    old_gemspec = File.join(@root, "recording_studio_exportable.gemspec")
     refute File.exist?(old_gemspec),
            "Old gemspec file should not exist: #{old_gemspec}"
   end
 
   def test_no_old_main_lib_file
-    skip if @gem_name == "gem_template"
+    skip if @gem_name == "recording_studio_exportable"
 
-    old_lib = File.join(@root, "lib", "gem_template.rb")
+    old_lib = File.join(@root, "lib", "recording_studio_exportable.rb")
     refute File.exist?(old_lib),
            "Old main lib file should not exist: #{old_lib}"
   end

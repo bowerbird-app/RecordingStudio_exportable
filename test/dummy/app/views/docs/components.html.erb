@@ -1,0 +1,92 @@
+<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "Components",
+    subtitle: "Show the export button in the sidebar flow and document how to customize it.",
+    variant: :h1
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Export button preview",
+    subtitle: "Use recording_studio_export_button to post exports through the engine route.",
+  ) %>
+
+  <% if @demo_recording.present? %>
+    <%= recording_studio_export_button(
+      context_recording: @demo_recording,
+      export_key: "recording_studio_article_export",
+      text: "Export Articles",
+      style: :secondary,
+      size: :md
+    ) %>
+  <% else %>
+    <p class="text-sm text-(--surface-muted-content-color)">
+      No recording found yet. Run <code>bin/rails db:seed</code> in the dummy app to populate demo data for live button previews.
+    </p>
+  <% end %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Basic usage",
+    subtitle: "Minimal helper call used in a sidebar or page section.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :erb,
+    code: <<~'CODE'
+      recording_studio_export_button(
+        context_recording: @demo_recording,
+        export_key: "recording_studio_article_export",
+        text: "Export Articles"
+      )
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Customize button style and payload",
+    subtitle: "Adjust text, icon, style, size, filename, and outgoing filters/columns.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :erb,
+    code: <<~'CODE'
+      recording_studio_export_button(
+        context_recording: @demo_recording,
+        export_key: "recording_studio_topics_articles_export",
+        text: "Export Filtered Topics",
+        icon: "arrow-down-tray",
+        style: :primary,
+        size: :md,
+        filename: "topics-report",
+        format: :csv,
+        filters: {
+          topic: params[:topic],
+          article: params[:article]
+        },
+        columns: ["topic_name", "article_titles"],
+        attributes: {
+          source: "sidebar",
+          requested_by: Current.actor&.email
+        }
+      )
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Access-aware behavior",
+    subtitle: "Use recording_studio_export_access_button to hide or disable when unauthorized.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :erb,
+    code: <<~'CODE'
+      recording_studio_export_access_button(
+        context_recording: @demo_recording,
+        export_key: "recording_studio_article_export",
+        text: "Export Articles",
+        style: :secondary,
+        size: :md,
+        unauthorized_behavior: :disable,
+        unauthorized_text: "Export Articles (admin required)"
+      )
+    CODE
+  ) %>
+</div>

@@ -1,30 +1,91 @@
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
     title: "Methods",
-    subtitle: "Document the public methods your addon exposes.",
+    subtitle: "Recordable-level export capability methods. export_key(key_here) returns the export definition object.",
     variant: :h1
   ) %>
 
   <%= render FlatPack::SectionTitle::Component.new(
-    title: "Example method",
-    subtitle: "recordingstudio_addon.example_method",
+    title: "Recordable.export_keys",
+    subtitle: "Read export keys enabled for the current recordable instance.",
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
     language: :ruby,
     code: <<~'CODE'
-      # Explain what this method does before the example.
-      result = RecordingstudioAddon.example_method(
-        # Replace with the real arguments this method accepts.
-        input: "demo value"
-      )
+      recordable = context_recording.recordable
 
-      # Show what the method returns or what side effect it creates.
-      puts result
+      recordable.export_keys
+      # => [
+      #      "recording_studio_article_export",
+      #      "recording_studio_article_topics_authors_export"
+      #    ]
+
+      # Compatibility fallback for single-key recordables
+      recordable.export_key
+      # => "recording_studio_article_export"
     CODE
   ) %>
 
-  <p class="text-sm text-(--body-muted-content-color)">
-    Provide one section title and codeblock for each method
-  </p>
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Recordable.export_key(key_here)",
+    subtitle: "Resolve an export definition object and inspect any registered params.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~'CODE'
+      recordable = context_recording.recordable
+      export_key = recordable.export_keys.first
+
+      definition = recordable.export_key(export_key)
+
+      definition.key
+      # => "recording_studio_topics_articles_export"
+
+      definition.label
+      # => "Topics with articles"
+
+      definition.description
+      # => "Exports topic names and matching article titles with author names."
+
+      definition.required_role
+      # => :admin
+
+      definition.filename
+      definition.context_types
+      definition.formats
+
+      definition.allowed_attributes
+      # => {
+      #      "topics"   => [#<Column key="name" ...>],
+      #      "articles" => [#<Column key="title_with_author" ...>]
+      #    }
+
+      definition.allowed_attribute_keys_for(:topics)
+      # => ["name"]
+
+      definition.allowed_attribute_keys_for(:articles)
+      # => ["title_with_author"]
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Recordable.export_key(key_here).columns",
+    subtitle: "Inspect export column keys used by attributes[:columns] in requests.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~'CODE'
+      recordable = context_recording.recordable
+      definition = recordable.export_key("recording_studio_topics_articles_export")
+
+      definition.columns.map(&:key)
+      # => ["topic_name", "article_titles"]
+
+      # Request attributes must use these exact column keys
+      attributes = { columns: ["topic_name", "article_titles"] }
+    CODE
+  ) %>
 </div>

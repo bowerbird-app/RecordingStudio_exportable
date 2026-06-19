@@ -1,14 +1,286 @@
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
     title: "Config",
-    subtitle: "Replace this placeholder with the configuration settings your generated gem exposes.",
+    subtitle: "How to configure RecordingStudioExportable across initializer, recordable model, and services/exports.",
     variant: :h1
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "What goes where",
+    subtitle: "Use this split to keep setup predictable in host apps.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :markdown,
+    code: <<~'CODE'
+      1) config/initializers/recording_studio_exportable.rb
+         - global defaults and runtime hooks
+         - current actor resolver
+         - auto-registration of classes in services/exports/**/*_export.rb
+
+      2) app/models/<recordable>.rb
+         - recording_studio_recordable declaration
+         - RecordingStudio::Exportable::Capabilities::Exportable.enabled(...)
+         - allowed export keys for that type
+
+      3) services/exports/**/*_export.rb
+         - one class per export
+         - config.register_export(...) with metadata + resolver block
+         - query logic scoped to context_recording
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Initializer config",
+    subtitle: "Minimal setup in config/initializers/recording_studio_exportable.rb",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~CODE
+      RecordingStudioExportable.configure do |config|
+        # Required in practice so export authorization has an actor.
+        config.current_actor = ->(controller: nil) { controller&.send(:current_user) || Current.actor }
+
+        # Loads and registers services/exports/**/*_export.rb classes.
+        RecordingStudioExportable.auto_register_exports!(config)
+
+        # Re-register on code reload in development.
+        Rails.application.config.to_prepare do
+          RecordingStudioExportable.auto_register_exports!(config)
+        end
+      end
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "All config parameters",
+    subtitle: "Options available on RecordingStudioExportable::Configuration.",
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
     language: :ruby,
     code: <<~'CODE'
-      # Add the config settings for the gem here.
+      # Actor and identity
+      config.current_actor = ->(controller: nil) { ... }
+      config.current_impersonator = ->(*) { ... }
+
+      # Export defaults
+      config.default_format = :csv
+      config.default_required_role = :view
+      config.max_rows = 50_000
+      config.default_row_limit = 50_000 # alias for max_rows
+      config.include_bom = false
+      config.allow_request_filename_override = false
+
+      # Request/filter handling
+      config.filter_log_sanitizer = ->(filters) { ... }
+
+      # Context export-key lookup fallback
+      config.context_export_keys_resolver = ->(context_recording) { ... }
+
+      # Export registration
+      config.register_export(...)
+      config.replace_export(...)
+      config.export(...) # alias for register_export
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Recordable model",
+    subtitle: "Declare the type and enable export keys on that type.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~'CODE'
+      class DemoDashboard < ApplicationRecord
+        recording_studio_recordable label: "Demo Dashboard", root: true
+
+        RecordingStudio::Exportable::Capabilities::Exportable.enabled(
+          export_keys: [
+            "recording_studio_demo_dashboard_requests_export",
+            "recording_studio_article_export",
+            "recording_studio_article_topics_authors_export",
+            "recording_studio_topics_articles_export"
+          ],
+          required_role: :view,
+          max_rows: 50_000,
+          formats: [:csv]
+        )
+
+        # Optional fallback for apps using recordable.export_keys directly.
+        def export_keys
+          [
+            "recording_studio_demo_dashboard_requests_export",
+            "recording_studio_article_export",
+            "recording_studio_article_topics_authors_export",
+            "recording_studio_topics_articles_export"
+          ]
+        end
+      end
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "enabled(...) parameters",
+    subtitle: "Supported capability options on the recordable declaration.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~'CODE'
+      RecordingStudio::Exportable::Capabilities::Exportable.enabled(
+        # Optional first arg: recordable class; inferred when called in class body
+        # recordable,
+
+        export_keys: ["key.one", "key.two"], # alias: exports:
+        required_role: :view,
+        max_rows: 50_000,
+        formats: [:csv]
+      )
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "services/exports class",
+    subtitle: "Define one export class per key under services/exports/**/*_export.rb.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~'CODE'
+      class RecordingStudioDemoDashboardRequestsExport
+        KEY = "recording_studio_demo_dashboard_requests_export".freeze
+
+        def self.register(config)
+          config.register_export(
+            KEY,
+            label: "Demo API requests",
+            description: "Exports dashboard API request rows.",
+            context_types: ["DemoDashboard"],
+            columns: [
+              { key: :path, label: "Path", value: :path },
+              { key: :status, label: "Status", value: :status }
+            ],
+            default_columns: %i[path status],
+            filename: method(:filename),
+            required_role: :view,
+            max_rows: 50_000,
+            formats: [:csv],
+            context_predicate: ->(context_recording) { context_recording.recordable.present? }
+          ) do |context_recording:, actor:, attributes:, filters:, format:, controller:, **|
+            scope = context_recording.recordable.demo_api_requests.order(:created_at)
+            scope = scope.where(status: filters[:status]) if filters[:status].present?
+            scope
+          end
+        end
+
+        def self.filename(context_recording:, **)
+          "#{context_recording.recordable.name}-api-requests.csv"
+        end
+      end
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "register_export(...) parameters",
+    subtitle: "Complete list, including aliases supported by ExportDefinition.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~'CODE'
+      config.register_export(
+        key,                          # Required unique export key. Normalized to a stable dot format.
+        replace: false,               # Optional. Replace an existing definition with the same key.
+
+        # Display metadata used by UI/docs
+        label: "Human label",         # Optional title shown in UI.
+        description: "Human description", # Optional longer text for users.
+
+        # Context restrictions
+        context_types: ["DemoDashboard"], # Optional allowlist of recordable types.
+        screen_keys: ["requests_table"],  # Optional allowlist of screen/section keys.
+        context_key: "requests_table",    # Alias for a single screen key.
+
+        # Column definitions
+        columns: [...],                # Required in practice. Allowed export columns (alias: headers:).
+        default_columns: [...],        # Optional default subset when caller does not pick columns.
+        allowed_attributes: {          # Optional scoped request attributes used by resolvers.
+          topics: [
+            { key: :name, label: "Topic", value: :name }
+          ],
+          articles: [
+            { key: :title_with_author, label: "Article with author", value: :title_with_author }
+          ]
+        },
+
+        # Output filename
+        filename: "export.csv",       # Optional String or callable receiving resolver args.
+
+        # Authorization + limits
+        required_role: :view,          # Optional role checked through RecordingStudioAccessible.
+        max_rows: 50_000,              # Optional row cap (alias: row_limit:).
+        formats: [:csv],               # Optional allowed formats (current addon supports csv output).
+
+        # Resolver behavior
+        resolver: ->(**args) { ... },  # Optional resolver callable (alias: exporter:).
+        context_predicate: ->(context_recording) { ... } # Optional extra context validation.
+      ) do |context_recording:, actor:, attributes:, filters:, format:, controller:, **|
+        # Return enumerable rows
+      end
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Resolver params",
+    subtitle: "Arguments passed to resolver callables and registration blocks.",
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~'CODE'
+      do |context_recording:, recording:, actor:, attributes:, filters:, params:, format:, context:, controller:|
+        # context_recording:
+        #   The RecordingStudio::Recording the export runs from.
+        #   Use this to scope data safely to the current context.
+
+        # recording:
+        #   Alias of context_recording for compatibility/convenience.
+        #   Today they point to the same object.
+
+        # actor:
+        #   Current user/actor resolved from config.current_actor.
+        #   Use for actor-specific filtering or policy checks.
+
+        # attributes:
+        #   Requested export attributes (usually selected columns and scoped attributes).
+        #   Common shape: { columns: ["name", "status"] }.
+        #   The helper-level columns: [...] option is serialized as attributes[:columns].
+
+        # filters:
+        #   Request filter values (date range, status, search term, etc).
+        #   Sanitize and apply to your query scope.
+
+        # params:
+        #   Combined hash payload passed to resolver, including attributes/filters.
+        #   Useful when you prefer one object over separate args.
+
+        # format:
+        #   Requested output format (currently :csv in this addon).
+        #   Keep for forward compatibility if more formats are added.
+
+        # context:
+        #   Optional screen/section context (can be nil).
+        #   Use with context_key/context_keys-aware export behavior.
+
+        # controller:
+        #   Current controller instance when export is triggered from HTTP.
+        #   Useful for request/session info; may be nil in non-controller calls.
+
+        # Return an enumerable of rows (Array, ActiveRecord::Relation, etc)
+      end
     CODE
   ) %>
 </div>

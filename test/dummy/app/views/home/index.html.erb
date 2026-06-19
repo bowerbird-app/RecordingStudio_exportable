@@ -1,99 +1,301 @@
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
     title: "Template Demo",
-    subtitle: "This dummy app is the browser-facing demo surface for the template.",
+    subtitle: "This dummy app is the browser-facing demo surface for the template, including access-aware export actions.",
     variant: :h1
   ) %>
 
-  <div class="grid gap-6 lg:grid-cols-2">
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "What's working",
-          subtitle: "Core template capabilities already wired into the dummy app.",
-          variant: :h3,
-          class: "mb-0 pb-0"
+  <p class="text-sm text-(--surface-muted-content-color)">
+    Current actor: <code><%= @current_actor_email || "none" %></code>
+    • Dashboard view: <code><%= @dashboard_view_allowed ? "true" : "false" %></code>
+    • Dashboard admin: <code><%= @dashboard_admin_allowed ? "true" : "false" %></code>
+    • Article export allowed: <code><%= @article_export_allowed ? "true" : "false" %></code>
+  </p>
+
+  <p class="text-xs text-(--surface-muted-content-color)">
+    Dashboard export keys: <code><%= @dashboard_allowed_export_keys.join(", ") %></code>
+  </p>
+
+  <div class="space-y-8">
+    <section id="demo-api-requests" class="space-y-3">
+      <%= render FlatPack::SectionTitle::Component.new(
+        title: "Demo API requests"
+      ) %>
+
+      <p class="text-sm text-(--surface-muted-content-color)">Required role: <code>view</code></p>
+
+      <% if @demo_dashboard && @demo_recording %>
+        <%= recording_studio_export_access_button(
+          context_recording: @demo_recording,
+          export_key: "recording_studio_demo_dashboard_requests_export",
+          text: "Export API requests",
+          style: :secondary,
+          size: :md,
+          unauthorized_behavior: :disable,
+          unauthorized_text: "Export restricted"
         ) %>
-      <% end %>
 
-      <% card.body do %>
-        <ul class="space-y-3 text-sm leading-6">
-          <li>Rails engine routes are mounted and responding.</li>
-          <li>PostgreSQL UUID-oriented migrations are included in the engine.</li>
-          <li>Tailwind sources can be wired into a host app through the install generator.</li>
-          <li>The dummy app exercises authentication, FlatPack layouts, and Recording Studio setup.</li>
-        </ul>
-      <% end %>
-    <% end %>
+        <% rows = Array(@demo_dashboard.demo_api_requests).map do |request|
+             {
+               path: request.path,
+               method: request.http_method,
+               status: request.status,
+               duration: "#{request.duration_ms} ms"
+             }
+           end %>
 
-    <%= render FlatPack::Card::Component.new(style: :outlined) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Next steps",
-          subtitle: "The usual first moves when turning the template into a real addon.",
-          variant: :h3,
-          class: "mb-0 pb-0"
+        <%= render FlatPack::Table::Component.new(data: rows, class: "text-sm") do |table| %>
+          <% table.column(title: "Path") { |row| row[:path] } %>
+          <% table.column(title: "Method") { |row| row[:method] } %>
+          <% table.column(title: "Status") { |row| row[:status] } %>
+          <% table.column(title: "Duration") { |row| row[:duration] } %>
+        <% end %>
+      <% else %>
+        <p class="text-sm leading-6">Run <code>bin/rails db:seed</code> to create demo dashboard data.</p>
+      <% end %>
+    </section>
+
+    <section class="space-y-3">
+      <%= render FlatPack::SectionTitle::Component.new(
+        title: "Articles"
+      ) %>
+
+      <p class="text-sm text-(--surface-muted-content-color)">Required role: <code>admin</code></p>
+
+      <% if @article_rows.any? %>
+        <%= recording_studio_export_access_button(
+          context_recording: @demo_recording || @article_rows.first[:context_recording],
+          export_key: "recording_studio_article_export",
+          text: "Export Articles",
+          style: :secondary,
+          size: :md,
+          unauthorized_behavior: :disable,
+          unauthorized_text: "Export Articles (admin required)"
         ) %>
-      <% end %>
 
-      <% card.body do %>
-        <ol class="space-y-3 text-sm leading-6 list-decimal pl-5">
-          <li>Run <code>bin/rename_gem your_addon_name</code> when you are ready to rename the engine.</li>
-          <li>Replace the sample migration with your addon tables and install them into the host app.</li>
-          <li>Configure Recording Studio recordable types and capabilities in the host app initializer.</li>
-          <li>Use the dummy app to validate layout, asset scanning, and authentication flows.</li>
-        </ol>
+        <%= render FlatPack::Table::Component.new(data: @article_rows, class: "text-sm") do |table| %>
+          <% table.column(title: "Article") { |row| row[:title] } %>
+          <% table.column(title: "Author") { |row| row[:author_name] } %>
+          <% table.column(title: "Topics") { |row| row[:topic_count] } %>
+          <% table.column(title: "Word count") { |row| row[:word_count] } %>
+        <% end %>
+      <% else %>
+        <p class="text-sm leading-6">Run <code>bin/rails db:seed</code> to create demo article data.</p>
       <% end %>
-    <% end %>
+    </section>
 
-    <%= render FlatPack::Card::Component.new(style: :outlined) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "FlatPack usage",
-          subtitle: "This page uses FlatPack components for its primary UI structure.",
-          variant: :h3,
-          class: "mb-0 pb-0"
-        ) %>
-      <% end %>
+    <section class="space-y-3">
+      <%= render FlatPack::SectionTitle::Component.new(
+        title: "Article topics and authors"
+      ) %>
 
-      <% card.body do %>
-        <p class="text-sm leading-6 text-(--surface-content-color)">
-          Use FlatPack cards, buttons, badges, inputs, and layout primitives as the default path for addon UI. Keep raw HTML for simple semantic content only.
+      <p class="text-sm text-(--surface-muted-content-color)">Required role: <code>view</code></p>
+
+      <% if @article_topic_rows.any? %>
+        <p class="text-xs text-(--surface-muted-content-color)">
+          Showing <%= @article_topic_rows_page.length %> of <%= @article_topics_total_rows %> rows on page <%= @article_topics_page %> of <%= @article_topics_total_pages %>. Export includes all matching rows, not just this page.
         </p>
-      <% end %>
 
-      <% card.footer do %>
-        <a href="https://github.com/bowerbird-app/flatpack"
-           target="_blank"
-           rel="noopener noreferrer"
-           class="inline-flex">
-          <%= render FlatPack::Button::Component.new(
-            text: "View FlatPack documentation",
-            style: :primary,
-            size: :md
-          ) %>
-        </a>
-      <% end %>
-    <% end %>
-
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.header do %>
-        <%= render FlatPack::PageTitle::Component.new(
-          title: "Install flow",
-          subtitle: "What the host app generator path covers.",
-          variant: :h3,
-          class: "mb-0 pb-0"
+        <%= recording_studio_export_access_button(
+          context_recording: @demo_recording || @article_rows.first[:context_recording],
+          export_key: "recording_studio_article_topics_authors_export",
+          text: "Export Articles with Authors and Topics",
+          style: :secondary,
+          size: :md,
+          unauthorized_behavior: :disable,
+          unauthorized_text: "Export restricted"
         ) %>
+
+        <%= render FlatPack::Table::Component.new(data: @article_topic_rows_page, class: "text-sm") do |table| %>
+          <% table.column(title: "Article") { |row| row[:article_title] } %>
+          <% table.column(title: "Topic") { |row| row[:topic_name] } %>
+          <% table.column(title: "Author") { |row| row[:author_name] } %>
+        <% end %>
+
+        <% if @article_topics_total_pages > 1 %>
+          <div class="flex items-center gap-3 text-sm">
+            <% previous_page = @article_topics_page - 1 %>
+            <% next_page = @article_topics_page + 1 %>
+
+            <% if @article_topics_page > 1 %>
+              <%= link_to "Previous", url_for(request.query_parameters.merge(article_topics_page: previous_page)), class: "underline" %>
+            <% else %>
+              <span class="text-(--surface-muted-content-color)">Previous</span>
+            <% end %>
+
+            <span class="text-(--surface-muted-content-color)">Page <%= @article_topics_page %> / <%= @article_topics_total_pages %></span>
+
+            <% if @article_topics_page < @article_topics_total_pages %>
+              <%= link_to "Next", url_for(request.query_parameters.merge(article_topics_page: next_page)), class: "underline" %>
+            <% else %>
+              <span class="text-(--surface-muted-content-color)">Next</span>
+            <% end %>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-sm leading-6">Run <code>bin/rails db:seed</code> to create article topics.</p>
+      <% end %>
+    </section>
+
+    <section id="topics" class="space-y-3">
+      <%= render FlatPack::SectionTitle::Component.new(
+        title: "Topics"
+      ) %>
+
+      <p class="text-sm text-(--surface-muted-content-color)">Required role: <code>admin</code></p>
+
+      <%= form_with url: root_path(anchor: "topics"), method: :get, local: true, class: "grid gap-3 md:grid-cols-3" do %>
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="text-(--surface-muted-content-color)">Filter by topic</span>
+          <input type="text" name="topic" value="<%= @topic_filter %>" class="rounded-md border border-(--surface-border-color) bg-(--surface-base-color) px-3 py-2 text-sm" placeholder="topic name" />
+        </label>
+
+        <label class="flex flex-col gap-1 text-sm">
+          <span class="text-(--surface-muted-content-color)">Filter by article</span>
+          <input type="text" name="article" value="<%= @article_filter %>" class="rounded-md border border-(--surface-border-color) bg-(--surface-base-color) px-3 py-2 text-sm" placeholder="article title" />
+        </label>
+
+        <div class="md:col-span-3">
+          <%= render FlatPack::DateRangeInput::Component.new(
+            start_name: "topics_created_at_start",
+            end_name: "topics_created_at_end",
+            label: "Created at",
+            placeholder: "Filter created at range",
+            start_value: @topics_created_at_start,
+            end_value: @topics_created_at_end,
+            class: "md:max-w-md"
+          ) %>
+        </div>
+
+        <div class="flex items-end gap-2">
+          <% @topics_selected_columns.each do |column_key| %>
+            <%= hidden_field_tag "topics_columns[]", column_key %>
+          <% end %>
+          <%= render FlatPack::Button::Component.new(text: "Apply filters", type: "submit", style: :primary, size: :md) %>
+          <%= link_to "Reset", root_path(anchor: "topics"), class: "text-sm text-(--surface-muted-content-color) underline" %>
+        </div>
       <% end %>
 
-      <% card.body do %>
-        <ul class="space-y-3 text-sm leading-6">
-          <li>Add the gem to your host app and run <code>bundle install</code>.</li>
-          <li>Run <code>rails generate gem_template:install</code> to mount the engine and add configuration.</li>
-          <li>Run <code>rails generate gem_template:migrations</code> to copy engine migrations into the host app.</li>
-          <li>Rebuild Tailwind if needed with <code>bin/rails tailwindcss:build</code>.</li>
-        </ul>
+      <% if @topic_article_rows.any? && @demo_recording %>
+        <div class="flex items-center gap-2">
+          <%= render FlatPack::Button::Component.new(
+            text: "Columns",
+            type: "button",
+            style: :secondary,
+            size: :sm,
+            data: { action: "click->flat-pack--modal#open", "modal-id": "topics-columns-modal" }
+          ) %>
+
+          <span class="text-xs text-(--surface-muted-content-color)">
+            Created at is visible in the table but not exportable.
+          </span>
+        </div>
+
+        <%= render FlatPack::Modal::Component.new(id: "topics-columns-modal", title: "Choose Topic Columns", size: :md) do |modal| %>
+          <% modal.body do %>
+            <p class="mb-3 text-sm text-(--surface-muted-content-color)">Checked columns are shown in the table and sent as export columns.</p>
+
+            <%= form_with url: root_path(anchor: "topics"), method: :get, local: true, class: "space-y-3" do %>
+              <%= hidden_field_tag :topic, @topic_filter %>
+              <%= hidden_field_tag :article, @article_filter %>
+              <%= hidden_field_tag :topics_created_at_start, @topics_created_at_start %>
+              <%= hidden_field_tag :topics_created_at_end, @topics_created_at_end %>
+
+              <div class="space-y-2">
+                <% @topics_column_options.each do |column| %>
+                  <%= render FlatPack::Checkbox::Component.new(
+                    name: "topics_columns[]",
+                    label: column[:title],
+                    value: column[:key],
+                    checked: @topics_selected_columns.include?(column[:key])
+                  ) %>
+                <% end %>
+              </div>
+
+              <div class="flex items-center justify-end gap-2 pt-2">
+                <%= render FlatPack::Button::Component.new(
+                  text: "Cancel",
+                  type: "button",
+                  style: :ghost,
+                  size: :sm,
+                  data: { action: "click->flat-pack--modal#close" }
+                ) %>
+                <%= render FlatPack::Button::Component.new(text: "Apply columns", type: "submit", style: :primary, size: :sm) %>
+              </div>
+            <% end %>
+          <% end %>
+        <% end %>
+
+        <p class="text-xs text-(--surface-muted-content-color)">
+          Showing <%= @topic_article_rows_page.length %> of <%= @topics_total_rows %> rows on page <%= @topics_page %> of <%= @topics_total_pages %>. Export includes all matching rows, not just this page.
+        </p>
+
+        <%= recording_studio_export_access_button(
+          context_recording: @demo_recording,
+          export_key: "recording_studio_topics_articles_export",
+          columns: @topics_selected_columns,
+          filters: { topic: @topic_filter, article: @article_filter },
+          text: "Export Topics",
+          style: :secondary,
+          size: :md,
+          unauthorized_behavior: :disable,
+          unauthorized_text: "Export Topics (admin required)"
+        ) %>
+
+        <%= render FlatPack::Table::Component.new(data: @topic_article_rows_page, class: "text-sm") do |table| %>
+          <% if @topics_selected_columns.include?("topic_name") %>
+            <% table.column(title: "Topic") { |row| row[:topic_name] } %>
+          <% end %>
+          <% if @topics_selected_columns.include?("article_titles") %>
+            <% table.column(title: "Articles") { |row| row[:article_titles] } %>
+          <% end %>
+          <% if @topics_selected_columns.include?("topic_created_at") %>
+            <% table.column(title: "Created at") { |row| row[:topic_created_at] } %>
+          <% end %>
+        <% end %>
+
+        <% if @topics_total_pages > 1 %>
+          <% topics_query = request.query_parameters.merge(topics_columns: @topics_selected_columns) %>
+          <div class="flex items-center gap-3 text-sm">
+            <% previous_page = @topics_page - 1 %>
+            <% next_page = @topics_page + 1 %>
+
+            <% if @topics_page > 1 %>
+              <%= link_to "Previous", url_for(topics_query.merge(topics_page: previous_page, anchor: "topics")), class: "underline" %>
+            <% else %>
+              <span class="text-(--surface-muted-content-color)">Previous</span>
+            <% end %>
+
+            <span class="text-(--surface-muted-content-color)">Page <%= @topics_page %> / <%= @topics_total_pages %></span>
+
+            <% if @topics_page < @topics_total_pages %>
+              <%= link_to "Next", url_for(topics_query.merge(topics_page: next_page, anchor: "topics")), class: "underline" %>
+            <% else %>
+              <span class="text-(--surface-muted-content-color)">Next</span>
+            <% end %>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-sm leading-6">Run <code>bin/rails db:seed</code> to create topic data.</p>
       <% end %>
-    <% end %>
+    </section>
+
+    <section class="space-y-3">
+      <%= render FlatPack::SectionTitle::Component.new(
+        title: "Documents"
+      ) %>
+
+      <p class="text-sm text-(--surface-muted-content-color)">Page access role: <code>admin</code> • Export role: <code>view</code></p>
+
+      <% if @documents.any? %>
+        <%= render FlatPack::Table::Component.new(data: @documents, class: "text-sm") do |table| %>
+          <% table.column(title: "Document") { |row| link_to(row.title, document_path(row), class: "underline") } %>
+          <% table.column(title: "Items") { |row| row.items.count } %>
+        <% end %>
+      <% else %>
+        <p class="text-sm leading-6">Run <code>bin/rails db:seed</code> to create document data.</p>
+      <% end %>
+    </section>
+
   </div>
 </div>
