@@ -3,6 +3,7 @@
 require "monitor"
 require "active_support/parameter_filter"
 require "active_support/core_ext/object/blank"
+require "active_support/cache/null_store"
 require_relative "hooks"
 
 module RecordingStudioExportable
@@ -11,7 +12,8 @@ module RecordingStudioExportable
 
     attr_accessor :current_actor, :current_impersonator, :default_format, :default_required_role,
                   :max_rows, :include_bom, :allow_request_filename_override,
-                  :filter_log_sanitizer, :context_export_keys_resolver
+                  :filter_log_sanitizer, :context_export_keys_resolver,
+                  :trusted_export_sources, :trusted_export_token_store
     attr_reader :export_definitions, :hooks
 
     def initialize
@@ -29,6 +31,8 @@ module RecordingStudioExportable
       @allow_request_filename_override = false
       @filter_log_sanitizer = method(:default_filter_log_sanitizer)
       @context_export_keys_resolver = method(:default_context_export_keys_for)
+      @trusted_export_sources = []
+      @trusted_export_token_store = nil
       @export_definitions = {}
       @hooks = Hooks.new
       @mutex = Monitor.new
@@ -138,6 +142,17 @@ module RecordingStudioExportable
         export_definitions: @export_definitions.keys.sort,
         hooks_registered: hooks.instance_variable_get(:@registry).transform_values(&:size)
       }
+    end
+
+    def resolve_trusted_export_token_store
+      return @trusted_export_token_store if @trusted_export_token_store
+
+      if defined?(Rails) && Rails.cache &&
+         !Rails.cache.is_a?(ActiveSupport::Cache::NullStore)
+        Rails.cache
+      else
+        @fallback_token_store ||= TrustedExportTokenStore.new
+      end
     end
 
     private
