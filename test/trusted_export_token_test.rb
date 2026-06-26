@@ -109,19 +109,21 @@ class TrustedExportTokenTest < Minitest::Test
     assert_equal "second", RecordingStudioExportable::TrustedExportToken.find_and_consume!(second.id).screen_identifier
   end
 
-  def test_auto_detection_uses_rails_cache_when_real_backend_available
+  def test_default_store_is_process_local_even_when_rails_cache_is_available
     cache = ActiveSupport::Cache::MemoryStore.new
 
     Rails.stub(:cache, cache) do
-      assert_same cache, RecordingStudioExportable.configuration.resolve_trusted_export_token_store
-    end
-  end
-
-  def test_auto_detection_falls_back_when_rails_cache_is_null_store
-    Rails.stub(:cache, ActiveSupport::Cache::NullStore.new) do
       store = RecordingStudioExportable.configuration.resolve_trusted_export_token_store
 
       assert_instance_of RecordingStudioExportable::TrustedExportTokenStore, store
+      refute_same cache, store
+    end
+  end
+
+  def test_default_store_is_reused
+    Rails.stub(:cache, ActiveSupport::Cache::NullStore.new) do
+      assert_same RecordingStudioExportable.configuration.resolve_trusted_export_token_store,
+                  RecordingStudioExportable.configuration.resolve_trusted_export_token_store
     end
   end
 
@@ -130,6 +132,14 @@ class TrustedExportTokenTest < Minitest::Test
     RecordingStudioExportable.configuration.trusted_export_token_store = store
 
     assert_same store, RecordingStudioExportable.configuration.resolve_trusted_export_token_store
+  end
+
+  def test_explicit_token_store_must_support_atomic_consume
+    RecordingStudioExportable.configuration.trusted_export_token_store = ActiveSupport::Cache::MemoryStore.new
+
+    assert_raises(RecordingStudioExportable::TrustedExportToken::Error) do
+      issue_token
+    end
   end
 
   def test_issue_requires_actor
@@ -155,6 +165,28 @@ class TrustedExportTokenTest < Minitest::Test
 
     assert_equal 1, successes.size
     assert_equal 1, failures.size
+  end
+
+  def test_find_and_consume_uses_store_atomic_consume
+    store = RecordingStudioExportable::TrustedExportTokenStore.new
+    RecordingStudioExportable.configuration.trusted_export_token_store = store
+    token = issue_token
+    calls = 0
+
+    store.define_singleton_method(:read) do |_key|
+      raise "find_and_consume! must not perform non-atomic read/delete"
+    end
+    store.define_singleton_method(:delete) do |_key|
+      raise "find_and_consume! must not perform non-atomic read/delete"
+    end
+    original_consume = store.method(:consume)
+    store.define_singleton_method(:consume) do |key|
+      calls += 1
+      original_consume.call(key)
+    end
+
+    assert_same token, RecordingStudioExportable::TrustedExportToken.find_and_consume!(token.id)
+    assert_equal 1, calls
   end
 
   private

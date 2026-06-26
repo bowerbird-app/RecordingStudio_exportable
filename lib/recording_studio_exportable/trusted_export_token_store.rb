@@ -17,13 +17,16 @@ module RecordingStudioExportable
 
     def read(key)
       @mutex.synchronize do
-        expiry = @expiries[key]
-        if expiry && expiry < Time.current
-          @store.delete(key)
-          @expiries.delete(key)
-          return nil
-        end
-        @store[key]
+        read_unlocked(key)
+      end
+    end
+
+    def consume(key)
+      @mutex.synchronize do
+        value = read_unlocked(key)
+        @store.delete(key)
+        @expiries.delete(key)
+        value
       end
     end
 
@@ -39,6 +42,18 @@ module RecordingStudioExportable
         @store.clear
         @expiries.clear
       end
+    end
+
+    private
+
+    def read_unlocked(key)
+      expiry = @expiries[key]
+      if expiry && expiry < Time.current
+        @store.delete(key)
+        @expiries.delete(key)
+        return nil
+      end
+      @store[key]
     end
   end
 end

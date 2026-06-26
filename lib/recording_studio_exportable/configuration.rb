@@ -3,7 +3,6 @@
 require "monitor"
 require "active_support/parameter_filter"
 require "active_support/core_ext/object/blank"
-require "active_support/cache/null_store"
 require_relative "hooks"
 
 module RecordingStudioExportable
@@ -145,14 +144,7 @@ module RecordingStudioExportable
     end
 
     def resolve_trusted_export_token_store
-      return @trusted_export_token_store if @trusted_export_token_store
-
-      if defined?(Rails) && Rails.cache &&
-         !Rails.cache.is_a?(ActiveSupport::Cache::NullStore)
-        Rails.cache
-      else
-        @fallback_token_store ||= TrustedExportTokenStore.new
-      end
+      @trusted_export_token_store || (@fallback_token_store ||= TrustedExportTokenStore.new)
     end
 
     private

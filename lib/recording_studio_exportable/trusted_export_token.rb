@@ -67,11 +67,7 @@ module RecordingStudioExportable
     end
 
     def self.find_and_consume!(id)
-      token = consume_mutex.synchronize do
-        consumed = store.read(id)
-        store.delete(id) if consumed
-        consumed
-      end
+      token = token_store.consume(id)
       raise TokenNotFound, "export token not found or expired" unless token
       raise TokenExpired, "export token has expired" if token.expires_at < Time.current
 
@@ -79,7 +75,16 @@ module RecordingStudioExportable
     end
 
     def self.store
-      RecordingStudioExportable.configuration.resolve_trusted_export_token_store
+      token_store
+    end
+
+    def self.token_store
+      store = RecordingStudioExportable.configuration.resolve_trusted_export_token_store
+      unless store.respond_to?(:write) && store.respond_to?(:consume)
+        raise Error, "trusted_export_token_store must implement write and atomic consume"
+      end
+
+      store
     end
 
     def self.normalize_column(column)
@@ -92,10 +97,6 @@ module RecordingStudioExportable
       else
         raise ArgumentError, "column must be ExportDefinition::Column or Hash, got #{column.class}"
       end
-    end
-
-    def self.consume_mutex
-      @consume_mutex ||= Mutex.new
     end
   end
 end
