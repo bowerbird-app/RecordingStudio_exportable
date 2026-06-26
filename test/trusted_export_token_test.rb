@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "active_support/testing/time_helpers"
 
 class TrustedExportTokenTest < Minitest::Test
+  include ActiveSupport::Testing::TimeHelpers
+
   FakeContext = Struct.new(:recordable_type, :recordable)
   FakeRecordable = Struct.new(:id)
 
@@ -13,6 +16,7 @@ class TrustedExportTokenTest < Minitest::Test
   end
 
   def teardown
+    travel_back
     RecordingStudioExportable.instance_variable_set(:@configuration, @original_configuration)
   end
 
@@ -50,6 +54,17 @@ class TrustedExportTokenTest < Minitest::Test
     assert_raises(RecordingStudioExportable::TrustedExportToken::TokenNotFound) do
       RecordingStudioExportable::TrustedExportToken.find_and_consume!(token.id)
     end
+  end
+
+  def test_store_consume_does_not_return_expired_values
+    store = RecordingStudioExportable::TrustedExportTokenStore.new
+    store.write("expired", "secret", expires_in: 1.second)
+
+    travel 2.seconds
+
+    assert_nil store.consume("expired")
+    assert_nil store.read("expired")
+    assert_nil store.consume("expired")
   end
 
   def test_source_allowlist_allows_configured_source

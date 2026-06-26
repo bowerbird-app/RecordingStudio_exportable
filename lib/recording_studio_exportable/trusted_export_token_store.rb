@@ -11,7 +11,11 @@ module RecordingStudioExportable
     def write(key, value, expires_in: nil)
       @mutex.synchronize do
         @store[key] = value
-        @expiries[key] = Time.current + expires_in if expires_in
+        if expires_in
+          @expiries[key] = Time.current + expires_in
+        else
+          @expiries.delete(key)
+        end
       end
     end
 
