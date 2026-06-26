@@ -417,7 +417,7 @@ module RecordingStudioExportable
       # Filter out any keys with nil values that would be rejected by create!
       filtered_attrs = filter_known_log_attributes(attrs)
 
-      RecordingStudioExportable::ExportLog.create!(filtered_attrs)
+      RecordingStudioExportable::ExportLog.create!(**filtered_attrs)
     rescue ActiveRecord::StatementInvalid, ActiveRecord::NoDatabaseError,
            ActiveRecord::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch
       nil
@@ -435,7 +435,7 @@ module RecordingStudioExportable
         metadata: metadata,
         completed_at: Time.current
       }
-      export_log.update!(filter_known_log_attributes(attrs, record: export_log))
+      export_log.update!(**filter_known_log_attributes(attrs, record: export_log))
     rescue ActiveRecord::ActiveRecordError
       nil
     end
@@ -449,7 +449,7 @@ module RecordingStudioExportable
         error_message: sanitized_error_message(exception),
         failed_at: Time.current
       }
-      export_log.update!(filter_known_log_attributes(attrs, record: export_log))
+      export_log.update!(**filter_known_log_attributes(attrs, record: export_log))
     rescue ActiveRecord::ActiveRecordError
       nil
     end

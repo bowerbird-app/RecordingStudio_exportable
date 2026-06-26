@@ -78,7 +78,8 @@ unless Object.new.respond_to?(:stub)
       original = method(method) if had_method
 
       if value.respond_to?(:call)
-        singleton_class.define_method(method) { |*args, **kwargs, &block| value.call(*args, **kwargs, &block) }
+        singleton_class.define_method(method) { |*args, &block| value.call(*args, &block) }
+        singleton_class.send(:ruby2_keywords, method) if singleton_class.respond_to?(:ruby2_keywords, true)
       else
         singleton_class.define_method(method) { |*| value }
       end
