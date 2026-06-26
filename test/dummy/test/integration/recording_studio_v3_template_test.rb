@@ -120,9 +120,9 @@ class RecordingStudioV3TemplateTest < ActiveSupport::TestCase
       actor: user,
       export_key: "recording_studio_topics_articles_export",
       attributes: {
-        columns: ["topic_name", "article_titles"],
-        topics: ["name"],
-        articles: ["title_with_author"]
+        columns: [ "topic_name", "article_titles" ],
+        topics: [ "name" ],
+        articles: [ "title_with_author" ]
       }
     )
     filtered_topics_export = RecordingStudioExportable.export(
@@ -153,7 +153,7 @@ class RecordingStudioV3TemplateTest < ActiveSupport::TestCase
         context_recording: demo_dashboard_recording,
         actor: user,
         export_key: "recording_studio_topics_articles_export",
-        attributes: { columns: ["topic_name", "topic_created_at"] }
+        attributes: { columns: [ "topic_name", "topic_created_at" ] }
       )
     end
 

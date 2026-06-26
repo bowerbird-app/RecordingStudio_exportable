@@ -7,7 +7,7 @@ class RecordingStudioDemoDashboardRequestsExport
       label: "Demo API requests",
       description: "Exports the API request rows shown on the demo dashboard.",
       required_role: :view,
-      context_types: ["DemoDashboard"],
+      context_types: [ "DemoDashboard" ],
       columns: [
         { key: :path, label: "Path", value: :path },
         { key: :method, label: "Method", value: :http_method },

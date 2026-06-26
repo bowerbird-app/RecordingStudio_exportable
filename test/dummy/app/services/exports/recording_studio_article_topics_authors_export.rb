@@ -1,7 +1,7 @@
 class RecordingStudioArticleTopicsAuthorsExport
   KEY = "recording_studio_article_topics_authors_export".freeze
 
-  DASHBOARD_CONTEXT_TYPES = ["Article", "DemoDashboard"].freeze
+  DASHBOARD_CONTEXT_TYPES = [ "Article", "DemoDashboard" ].freeze
 
   def self.register(config)
     config.register_export(
@@ -57,6 +57,6 @@ class RecordingStudioArticleTopicsAuthorsExport
 
     return Article.includes(:author, :topics).order(:title).to_a if recordable.is_a?(DemoDashboard)
 
-    [recordable]
+    [ recordable ]
   end
 end

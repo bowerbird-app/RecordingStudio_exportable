@@ -30,10 +30,10 @@ class CreateRecordingStudioExportableExportLogs < ActiveRecord::Migration[8.1]
       t.text :error_message
       t.timestamps
 
-      t.index [:context_recordable_type, :context_recordable_id], name: "idx_rs_exportable_logs_on_context_recordable"
-      t.index [:export_key, :status], name: "idx_rs_exportable_logs_on_export_key_and_status"
-      t.index [:actor_type, :actor_id], name: "idx_rs_exportable_logs_on_actor"
-      t.index [:impersonator_type, :impersonator_id], name: "idx_rs_exportable_logs_on_impersonator"
+      t.index [ :context_recordable_type, :context_recordable_id ], name: "idx_rs_exportable_logs_on_context_recordable"
+      t.index [ :export_key, :status ], name: "idx_rs_exportable_logs_on_export_key_and_status"
+      t.index [ :actor_type, :actor_id ], name: "idx_rs_exportable_logs_on_actor"
+      t.index [ :impersonator_type, :impersonator_id ], name: "idx_rs_exportable_logs_on_impersonator"
       t.index :status, name: "idx_rs_exportable_logs_on_status"
       t.index :created_at, name: "idx_rs_exportable_logs_on_created_at"
     end

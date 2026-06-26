@@ -7,7 +7,7 @@ class RecordingStudioDocumentItemsExport
       label: "Document items",
       description: "Exports items for the current document.",
       required_role: :view,
-      context_types: ["Document"],
+      context_types: [ "Document" ],
       columns: [
         { key: :item_name, label: "Item", value: :name },
         { key: :item_description, label: "Description", value: :description }

@@ -1,7 +1,7 @@
 class HomeController < ApplicationController
   ARTICLE_TOPICS_PER_PAGE = 20
   TOPICS_PER_PAGE = 20
-  TOPICS_TABLE_COLUMNS = ["topic_name", "article_titles", "topic_created_at"].freeze
+  TOPICS_TABLE_COLUMNS = [ "topic_name", "article_titles", "topic_created_at" ].freeze
   DEFAULT_TOPICS_TABLE_COLUMNS = TOPICS_TABLE_COLUMNS.freeze
 
   def index
@@ -48,7 +48,7 @@ class HomeController < ApplicationController
     @article_topics_total_rows = @article_topic_rows.length
     @article_topics_page = params[:article_topics_page].to_i
     @article_topics_page = 1 if @article_topics_page < 1
-    @article_topics_total_pages = [(@article_topics_total_rows.to_f / ARTICLE_TOPICS_PER_PAGE).ceil, 1].max
+    @article_topics_total_pages = [ (@article_topics_total_rows.to_f / ARTICLE_TOPICS_PER_PAGE).ceil, 1 ].max
     @article_topics_page = @article_topics_total_pages if @article_topics_page > @article_topics_total_pages
 
     article_topics_offset = (@article_topics_page - 1) * ARTICLE_TOPICS_PER_PAGE
@@ -83,7 +83,7 @@ class HomeController < ApplicationController
     @topics_total_rows = @topic_article_rows.length
     @topics_page = params[:topics_page].to_i
     @topics_page = 1 if @topics_page < 1
-    @topics_total_pages = [(@topics_total_rows.to_f / TOPICS_PER_PAGE).ceil, 1].max
+    @topics_total_pages = [ (@topics_total_rows.to_f / TOPICS_PER_PAGE).ceil, 1 ].max
     @topics_page = @topics_total_pages if @topics_page > @topics_total_pages
 
     topics_offset = (@topics_page - 1) * TOPICS_PER_PAGE

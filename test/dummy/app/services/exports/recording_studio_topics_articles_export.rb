@@ -7,7 +7,7 @@ class RecordingStudioTopicsArticlesExport
       label: "Topics with articles",
       description: "Exports topic names and matching article titles with author names.",
       required_role: :admin,
-      context_types: ["DemoDashboard"],
+      context_types: [ "DemoDashboard" ],
       columns: [
         { key: :topic_name, label: "Topic", value: ->(row) { row[:topic_name] } },
         { key: :article_titles, label: "Articles", value: ->(row) { row[:article_titles] } }
