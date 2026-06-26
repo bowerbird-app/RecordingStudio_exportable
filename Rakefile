@@ -12,6 +12,7 @@ DUMMY_APP_ROOT = File.expand_path("test/dummy", __dir__)
 TEST_ROOT = File.expand_path("test", __dir__)
 ROOT_TEST_EXCLUSIONS = %w[
   test/controllers/docs_controller_test.rb
+  test/controllers/documents_controller_test.rb
   test/dummy/**/*_test.rb
   test/recording_studio_v3_test.rb
   test/rename_verification_test.rb

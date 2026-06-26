@@ -97,7 +97,10 @@ module RecordingStudio
                             {}
                           end
 
-                keys = options.values_at(:export_keys, "export_keys", :exports, "exports").compact.first if options.respond_to?(:values_at)
+                if options.respond_to?(:values_at)
+                  keys = options.values_at(:export_keys, "export_keys", :exports,
+                                           "exports").compact.first
+                end
                 Array(keys).map { |key| RecordingStudioExportable.configuration.normalize_key(key) }.uniq
               end
             end

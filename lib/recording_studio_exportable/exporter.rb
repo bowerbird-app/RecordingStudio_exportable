@@ -184,26 +184,26 @@ module RecordingStudioExportable
 
     def validate_capability!(definition)
       options = capability_options
-      unless options.present?
-        raise ExportNotAllowedForContext, "exportable capability is not enabled for this context"
-      end
+      raise ExportNotAllowedForContext, "exportable capability is not enabled for this context" unless options.present?
+
       allowed_keys = capability_export_keys(options)
       unless allowed_keys.include?(definition.key)
         raise ExportNotAllowedForContext, "export #{definition.key} is not enabled for this context"
       end
+
       options
     end
 
     def validate_context_export_key!(definition)
       allowed_keys = configuration.context_export_keys_for(@context_recording)
-      unless allowed_keys.include?(definition.key)
-        raise ExportNotAllowedForContext, "export #{definition.key} is not allowed for this context"
-      end
+      return if allowed_keys.include?(definition.key)
+
+      raise ExportNotAllowedForContext, "export #{definition.key} is not allowed for this context"
     end
 
     def capability_options
       return {} unless RecordingStudio.respond_to?(:capability_options)
-      return {} unless @context_recording&.respond_to?(:recordable_type)
+      return {} unless @context_recording.respond_to?(:recordable_type)
 
       RecordingStudio.capability_options(:exportable, for: @context_recording.recordable_type) || {}
     rescue StandardError
@@ -211,7 +211,10 @@ module RecordingStudioExportable
     end
 
     def capability_export_keys(options)
-      keys = options.values_at(:export_keys, "export_keys", :exports, "exports").compact.first if options.respond_to?(:values_at)
+      if options.respond_to?(:values_at)
+        keys = options.values_at(:export_keys, "export_keys", :exports,
+                                 "exports").compact.first
+      end
       Array(keys).map { |key| configuration.normalize_key(key) }.uniq
     end
 
@@ -223,7 +226,8 @@ module RecordingStudioExportable
 
     def validate_authorization!(definition)
       unless @actor.present? &&
-             RecordingStudioAccessible.authorized?(actor: @actor, recording: @context_recording, role: effective_required_role(definition))
+             RecordingStudioAccessible.authorized?(actor: @actor, recording: @context_recording,
+                                                   role: effective_required_role(definition))
         raise NotAuthorized, "not authorized to export #{definition.key}"
       end
     end
@@ -319,17 +323,15 @@ module RecordingStudioExportable
     end
 
     def value_for(row, column, index)
-      value = if column.value.respond_to?(:call)
-                column.value.call(row)
-              elsif row.is_a?(Hash)
-                fetch_hash_value(row, column)
-              elsif row.is_a?(Array)
-                row[index]
-              else
-                row.public_send(column.value)
-              end
-
-      value
+      if column.value.respond_to?(:call)
+        column.value.call(row)
+      elsif row.is_a?(Hash)
+        fetch_hash_value(row, column)
+      elsif row.is_a?(Array)
+        row[index]
+      else
+        row.public_send(column.value)
+      end
     end
 
     def fetch_hash_value(row, column)
@@ -364,7 +366,7 @@ module RecordingStudioExportable
 
     def context_recording_fallback_filename
       recordable = @context_recording&.recordable
-      return unless recordable&.respond_to?(:export_filename)
+      return unless recordable.respond_to?(:export_filename)
 
       recordable.export_filename(format: @format)
     rescue StandardError
@@ -391,11 +393,13 @@ module RecordingStudioExportable
       return unless defined?(RecordingStudioExportable::ExportLog)
 
       recordable = @context_recording.respond_to?(:recordable) ? @context_recording.recordable : nil
+      context_recording_value = @context_recording.is_a?(RecordingStudio::Recording) ? @context_recording : nil
+
       attrs = {
         export_key: definition.key,
-        context_recording: @context_recording,
+        context_recording: context_recording_value,
         context_recordable_type: recordable&.class&.name,
-        context_recordable_id: (recordable.id if recordable&.respond_to?(:id)),
+        context_recordable_id: (recordable.id if recordable.respond_to?(:id)),
         screen_key: screen_key,
         format: @format,
         attributes: [],
@@ -410,8 +414,12 @@ module RecordingStudioExportable
         started_at: Time.current
       }
 
-      RecordingStudioExportable::ExportLog.create!(filter_known_log_attributes(attrs))
-    rescue ActiveRecord::StatementInvalid, ActiveRecord::NoDatabaseError, ActiveRecord::UnknownAttributeError
+      # Filter out any keys with nil values that would be rejected by create!
+      filtered_attrs = filter_known_log_attributes(attrs)
+
+      RecordingStudioExportable::ExportLog.create!(filtered_attrs)
+    rescue ActiveRecord::StatementInvalid, ActiveRecord::NoDatabaseError,
+           ActiveRecord::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch
       nil
     end
 
@@ -448,7 +456,9 @@ module RecordingStudioExportable
 
     def filter_known_log_attributes(attrs, record: nil)
       if record
-        attrs.select { |key, _| record.has_attribute?(key) || (key == :context_recording && record.respond_to?(:context_recording=)) }
+        attrs.select do |key, _|
+          record.has_attribute?(key) || (key == :context_recording && record.respond_to?(:context_recording=))
+        end
       else
         column_names = RecordingStudioExportable::ExportLog.column_names
         attrs.select { |key, _| column_names.include?(key.to_s) || key == :context_recording }
@@ -457,7 +467,8 @@ module RecordingStudioExportable
       attrs
     end
 
-    def create_recording_studio_event(definition, export_log:, filename:, row_count:, selected_attributes:, logged_filters:)
+    def create_recording_studio_event(definition, export_log:, filename:, row_count:, selected_attributes:,
+                                      logged_filters:)
       return unless @context_recording
 
       recordable = @context_recording.respond_to?(:recordable) ? @context_recording.recordable : nil
@@ -511,7 +522,7 @@ module RecordingStudioExportable
     end
 
     def create_trusted_recording_studio_event(definition, export_log:, filename:, row_count:,
-                                             selected_attributes:, logged_filters:)
+                                              selected_attributes:, logged_filters:)
       return unless @context_recording
 
       recordable = @context_recording.respond_to?(:recordable) ? @context_recording.recordable : nil
@@ -595,10 +606,10 @@ module RecordingStudioExportable
       when nil
         {}
       when Hash
-        value.each_with_object({}) { |(key, child), result| result[key] = deep_hash_value(child) }
+        value.transform_values { |child| deep_hash_value(child) }
       else
         return deep_hash(value.to_unsafe_h) if defined?(ActionController::Parameters) &&
-                                              value.is_a?(ActionController::Parameters)
+                                               value.is_a?(ActionController::Parameters)
 
         value
       end

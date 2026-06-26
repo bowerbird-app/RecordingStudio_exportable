@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   # Keep legacy links working by redirecting the base path to the app home.
   get "/recording_studio", to: redirect("/"), as: nil
   mount RecordingStudio::Engine, at: "/recording_studio"
-  mount RecordingStudioRootSwitchable::Engine, at: "/recording_studio_root_switchable"
+  mount RecordingStudioRootSwitchable::Engine, at: "/recording_studio_root_switchable" if defined?(RecordingStudioRootSwitchable)
   mount RecordingStudioExportable::Engine, at: "/recording_studio_exportable", as: :recording_studio_exportable
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -25,6 +25,7 @@ Rails.application.routes.draw do
   get "docs/gem_views", to: "docs#gem_views", as: :docs_gem_views
   get "docs/methods", to: "docs#methods", as: :docs_methods
   get "docs/components", to: "docs#components", as: :docs_components
+  get "docs/trusted_exports", to: "docs#trusted_exports", as: :docs_trusted_exports
 
   # Defines the root path route ("/")
   root "home#index"

@@ -3,9 +3,17 @@
 module RecordingStudioExportable
   class ApplicationController < ActionController::Base
     protect_from_forgery with: :exception
-    layout "application"
+    layout :recording_studio_exportable_layout
 
     private
+
+    def recording_studio_exportable_layout
+      configured_layout = RecordingStudioExportable.configuration.layout
+      return configured_layout.call(controller: self) if configured_layout.respond_to?(:call)
+      return configured_layout if configured_layout.present?
+
+      lookup_context.exists?("layouts/flat_pack_sidebar") ? "flat_pack_sidebar" : "application"
+    end
 
     def export_actor
       resolver = RecordingStudioExportable.configuration.current_actor

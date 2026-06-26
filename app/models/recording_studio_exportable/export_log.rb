@@ -10,7 +10,8 @@ module RecordingStudioExportable
     belongs_to :actor, polymorphic: true, optional: true
     belongs_to :impersonator, polymorphic: true, optional: true
 
-    enum :status, { pending: "pending", running: "running", completed: "completed", failed: "failed" }, default: :pending
+    enum :status, { pending: "pending", running: "running", completed: "completed", failed: "failed" },
+         default: :pending
 
     scope :recent, -> { order(created_at: :desc) }
     scope :for_context_recording, ->(recording) { where(context_recording_id: recording.id) }

@@ -51,13 +51,13 @@ module RecordingStudioExportable
     private
 
     def read_unlocked(key)
+      value = @store[key]
       expiry = @expiries[key]
       if expiry && expiry < Time.current
         @store.delete(key)
         @expiries.delete(key)
-        return nil
       end
-      @store[key]
+      value
     end
   end
 end

@@ -88,6 +88,16 @@ class HomeController < ApplicationController
 
     topics_offset = (@topics_page - 1) * TOPICS_PER_PAGE
     @topic_article_rows_page = @topic_article_rows.slice(topics_offset, TOPICS_PER_PAGE) || []
+
+    # --- Token-based export demo ---
+    @trusted_token = nil
+    if @demo_recording.present? && Current.actor.present?
+      begin
+        @trusted_token = issue_demo_token(@demo_recording)
+      rescue StandardError
+        @trusted_token = nil
+      end
+    end
   end
 
   private
@@ -104,5 +114,21 @@ class HomeController < ApplicationController
     Date.iso8601(value.to_s)
   rescue ArgumentError
     nil
+  end
+
+  def issue_demo_token(recording)
+    RecordingStudioExportable.issue_trusted_token(
+      context_recording: recording,
+      actor: Current.actor,
+      source: "RecordingStudioAdmin",
+      screen_identifier: "Homepage Demo Export",
+      columns: [
+        { key: :title, label: "Title", value: :title },
+        { key: :body, label: "Body", value: :body },
+        { key: :word_count, label: "Word count", value: ->(article) { article.body.to_s.split.size } }
+      ],
+      row_resolver: -> { Article.order(:title).to_a },
+      ttl: 30.seconds
+    )
   end
 end

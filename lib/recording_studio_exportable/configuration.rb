@@ -12,12 +12,12 @@ module RecordingStudioExportable
     attr_accessor :current_actor, :current_impersonator, :default_format, :default_required_role,
                   :max_rows, :include_bom, :allow_request_filename_override,
                   :filter_log_sanitizer, :context_export_keys_resolver,
-                  :trusted_export_sources, :trusted_export_token_store
+                  :trusted_export_sources, :trusted_export_token_store, :layout
     attr_reader :export_definitions, :hooks
 
     def initialize
       @current_actor = lambda do |controller: nil|
-        (controller&.send(:current_user) if controller&.respond_to?(:current_user, true)) ||
+        (controller&.send(:current_user) if controller.respond_to?(:current_user, true)) ||
           (defined?(Current) && Current.respond_to?(:actor) ? Current.actor : nil)
       end
       @current_impersonator = lambda { |*|
@@ -32,6 +32,7 @@ module RecordingStudioExportable
       @context_export_keys_resolver = method(:default_context_export_keys_for)
       @trusted_export_sources = []
       @trusted_export_token_store = nil
+      @layout = nil
       @export_definitions = {}
       @hooks = Hooks.new
       @mutex = Monitor.new
@@ -153,11 +154,11 @@ module RecordingStudioExportable
       return [] unless context_recording
 
       recordable = context_recording.recordable if context_recording.respond_to?(:recordable)
-      keys = if recordable&.respond_to?(:export_keys)
+      keys = if recordable.respond_to?(:export_keys)
                recordable.export_keys
              elsif recordable&.class&.const_defined?(:EXPORT_KEYS)
                recordable.class::EXPORT_KEYS
-             elsif recordable&.respond_to?(:export_key)
+             elsif recordable.respond_to?(:export_key)
                recordable.export_key
              else
                []

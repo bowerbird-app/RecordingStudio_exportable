@@ -38,9 +38,7 @@ module RecordingStudioExportable
       raise Error, "screen_identifier is required" if screen_identifier.blank?
 
       allowed = RecordingStudioExportable.configuration.trusted_export_sources
-      unless Array(allowed).map(&:to_s).include?(source.to_s)
-        raise Error, "source #{source.inspect} is not allowed"
-      end
+      raise Error, "source #{source.inspect} is not allowed" unless Array(allowed).map(&:to_s).include?(source.to_s)
 
       ttl_seconds = [ttl.to_i, DEFAULT_TTL.to_i].min
       id = SecureRandom.urlsafe_base64(32)

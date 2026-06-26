@@ -42,7 +42,7 @@ class ExporterTest < Minitest::Test
           context_recording: context,
           actor: Object.new,
           export_key: nil,
-          attributes: { columns: ["name", "enabled", "formula"] },
+          attributes: { columns: %w[name enabled formula] },
           filters: { "nested" => { "status" => "ok" } }
         )
 
@@ -244,7 +244,7 @@ class ExporterTest < Minitest::Test
         result = RecordingStudioExportable.export(
           context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
           actor: Object.new,
-          filename: "#{"a" * 200}.csv"
+          filename: "#{'a' * 200}.csv"
         )
 
         assert_equal 120, result.filename.length
@@ -259,7 +259,7 @@ class ExporterTest < Minitest::Test
       context_types: ["DemoDashboard"],
       columns: { name: { label: "Name", value: :name } },
       replace: true
-    ) { raise RuntimeError, "internal secret token" }
+    ) { raise "internal secret token" }
     RecordingStudioExportable.configuration.context_export_keys_resolver = ->(_context) { ["demo.broken"] }
 
     RecordingStudio.stub(:capability_options, { export_keys: ["demo.broken"] }) do
@@ -298,7 +298,7 @@ class ExporterTest < Minitest::Test
     ) { [{ name: "Ada" }, { name: "Grace" }] }
 
     RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"], required_role: :admin, max_rows: 1 }) do
-      RecordingStudioAccessible.stub(:authorized?, ->(**kwargs) {
+      RecordingStudioAccessible.stub(:authorized?, lambda { |**kwargs|
         calls << kwargs
         true
       }) do
@@ -315,7 +315,9 @@ class ExporterTest < Minitest::Test
   end
 
   def test_omitted_export_key_requires_exactly_one_allowed_key
-    RecordingStudioExportable.configuration.context_export_keys_resolver = ->(_context) { ["demo.people", "demo.other"] }
+    RecordingStudioExportable.configuration.context_export_keys_resolver = lambda { |_context|
+      ["demo.people", "demo.other"]
+    }
 
     assert_raises(RecordingStudioExportable::UnknownExportKey) do
       RecordingStudioExportable.export(
@@ -341,7 +343,7 @@ class ExporterTest < Minitest::Test
 
     RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
       RecordingStudioAccessible.stub(:authorized?, true) do
-        RecordingStudioExportable::ExportLog.stub(:create!, ->(**kwargs) {
+        RecordingStudioExportable::ExportLog.stub(:create!, lambda { |**kwargs|
           created_attrs = kwargs
           fake_log
         }) do
@@ -385,7 +387,7 @@ class ExporterTest < Minitest::Test
 
     RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
       RecordingStudioAccessible.stub(:authorized?, false) do
-        RecordingStudioExportable::ExportLog.stub(:create!, ->(**kwargs) {
+        RecordingStudioExportable::ExportLog.stub(:create!, lambda { |**kwargs|
           created_attrs = kwargs
           fake_log
         }) do
@@ -444,7 +446,7 @@ class ExporterTest < Minitest::Test
     end.new([])
     created_attrs = nil
 
-    RecordingStudioExportable::ExportLog.stub(:create!, ->(**kwargs) {
+    RecordingStudioExportable::ExportLog.stub(:create!, lambda { |**kwargs|
       created_attrs = kwargs
       fake_log
     }) do
@@ -532,7 +534,7 @@ class ExporterTest < Minitest::Test
   def test_trusted_export_uses_fallback_export_key
     created_attrs = nil
 
-    RecordingStudioExportable::ExportLog.stub(:create!, ->(**kwargs) {
+    RecordingStudioExportable::ExportLog.stub(:create!, lambda { |**kwargs|
       created_attrs = kwargs
       nil
     }) do

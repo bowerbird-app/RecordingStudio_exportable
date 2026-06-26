@@ -6,12 +6,12 @@ class ExportsControllerTest < Minitest::Test
   def test_controller_maps_unauthorized_exports_to_forbidden
     handlers = RecordingStudioExportable::ExportsController.rescue_handlers
 
-    assert handlers.any? { |exception_name, handler|
+    assert(handlers.any? do |exception_name, handler|
       exception_name == "RecordingStudioExportable::NotAuthorized" && handler == :render_forbidden
-    }
-    assert handlers.any? { |exception_name, handler|
+    end)
+    assert(handlers.any? do |exception_name, handler|
       exception_name == "ActiveRecord::RecordNotFound" && handler == :render_forbidden
-    }
+    end)
 
     generic_index = handlers.index { |exception_name, _handler| exception_name == "RecordingStudioExportable::Error" }
     unauthorized_index = handlers.index do |exception_name, _handler|
@@ -20,23 +20,51 @@ class ExportsControllerTest < Minitest::Test
     assert_operator generic_index, :<, unauthorized_index
   end
 
-  def test_controller_maps_invalid_trusted_tokens_to_bad_request
+  def test_controller_maps_invalid_trusted_tokens_to_html_error_pages
     handlers = RecordingStudioExportable::ExportsController.rescue_handlers
 
-    assert handlers.any? { |exception_name, handler|
+    assert(handlers.any? do |exception_name, handler|
       exception_name == "RecordingStudioExportable::TrustedExportToken::TokenNotFound" &&
-        handler == :render_bad_request
-    }
-    assert handlers.any? { |exception_name, handler|
+        handler == :render_token_not_found
+    end)
+    assert(handlers.any? do |exception_name, handler|
       exception_name == "RecordingStudioExportable::TrustedExportToken::TokenExpired" &&
-        handler == :render_bad_request
-    }
+        handler == :render_token_expired
+    end)
+  end
+
+  def test_engine_pages_use_configurable_flatpack_layout
+    source = File.read(File.expand_path("../app/controllers/recording_studio_exportable/application_controller.rb", __dir__))
+
+    assert_includes source, "layout :recording_studio_exportable_layout"
+    assert_includes source, "RecordingStudioExportable.configuration.layout"
+    assert_includes source, 'lookup_context.exists?("layouts/flat_pack_sidebar") ? "flat_pack_sidebar" : "application"'
+  end
+
+  def test_token_expired_page_uses_refresh_prompt_only
+    source = File.read(File.expand_path("../app/views/recording_studio_exportable/exports/token_expired.html.erb", __dir__))
+
+    assert_includes source, "max-w-6xl"
+    assert_includes source, 'title: "Export Expired"'
+    assert_includes source, 'subtitle: "Refresh the original page"'
+    refute_includes source, "Trusted export tokens are single-use"
+    refute_includes source, "The export link you clicked is no longer valid."
+  end
+
+  def test_token_not_found_page_uses_refresh_prompt_only
+    source = File.read(File.expand_path("../app/views/recording_studio_exportable/exports/token_not_found.html.erb", __dir__))
+
+    assert_includes source, "max-w-6xl"
+    assert_includes source, 'title: "Export Expired"'
+    assert_includes source, 'subtitle: "Refresh the original page"'
+    refute_includes source, "This export token does not exist"
+    refute_includes source, "Return to the page where you generated the export"
   end
 
   def test_controller_does_not_render_unexpected_internal_errors
     handlers = RecordingStudioExportable::ExportsController.rescue_handlers
 
-    refute handlers.any? { |exception_name, _handler| exception_name == "StandardError" }
+    refute(handlers.any? { |exception_name, _handler| exception_name == "StandardError" })
   end
 
   def test_controller_permits_nested_attributes_and_filters

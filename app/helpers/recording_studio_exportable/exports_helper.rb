@@ -23,14 +23,14 @@ module RecordingStudioExportable
             hidden_nested_fields("attributes", attributes),
             hidden_nested_fields("filters", filters),
             render(FlatPack::Button::Component.new(
-              text: text,
-              icon: icon,
-              type: "submit",
-              style: style,
-              size: size,
-              icon_only: icon_only,
-              **system_arguments
-            ))
+                     text: text,
+                     icon: icon,
+                     type: "submit",
+                     style: style,
+                     size: size,
+                     icon_only: icon_only,
+                     **system_arguments
+                   ))
           ].compact
         )
       end
@@ -51,37 +51,39 @@ module RecordingStudioExportable
       authorized = export_authorized_for_actor?(context_recording: context_recording, export_key: effective_export_key)
       return if !authorized && behavior == :hide
 
-      return recording_studio_export_button(
-        context_recording: context_recording,
-        export_key: effective_export_key,
-        columns: columns,
-        attributes: attributes,
-        filters: filters,
-        format: format,
-        filename: filename,
-        text: text,
-        icon: icon,
-        style: style,
-        size: size,
-        icon_only: icon_only,
-        data: data,
-        aria: aria,
-        **system_arguments
-      ) if authorized
+      if authorized
+        return recording_studio_export_button(
+          context_recording: context_recording,
+          export_key: effective_export_key,
+          columns: columns,
+          attributes: attributes,
+          filters: filters,
+          format: format,
+          filename: filename,
+          text: text,
+          icon: icon,
+          style: style,
+          size: size,
+          icon_only: icon_only,
+          data: data,
+          aria: aria,
+          **system_arguments
+        )
+      end
 
       disabled_aria = { disabled: true }.merge(aria || {})
 
       render(FlatPack::Button::Component.new(
-        text: unauthorized_text || text,
-        icon: icon,
-        type: "button",
-        style: style,
-        size: size,
-        icon_only: icon_only,
-        disabled: true,
-        aria: disabled_aria,
-        **system_arguments
-      ))
+               text: unauthorized_text || text,
+               icon: icon,
+               type: "button",
+               style: style,
+               size: size,
+               icon_only: icon_only,
+               disabled: true,
+               aria: disabled_aria,
+               **system_arguments
+             ))
     end
 
     private

@@ -3,9 +3,8 @@
 module RecordingStudioExportable
   class ExportsController < ApplicationController
     rescue_from RecordingStudioExportable::Error, ActionController::ParameterMissing, with: :render_bad_request
-    rescue_from RecordingStudioExportable::TrustedExportToken::TokenNotFound,
-                RecordingStudioExportable::TrustedExportToken::TokenExpired,
-                with: :render_bad_request
+    rescue_from RecordingStudioExportable::TrustedExportToken::TokenNotFound, with: :render_token_not_found
+    rescue_from RecordingStudioExportable::TrustedExportToken::TokenExpired, with: :render_token_expired
     rescue_from RecordingStudioExportable::NotAuthorized, ActiveRecord::RecordNotFound, with: :render_forbidden
 
     def create
@@ -60,6 +59,14 @@ module RecordingStudioExportable
 
     def render_bad_request(_exception)
       render plain: "Export request is invalid", status: :bad_request
+    end
+
+    def render_token_expired(_exception)
+      render :token_expired, status: :gone, formats: :html
+    end
+
+    def render_token_not_found(_exception)
+      render :token_not_found, status: :not_found, formats: :html
     end
   end
 end

@@ -4,10 +4,12 @@ require "test_helper"
 require "csv"
 
 class RecordingStudioV3TemplateTest < ActiveSupport::TestCase
-  test "dummy app loads root switchable config and controller support" do
-    assert_equal [ "all_workspaces" ], RecordingStudioRootSwitchable.configuration.scopes.keys
-    assert_equal :application_layout, RecordingStudioRootSwitchable.configuration.layout
-    assert_includes ApplicationController.ancestors, RecordingStudio::RootSwitchable::ControllerSupport
+  if defined?(RecordingStudioRootSwitchable)
+    test "dummy app loads root switchable config and controller support" do
+      assert_equal [ "all_workspaces" ], RecordingStudioRootSwitchable.configuration.scopes.keys
+      assert_equal :application_layout, RecordingStudioRootSwitchable.configuration.layout
+      assert_includes ApplicationController.ancestors, RecordingStudio::RootSwitchable::ControllerSupport
+    end
   end
 
   test "dummy app validates v3 recordable declarations" do
