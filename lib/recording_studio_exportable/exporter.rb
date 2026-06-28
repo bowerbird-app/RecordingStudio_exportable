@@ -48,9 +48,9 @@ module RecordingStudioExportable
         validate_context_export_key!(definition)
         definition.validate_context!(@context_recording, screen_key: screen_key)
         validate_format!(definition)
+        validate_authorization!(definition)
         selected_columns = definition.columns_for(@attributes)
         definition.validate_attributes!(@attributes)
-        validate_authorization!(definition)
 
         max_rows = effective_max_rows(definition)
         rows = materialized_rows(definition, max_rows: max_rows)
@@ -243,11 +243,15 @@ module RecordingStudioExportable
     end
 
     def effective_max_rows(definition)
+      definition_max_rows = definition&.max_rows
+      explicit_definition_max_rows = definition_max_rows if definition_max_rows != Configuration::DEFAULT_MAX_ROWS
+
       Integer(
-        definition&.max_rows ||
+        explicit_definition_max_rows ||
           @capability_options&.dig(:max_rows) ||
           @capability_options&.dig("max_rows") ||
           configuration.max_rows ||
+          definition_max_rows ||
           Configuration::DEFAULT_MAX_ROWS
       )
     end

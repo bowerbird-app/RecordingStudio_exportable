@@ -41,6 +41,7 @@ PATH
   remote: ../..
   specs:
     recording_studio_exportable (0.1.1)
+      csv
       flat_pack (>= 0.1.95)
       rails (~> 8.1.0)
       recording_studio (~> 3.0)
@@ -142,6 +143,7 @@ GEM
     concurrent-ruby (1.3.6)
     connection_pool (3.0.2)
     crass (1.0.6)
+    csv (3.3.5)
     date (3.5.1)
     debug (1.11.0)
       irb (~> 1.10)
@@ -382,6 +384,14 @@ GEM
       fugit (~> 1.11)
       railties (>= 7.1)
       thor (>= 1.3.1)
+    sqlite3 (2.9.5-aarch64-linux-gnu)
+    sqlite3 (2.9.5-aarch64-linux-musl)
+    sqlite3 (2.9.5-arm-linux-gnu)
+    sqlite3 (2.9.5-arm-linux-musl)
+    sqlite3 (2.9.5-arm64-darwin)
+    sqlite3 (2.9.5-x86_64-darwin)
+    sqlite3 (2.9.5-x86_64-linux-gnu)
+    sqlite3 (2.9.5-x86_64-linux-musl)
     sshkit (1.24.0)
       base64
       logger
@@ -473,6 +483,7 @@ DEPENDENCIES
   solid_cable
   solid_cache
   solid_queue
+  sqlite3
   stimulus-rails
   tailwindcss-rails
   thruster
@@ -508,6 +519,7 @@ CHECKSUMS
   concurrent-ruby (1.3.6) sha256=6b56837e1e7e5292f9864f34b69c5a2cbc75c0cf5338f1ce9903d10fa762d5ab
   connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
   crass (1.0.6) sha256=dc516022a56e7b3b156099abc81b6d2b08ea1ed12676ac7a5657617f012bd45d
+  csv (3.3.5) sha256=6e5134ac3383ef728b7f02725d9872934f523cb40b961479f69cf3afa6c8e73f
   date (3.5.1) sha256=750d06384d7b9c15d562c76291407d89e368dda4d4fff957eb94962d325a0dc0
   debug (1.11.0) sha256=1425db64cfa0130c952684e3dc974985be201dd62899bf4bbe3f8b5d6cf1aef2
   devise (5.0.1) sha256=2cd2c9fc2fac746693702c60a2bc22d60270f87c3c2bdcad255ba0c4bf4d5d87
@@ -612,6 +624,14 @@ CHECKSUMS
   solid_cable (3.0.12) sha256=a168a54731a455d5627af48d8441ea3b554b8c1f6e6cd6074109de493e6b0460
   solid_cache (1.0.10) sha256=bc05a2fb3ac78a6f43cbb5946679cf9db67dd30d22939ededc385cb93e120d41
   solid_queue (1.2.4) sha256=bb60f9552a969ac377d87601b0ff6a088f5e6f20b0cbbe3844a59d022cac0e4b
+  sqlite3 (2.9.5-aarch64-linux-gnu) sha256=78075b6337d3d182c6d2b4691049ed45cd220826160c9ea18946bf6a1de200dc
+  sqlite3 (2.9.5-aarch64-linux-musl) sha256=18c801185deb4adc01ddb281e8f672a39e3d1729979ca91e39439cd3eac0402d
+  sqlite3 (2.9.5-arm-linux-gnu) sha256=1bdfca0c7d63998c60b0f4a8e3c8df2d33800ccc4abd2d612eddbbbc92a4c48b
+  sqlite3 (2.9.5-arm-linux-musl) sha256=bae1109d12b2e9f588455967729b008e1ff4feb7761749df695019c9079913c6
+  sqlite3 (2.9.5-arm64-darwin) sha256=d0cf444a70fc9395d513cfbcc1e6719e224aa645314e3824cb0474c721425aa2
+  sqlite3 (2.9.5-x86_64-darwin) sha256=8e9caae38bd7ebb29cbeee3e7ab1d12dc2327d9a1b92c7fcf0dda05589627a81
+  sqlite3 (2.9.5-x86_64-linux-gnu) sha256=233dbcb6714148dd23bc5aeb33e8efd6eac974969564ddd5794c23d5f52b231e
+  sqlite3 (2.9.5-x86_64-linux-musl) sha256=e7d3a7474e8af0f96150c21abc203fbab5437206bfcdf11deab7741c0ca516f2
   sshkit (1.24.0) sha256=9597c1f984778ae9742f2dc839778d57a6a2efb868107046575c52ac7c628e6c
   stimulus-rails (1.3.4) sha256=765676ffa1f33af64ce026d26b48e8ffb2e0b94e0f50e9119e11d6107d67cb06
   stringio (3.2.0) sha256=c37cb2e58b4ffbd33fe5cd948c05934af997b36e0b6ca6fdf43afa234cf222e1

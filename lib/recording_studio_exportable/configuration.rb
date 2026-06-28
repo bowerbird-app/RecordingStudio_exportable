@@ -198,9 +198,13 @@ module RecordingStudioExportable
 
     def capability_options_for(context_recording)
       type_name = context_recording.respond_to?(:recordable_type) ? context_recording.recordable_type : nil
-      return if type_name.blank? || !RecordingStudio.respond_to?(:capability_options)
+      return unless RecordingStudio.respond_to?(:capability_options)
 
-      RecordingStudio.capability_options(:exportable, for: type_name)
+      if type_name.present?
+        RecordingStudio.capability_options(:exportable, for: type_name)
+      else
+        RecordingStudio.capability_options(:exportable)
+      end
     end
 
     def test_environment?

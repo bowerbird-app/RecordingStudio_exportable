@@ -22,7 +22,6 @@ DUMMY_BUNDLE_CLEARED_ENV = {
   "BUNDLE_BIN_PATH" => nil,
   "BUNDLE_GEMFILE" => DUMMY_GEMFILE,
   "BUNDLE_LOCKFILE" => nil,
-  "BUNDLE_PATH" => nil,
   "BUNDLER_SETUP" => nil,
   "BUNDLER_VERSION" => nil,
   "RUBYLIB" => nil,
@@ -40,10 +39,12 @@ def dummy_bundle_env
 end
 
 def dummy_bundle_base_env
-  {
+  env = {
     "BUNDLE_GEMFILE" => DUMMY_GEMFILE,
     "DISABLE_SIMPLECOV" => "true"
   }
+  env["BUNDLE_PATH"] = ENV["BUNDLE_PATH"] if ENV["BUNDLE_PATH"].to_s != ""
+  env
 end
 
 Rake::TestTask.new(:test) do |t|

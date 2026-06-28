@@ -21,7 +21,7 @@ class ExporterTest < Minitest::Test
       filename: "People Export"
     ) do |context_recording:, filters:, **|
       assert_equal "DemoDashboard", context_recording.recordable_type
-      assert_equal({ "nested" => { "status" => "ok" } }, filters)
+      @resolved_filters = filters
       [
         { name: "Ada", enabled: false, formula: "=1+1" },
         { name: "+Grace", enabled: true, formula: "safe" }
@@ -49,6 +49,7 @@ class ExporterTest < Minitest::Test
         assert_equal "'=Name,Enabled,Formula\nAda,false,'=1+1\n'+Grace,true,safe\n", result.data
         assert_equal "People-Export.csv", result.filename
         assert_equal 2, result.row_count
+        assert_equal({ "nested" => { "status" => "ok" } }, @resolved_filters)
       end
     end
   end

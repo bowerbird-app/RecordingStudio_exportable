@@ -1,9 +1,18 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "devise/test/integration_helpers"
 
 class HomeTopicsFilterTest < ActionDispatch::IntegrationTest
+  include Devise::Test::IntegrationHelpers
+
   test "topics created_at date range filters the visible rows" do
+    user = User.find_or_create_by!(email: "topics-filter@example.com") do |record|
+      record.password = "Password123!"
+      record.password_confirmation = "Password123!"
+    end
+    sign_in user
+
     dashboard = DemoDashboard.create!(name: "Topics Filter Dashboard")
     RecordingStudio.root_recording_for(dashboard)
 

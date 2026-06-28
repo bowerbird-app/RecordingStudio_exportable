@@ -309,47 +309,43 @@
       </p>
 
       <% if @trusted_token.present? %>
-        <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-          <% card.body do %>
-            <p class="text-sm">
-              <span class="font-medium">Token ID:</span>
-              <code class="text-xs break-all"><%= @trusted_token.id %></code>
-            </p>
-            <p class="text-xs text-(--surface-muted-content-color)">
-              Token expires in 30 seconds &bull; Single use only &bull;
-              Source: <code><%= @trusted_token.source %></code>
-            </p>
+        <div class="space-y-3 rounded-lg border border-(--surface-border-color) p-4">
+          <p class="text-sm">
+            <span class="font-medium">Token ID:</span>
+            <code class="text-xs break-all"><%= @trusted_token.id %></code>
+          </p>
+          <p class="text-xs text-(--surface-muted-content-color)">
+            Token expires in 30 seconds &bull; Single use only &bull;
+            Source: <code><%= @trusted_token.source %></code>
+          </p>
 
-            <%= tag.form(action: recording_studio_exportable.exports_path, method: :post) do %>
-              <%= hidden_field_tag(:authenticity_token, form_authenticity_token) %>
-              <%= hidden_field_tag(:export_token, @trusted_token.id) %>
-              <%= hidden_field_tag(:format, :csv) %>
-              <%= render FlatPack::Button::Component.new(
-                text: "Export Articles (token-based)",
-                icon: "arrow-down-tray",
-                type: "submit",
-                style: :secondary,
-                size: :md
-              ) %>
-            <% end %>
-
-            <p class="text-xs text-(--surface-muted-content-color)">
-              After clicking, refresh the page to issue a new token.
-              The old one will return 400 (consumed or expired).
-            </p>
+          <%= tag.form(action: recording_studio_exportable.exports_path, method: :post) do %>
+            <%= hidden_field_tag(:authenticity_token, form_authenticity_token) %>
+            <%= hidden_field_tag(:export_token, @trusted_token.id) %>
+            <%= hidden_field_tag(:format, :csv) %>
+            <%= render FlatPack::Button::Component.new(
+              text: "Export Articles (token-based)",
+              icon: "arrow-down-tray",
+              type: "submit",
+              style: :secondary,
+              size: :md
+            ) %>
           <% end %>
-        <% end %>
+
+          <p class="text-xs text-(--surface-muted-content-color)">
+            After clicking, refresh the page to issue a new token.
+            The old one will return 400 (consumed or expired).
+          </p>
+        </div>
       <% else %>
-        <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-          <% card.body do %>
-            <p class="text-sm text-(--surface-muted-content-color)">
-              To enable the token demo, ensure <code>RecordingStudioAdmin</code>
-              is in <code>config.trusted_export_sources</code>. See the
-              <%= link_to "trusted exports docs", docs_trusted_exports_path, class: "underline" %>
-              for setup instructions.
-            </p>
-          <% end %>
-        <% end %>
+        <div class="space-y-3 rounded-lg border border-(--surface-border-color) p-4">
+          <p class="text-sm text-(--surface-muted-content-color)">
+            To enable the token demo, ensure <code>RecordingStudioAdmin</code>
+            is in <code>config.trusted_export_sources</code>. See the
+            <%= link_to "trusted exports docs", docs_trusted_exports_path, class: "underline" %>
+            for setup instructions.
+          </p>
+        </div>
       <% end %>
     </section>
   </div>

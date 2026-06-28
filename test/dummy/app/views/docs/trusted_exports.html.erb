@@ -55,58 +55,54 @@
       subtitle: "The button below uses a token issued just now. Refresh to get a new one."
     ) %>
 
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.body do %>
-        <p class="text-sm">
-          <span class="font-medium">Token ID:</span>
-          <code class="text-xs"><%= @demo_token.id %></code>
-        </p>
-        <p class="text-sm text-(--surface-muted-content-color)">
-          Expires in: 30 seconds &bull;
-          Source: <code><%= @demo_token.source %></code> &bull;
-          Effective key: <code><%= @demo_token.effective_export_key %></code>
-        </p>
+    <div class="space-y-3 rounded-lg border border-(--surface-border-color) p-4">
+      <p class="text-sm">
+        <span class="font-medium">Token ID:</span>
+        <code class="text-xs"><%= @demo_token.id %></code>
+      </p>
+      <p class="text-sm text-(--surface-muted-content-color)">
+        Expires in: 30 seconds &bull;
+        Source: <code><%= @demo_token.source %></code> &bull;
+        Effective key: <code><%= @demo_token.effective_export_key %></code>
+      </p>
 
-        <%= tag.form(action: recording_studio_exportable.exports_path, method: :post) do %>
-          <%= hidden_field_tag(:authenticity_token, form_authenticity_token) %>
-          <%= hidden_field_tag(:export_token, @demo_token.id) %>
-          <%= hidden_field_tag(:format, :csv) %>
-          <%= render FlatPack::Button::Component.new(
-            text: "Export Articles (token-based)",
-            icon: "arrow-down-tray",
-            type: "submit",
-            style: :secondary,
-            size: :md
-          ) %>
-        <% end %>
+      <%= tag.form(action: recording_studio_exportable.exports_path, method: :post) do %>
+        <%= hidden_field_tag(:authenticity_token, form_authenticity_token) %>
+        <%= hidden_field_tag(:export_token, @demo_token.id) %>
+        <%= hidden_field_tag(:format, :csv) %>
+        <%= render FlatPack::Button::Component.new(
+          text: "Export Articles (token-based)",
+          icon: "arrow-down-tray",
+          type: "submit",
+          style: :secondary,
+          size: :md
+        ) %>
       <% end %>
-    <% end %>
+    </div>
 
     <p class="text-xs text-(--surface-muted-content-color)">
       Clicking the button above consumes the token. After that, the same link will return 400 (token not found).
       Refresh the page to issue a fresh token.
     </p>
   <% else %>
-    <%= render FlatPack::Card::Component.new(style: :default) do |card| %>
-      <% card.body do %>
-        <p class="text-sm text-(--surface-muted-content-color)">
-          To see a live token, add <code>RecordingStudioAdmin</code> to
-          <code>config.trusted_export_sources</code> in your initializer:
-        </p>
+    <div class="space-y-3 rounded-lg border border-(--surface-border-color) p-4">
+      <p class="text-sm text-(--surface-muted-content-color)">
+        To see a live token, add <code>RecordingStudioAdmin</code> to
+        <code>config.trusted_export_sources</code> in your initializer:
+      </p>
 
-        <%= render FlatPack::CodeBlock::Component.new(
-          language: :ruby,
-          code: <<~'CODE'
-            # config/initializers/recording_studio_exportable.rb
-            Rails.application.reloader.to_prepare do
-              RecordingStudioExportable.configure do |config|
-                config.trusted_export_sources = %w[RecordingStudioAdmin]
-              end
+      <%= render FlatPack::CodeBlock::Component.new(
+        language: :ruby,
+        code: <<~'CODE'
+          # config/initializers/recording_studio_exportable.rb
+          Rails.application.reloader.to_prepare do
+            RecordingStudioExportable.configure do |config|
+              config.trusted_export_sources = %w[RecordingStudioAdmin]
             end
-          CODE
-        ) %>
-      <% end %>
-    <% end %>
+          end
+        CODE
+      ) %>
+    </div>
 
   <% end %>
 

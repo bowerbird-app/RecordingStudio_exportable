@@ -56,6 +56,7 @@ module RecordingStudioExportable
       if expiry && expiry < Time.current
         @store.delete(key)
         @expiries.delete(key)
+        return nil
       end
       value
     end
