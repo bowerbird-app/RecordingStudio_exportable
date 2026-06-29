@@ -43,7 +43,7 @@ def dummy_bundle_base_env
     "BUNDLE_GEMFILE" => DUMMY_GEMFILE,
     "DISABLE_SIMPLECOV" => "true"
   }
-  env["BUNDLE_PATH"] = ENV["BUNDLE_PATH"] if ENV["BUNDLE_PATH"].to_s != ""
+  env["BUNDLE_PATH"] = ENV.fetch("BUNDLE_PATH", nil) if ENV["BUNDLE_PATH"].to_s != ""
   env
 end
 
