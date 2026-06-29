@@ -76,7 +76,7 @@ namespace :test do
       env = dummy_bundle_env
 
       run_command!(env, "bundle", "exec", "bin/rails", "db:prepare")
-      run_command!(env, "bundle", "exec", "bin/rails", "test", "--verbose", "-b")
+      run_command!(env, "bundle", "exec", "bin/rails", "test", "--verbose")
       DUMMY_TEST_FILES.each do |test_file|
         run_command!(env, "bundle", "exec", "ruby", "-I#{TEST_ROOT}", test_file)
       end
