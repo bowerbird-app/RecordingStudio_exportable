@@ -41,7 +41,13 @@ end
 def dummy_bundle_base_env
   env = {
     "BUNDLE_GEMFILE" => DUMMY_GEMFILE,
-    "DISABLE_SIMPLECOV" => "true"
+    "DISABLE_SIMPLECOV" => "true",
+    "RAILS_ENV" => "test",
+    "DB_HOST" => ENV.fetch("DB_HOST", "localhost"),
+    "DB_PORT" => ENV.fetch("DB_PORT", "5432"),
+    "DB_USER" => ENV.fetch("DB_USER", "postgres"),
+    "DB_PASSWORD" => ENV.fetch("DB_PASSWORD", "postgres"),
+    "DB_NAME" => ENV.fetch("DB_NAME", "gem_template_test")
   }
   env["BUNDLE_PATH"] = ENV.fetch("BUNDLE_PATH", nil) if ENV["BUNDLE_PATH"].to_s != ""
   env
