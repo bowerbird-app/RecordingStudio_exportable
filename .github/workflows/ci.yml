@@ -9,11 +9,14 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DB_HOST: localhost
-      DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: gem_template_test
+      DB_NAME_TEST: gem_template_test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/gem_template_test
 
     permissions:
@@ -29,7 +32,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres -d gem_template_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
