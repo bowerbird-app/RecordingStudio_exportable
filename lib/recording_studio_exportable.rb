@@ -7,8 +7,10 @@ require "active_support/core_ext/string/inflections"
 require "recording_studio_exportable/version"
 require "recording_studio_exportable/errors"
 require "recording_studio_exportable/export_definition"
+require "recording_studio_exportable/trusted_export_token_store"
 require "recording_studio_exportable/configuration"
 require "recording_studio_exportable/exporter"
+require "recording_studio_exportable/trusted_export_token"
 require "recording_studio_exportable/capabilities/exportable"
 require "recording_studio_exportable/services/base_service"
 require "recording_studio_exportable/services/example_service"
@@ -54,6 +56,37 @@ module RecordingStudioExportable
         filters: filters,
         format: format,
         filename: filename,
+        controller: controller
+      )
+    end
+
+    def issue_trusted_token(context_recording:, actor:, source:, screen_identifier:,
+                            columns:, row_resolver:, ttl: TrustedExportToken::DEFAULT_TTL)
+      TrustedExportToken.issue(
+        context_recording: context_recording,
+        actor: actor,
+        source: source,
+        screen_identifier: screen_identifier,
+        columns: columns,
+        row_resolver: row_resolver,
+        ttl: ttl
+      )
+    end
+
+    def export_from_token(token_id:, format: :csv, filename: nil, filters: {}, controller: nil)
+      token = TrustedExportToken.find_and_consume!(token_id)
+      Exporter.call(
+        context_recording: token.context_recording,
+        actor: token.actor,
+        export_key: token.effective_export_key,
+        trusted_export: true,
+        rows: token.row_resolver,
+        columns: token.columns,
+        trusted_source: token.source,
+        screen_identifier: token.screen_identifier,
+        format: format,
+        filename: filename,
+        filters: filters,
         controller: controller
       )
     end

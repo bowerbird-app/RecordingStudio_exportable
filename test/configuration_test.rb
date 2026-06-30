@@ -54,6 +54,12 @@ class ConfigurationTest < Minitest::Test
     refute_respond_to @configuration, :unknown
   end
 
+  def test_layout_can_be_configured
+    @configuration.merge!("layout" => "flat_pack_sidebar")
+
+    assert_equal "flat_pack_sidebar", @configuration.layout
+  end
+
   def test_fetch_unknown_definition_raises_clear_error
     assert_raises(RecordingStudioExportable::UnknownExportDefinition) do
       @configuration.fetch_export_definition!("missing")
@@ -88,7 +94,7 @@ class ConfigurationTest < Minitest::Test
     @configuration.export("demo.admin", columns: [:name]) { [] }
 
     RecordingStudio.stub(:capability_options, { export_keys: ["demo.admin"], required_role: :admin }) do
-      RecordingStudioAccessible.stub(:authorized?, ->(**kwargs) {
+      RecordingStudioAccessible.stub(:authorized?, lambda { |**kwargs|
         roles << kwargs.fetch(:role)
         true
       }) do

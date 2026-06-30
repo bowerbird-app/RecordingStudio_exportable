@@ -1,7 +1,7 @@
 class RecordingStudioArticleExport
   KEY = "recording_studio_article_export".freeze
 
-  DASHBOARD_CONTEXT_TYPES = ["Article", "DemoDashboard"].freeze
+  DASHBOARD_CONTEXT_TYPES = [ "Article", "DemoDashboard" ].freeze
 
   def self.register(config)
     config.register_export(
@@ -41,7 +41,7 @@ class RecordingStudioArticleExport
 
     return Article.order(:title).to_a if recordable.is_a?(DemoDashboard)
 
-    [recordable]
+    [ recordable ]
   end
 
   def self.word_count(article)

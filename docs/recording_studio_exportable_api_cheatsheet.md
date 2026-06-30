@@ -374,3 +374,173 @@ So the resolver should still be scoped carefully:
 - `context_key` / `context_keys` = extra optional screen/section restriction inside the context
 - `required_role` = the role checked through Accessible
 - resolver query = still needs safe scoping for joined/unrelated tables
+
+## Trusted Export Tokens
+
+Trusted export tokens are single-use, time-limited tokens that allow a server-side
+issuer to grant a one-off export to an external system *without* passing the
+actor, context recording, or export key over the wire.
+
+The flow is:
+
+1. **Issue** a token server-side with the rows, columns, and context already resolved.
+2. **Pass only the token ID** to the external consumer.
+3. The consumer **POSTs the token ID** to the engine endpoint.
+4. The engine **atomically consumes** the token (read-and-delete) and streams
+   the export.
+
+```mermaid
+sequenceDiagram
+    participant I as Issuer (ActiveJob / sidecar)
+    participant T as Token Store
+    participant C as Consumer (external system)
+    participant E as Engine Controller
+
+    I->>T: issue_trusted_token(context, actor, source, columns, row_resolver)
+    T-->>I: token.id
+    I->>C: export_url?export_token=<token.id>
+    C->>E: POST /exports export_token=<token.id>&format=csv
+    E->>T: find_and_consume!(token.id)
+    T-->>E: token (atomically deleted)
+    E-->>C: CSV export data
+```
+
+### Why use trusted tokens
+
+| Pattern | When to use |
+|---|---|
+| Standard export (`export`) | The user is authenticated and making a direct request from the UI. |
+| Trusted token export (`export_from_token`) | A server-side job or admin panel pre-resolves the rows and hands a one-time link to another system. |
+
+Trusted tokens let you:
+
+- Decouple row resolution from the request lifecycle.
+- Avoid exposing `context_recording_id`, actor credentials, or export keys to the consumer.
+- Guarantee one-time use: the token is atomically consumed and cannot be reused.
+
+### Configuration
+
+Add allowed sources to your initializer:
+
+```ruby
+# config/initializers/recording_studio_exportable.rb
+RecordingStudioExportable.configure do |config|
+  config.trusted_export_sources = %w[RecordingStudioAdmin MySidecarApp]
+end
+```
+
+Only sources listed in `trusted_export_sources` are permitted to issue tokens.
+The source string is normalised and used as part of the effective export key.
+
+#### Custom token store (optional)
+
+By default the engine uses an in-memory store (`TrustedExportTokenStore`).
+For production workloads that span multiple processes, provide your own store:
+
+```ruby
+config.trusted_export_token_store = MyRedisTokenStore.new
+```
+
+The store must implement two methods:
+
+- `write(key, value, expires_in:)` — persist a token with an optional TTL in seconds.
+- `consume(key)` — atomically read the value **and delete** it; return `nil` if missing.
+
+### Issuing a token
+
+Call `issue_trusted_token` from a sidecar (ActiveJob, admin controller, rake task,
+etc.):
+
+```ruby
+token = RecordingStudioExportable.issue_trusted_token(
+  context_recording: recording,
+  actor: Current.actor,
+  source: "RecordingStudioAdmin",
+  screen_identifier: "Admin Users Export",
+  columns: [
+    { key: :title,   label: "Title",      value: :title },
+    { key: :status,  label: "Status",     value: :status },
+    { key: :word_count, label: "Words",   value: ->(article) { article.body.to_s.split.size } }
+  ],
+  row_resolver: -> { Article.order(:title).to_a },
+  ttl: 30.seconds
+)
+
+# Pass the token ID to the external system
+export_url = recording_studio_exportable.exports_url(export_token: token.id)
+```
+
+Parameters:
+
+| Parameter | Required | Description |
+|---|---|---|
+| `context_recording:` | Yes | The RecordingStudio context the export runs under. Used for access logging. |
+| `actor:` | Yes | The user/actor on whose behalf the export runs. |
+| `source:` | Yes | Must be listed in `trusted_export_sources`. |
+| `screen_identifier:` | Yes | Human-readable label for the export screen or section. |
+| `columns:` | Yes | Array of column hashes or `ExportDefinition::Column` objects. |
+| `row_resolver:` | Yes | A callable (proc/lambda) that returns the rows when invoked. |
+| `ttl:` | No | Time-to-live. Defaults to 5 minutes; capped at 5 minutes. |
+
+The effective export key is derived as `source.screen_identifier` (normalised).
+
+### Consuming a token
+
+The consumer POSTs to the engine endpoint with only the token ID:
+
+```bash
+curl -X POST https://example.com/recording_studio_exportable/exports \
+  -d "export_token=TOKEN_ID&format=csv"
+```
+
+No `context_recording_id`, `actor`, or `export_key` is needed. The token carries
+all of that internally.
+
+In Ruby:
+
+```ruby
+RecordingStudioExportable.export_from_token(
+  token_id: params[:export_token],
+  format: :csv,
+  filename: "optional-override.csv",
+  filters: { status: "active" },
+  controller: self
+)
+```
+
+### Token lifecycle
+
+| Behaviour | Detail |
+|---|---|
+| **Single-use** | `find_and_consume!` atomically reads and deletes. A token can never be used twice, even under concurrent requests. |
+| **Time-limited** | Default TTL is 5 minutes. The `ttl` argument is capped at the default. |
+| **Expired** | Raises `TrustedExportToken::TokenExpired` → HTTP 410 Gone. |
+| **Missing / already consumed** | Raises `TrustedExportToken::TokenNotFound` → HTTP 404 Not Found. |
+| **Unauthorised source** | `issue_trusted_token` raises `TrustedExportToken::Error` if the source is not in `trusted_export_sources`. |
+
+### Controller behaviour
+
+The engine's `ExportsController` auto-detects the token path. When
+`params[:export_token]` is present it delegates to `export_from_token` instead of
+the standard `export` flow.
+
+Token errors are mapped to HTTP status codes automatically:
+
+```ruby
+rescue_from RecordingStudioExportable::TrustedExportToken::TokenNotFound, with: :render_token_not_found
+rescue_from RecordingStudioExportable::TrustedExportToken::TokenExpired,  with: :render_token_expired
+```
+
+Custom error views (`token_not_found.html.erb`, `token_expired.html.erb`) are
+shipped with the engine and can be overridden in the host app.
+
+### When NOT to use trusted tokens
+
+Trusted tokens are **not** a replacement for the standard `export` API when:
+
+- The user is authenticated and making a direct UI request.
+- You need column/attribute negotiation from the export definition.
+- You want the export key to control allowed columns and formats.
+
+Use the standard flow for interactive exports and the token flow for
+server-to-server or deferred export orchestration.

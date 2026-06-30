@@ -1,0 +1,154 @@
+<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+  <%= render FlatPack::PageTitle::Component.new(
+    title: "Trusted export token flow",
+    subtitle: "Issue a single-use token server-side and consume it in an external export request.",
+    variant: :h1
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Step 1 — Issue a token server-side",
+    subtitle: "Call issue_trusted_token from your sidecar (ActiveJob, admin panel, etc.)"
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~'CODE'
+      token = RecordingStudioExportable.issue_trusted_token(
+        context_recording: recording,
+        actor: Current.actor,
+        source: "RecordingStudioAdmin",
+        screen_identifier: "Admin Users Export",
+        columns: [
+          { key: :title, label: "Title", value: :title },
+          { key: :word_count, label: "Word count", value: ->(article) { article.body.to_s.split.size } }
+        ],
+        row_resolver: -> { Article.order(:title).to_a },
+        ttl: 30.seconds
+      )
+
+      # Pass token.id to the external system
+      export_url = recording_studio_exportable_exports_url(export_token: token.id)
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Step 2 — Export from the token ID",
+    subtitle: "The consuming side posts to the engine with just the token."
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~'CODE'
+      # POST to the engine route with just the token
+      # No context_recording_id, actor, or export_key needed
+
+      curl -X POST https://example.com/recording_studio_exportable/exports \
+        -d "export_token=TOKEN_ID&format=csv"
+    CODE
+  ) %>
+
+  <%# ---------- Live demo ---------- %>
+
+  <% if @demo_token.present? %>
+    <%= render FlatPack::SectionTitle::Component.new(
+      title: "Live demo",
+      subtitle: "The button below uses a token issued just now. Refresh to get a new one."
+    ) %>
+
+    <div class="space-y-3 rounded-lg border border-(--surface-border-color) p-4">
+      <p class="text-sm">
+        <span class="font-medium">Token ID:</span>
+        <code class="text-xs"><%= @demo_token.id %></code>
+      </p>
+      <p class="text-sm text-(--surface-muted-content-color)">
+        Expires in: 30 seconds &bull;
+        Source: <code><%= @demo_token.source %></code> &bull;
+        Effective key: <code><%= @demo_token.effective_export_key %></code>
+      </p>
+
+      <%= tag.form(action: recording_studio_exportable.exports_path, method: :post) do %>
+        <%= hidden_field_tag(:authenticity_token, form_authenticity_token) %>
+        <%= hidden_field_tag(:export_token, @demo_token.id) %>
+        <%= hidden_field_tag(:format, :csv) %>
+        <%= render FlatPack::Button::Component.new(
+          text: "Export Articles (token-based)",
+          icon: "arrow-down-tray",
+          type: "submit",
+          style: :secondary,
+          size: :md
+        ) %>
+      <% end %>
+    </div>
+
+    <p class="text-xs text-(--surface-muted-content-color)">
+      Clicking the button above consumes the token. After that, the same link will return 400 (token not found).
+      Refresh the page to issue a fresh token.
+    </p>
+  <% else %>
+    <div class="space-y-3 rounded-lg border border-(--surface-border-color) p-4">
+      <p class="text-sm text-(--surface-muted-content-color)">
+        To see a live token, add <code>RecordingStudioAdmin</code> to
+        <code>config.trusted_export_sources</code> in your initializer:
+      </p>
+
+      <%= render FlatPack::CodeBlock::Component.new(
+        language: :ruby,
+        code: <<~'CODE'
+          # config/initializers/recording_studio_exportable.rb
+          Rails.application.reloader.to_prepare do
+            RecordingStudioExportable.configure do |config|
+              config.trusted_export_sources = %w[RecordingStudioAdmin]
+            end
+          end
+        CODE
+      ) %>
+    </div>
+
+  <% end %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Step 3 — Token lifecycle",
+    subtitle: "Single-use, time-limited, atomically consumed."
+  ) %>
+
+  <%= render FlatPack::List::Component.new(divider: true) do %>
+    <%= render FlatPack::List::Item.new do %>
+      Tokens default to a 5‑minute TTL, capped at the default.
+    <% end %>
+    <%= render FlatPack::List::Item.new do %>
+      <code>find_and_consume!</code> atomically reads and deletes, so a token
+      can never be used twice even under concurrent requests.
+    <% end %>
+    <%= render FlatPack::List::Item.new do %>
+      Expired tokens raise <code>TokenExpired</code>; missing tokens raise
+      <code>TokenNotFound</code>. Both map to HTTP 400 in the engine controller.
+    <% end %>
+  <% end %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "When to use trusted tokens",
+    subtitle: "This pattern is designed for cross-system export orchestration."
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~'CODE'
+      # In your sidecar (ActiveJob, admin notification, webhook handler):
+      token = RecordingStudioExportable.issue_trusted_token(
+        context_recording: recording,
+        actor: actor,
+        source: "RecordingStudioAdmin",
+        screen_identifier: "Weekly Report Export",
+        columns: [
+          { key: :name, label: "Name", value: :name },
+          { key: :status, label: "Status", value: :status }
+        ],
+        row_resolver: -> { MyReportQuery.new(recording: recording).results },
+        ttl: 5.minutes
+      )
+
+      # Deliver token.id to the external consumer
+      NotifyExternalService.perform_later(token.id)
+    CODE
+  ) %>
+</div>

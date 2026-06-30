@@ -35,6 +35,9 @@ This will:
 | `api_key`           | String  | `ENV["RECORDING_STUDIO_EXPORTABLE_API_KEY"]`    | API key for external service integration.  |
 | `enable_feature_x`  | Boolean | `false`                          | Toggle optional feature X.                 |
 | `timeout`           | Integer | `5`                              | Timeout (seconds) for external calls.      |
+| `trusted_export_sources` | Array   | `[]`                            | Allowed source identifiers for trusted export token issuance. |
+| `trusted_export_token_store` | Object  | `nil` (in-memory fallback)       | Custom token store that responds to `write` and `consume`. |
+| `layout`             | String  | `nil`                           | Custom layout for engine views. |
 
 ### RecordingStudio v3 Host-App Declarations
 
@@ -155,6 +158,36 @@ To add new options:
 2. Set a sensible default in `#initialize`.
 3. Update `#to_h` if you want the option included in hash export.
 4. Document the new option in this file and in the initializer template.
+
+---
+
+## Trusted Export Token Configuration
+
+Trusted export tokens allow server-side jobs or sidecars to issue single-use
+export links that external systems can consume without knowledge of the actor,
+context recording, or export key.
+
+```ruby
+RecordingStudioExportable.configure do |config|
+  # Whitelist sources allowed to issue trusted export tokens.
+  config.trusted_export_sources = %w[RecordingStudioAdmin MySidecarApp]
+
+  # Optional: use a Redis-backed store for multi-process deployments.
+  # Remove this line to use the default in-memory store.
+  # config.trusted_export_token_store = MyRedisTokenStore.new
+end
+```
+
+| Setting | Description |
+|---|---|
+| `trusted_export_sources` | Array of string identifiers. Only these sources can call `issue_trusted_token`. |
+| `trusted_export_token_store` | Object responding to `write(key, value, expires_in:)` and `consume(key)`. Defaults to an in-memory store. |
+
+The token store must implement atomic read-and-delete in `consume` to guarantee
+that a token cannot be used more than once, even under concurrent requests.
+
+See `docs/recording_studio_exportable_api_cheatsheet.md#trusted-export-tokens`
+for the full token workflow.
 
 ---
 

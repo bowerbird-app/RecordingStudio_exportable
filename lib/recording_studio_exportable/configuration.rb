@@ -11,12 +11,13 @@ module RecordingStudioExportable
 
     attr_accessor :current_actor, :current_impersonator, :default_format, :default_required_role,
                   :max_rows, :include_bom, :allow_request_filename_override,
-                  :filter_log_sanitizer, :context_export_keys_resolver
+                  :filter_log_sanitizer, :context_export_keys_resolver,
+                  :trusted_export_sources, :trusted_export_token_store, :layout
     attr_reader :export_definitions, :hooks
 
     def initialize
       @current_actor = lambda do |controller: nil|
-        (controller&.send(:current_user) if controller&.respond_to?(:current_user, true)) ||
+        (controller&.send(:current_user) if controller.respond_to?(:current_user, true)) ||
           (defined?(Current) && Current.respond_to?(:actor) ? Current.actor : nil)
       end
       @current_impersonator = lambda { |*|
@@ -29,6 +30,9 @@ module RecordingStudioExportable
       @allow_request_filename_override = false
       @filter_log_sanitizer = method(:default_filter_log_sanitizer)
       @context_export_keys_resolver = method(:default_context_export_keys_for)
+      @trusted_export_sources = []
+      @trusted_export_token_store = nil
+      @layout = nil
       @export_definitions = {}
       @hooks = Hooks.new
       @mutex = Monitor.new
@@ -140,17 +144,21 @@ module RecordingStudioExportable
       }
     end
 
+    def resolve_trusted_export_token_store
+      @trusted_export_token_store || (@fallback_token_store ||= TrustedExportTokenStore.new)
+    end
+
     private
 
     def default_context_export_keys_for(context_recording)
       return [] unless context_recording
 
       recordable = context_recording.recordable if context_recording.respond_to?(:recordable)
-      keys = if recordable&.respond_to?(:export_keys)
+      keys = if recordable.respond_to?(:export_keys)
                recordable.export_keys
              elsif recordable&.class&.const_defined?(:EXPORT_KEYS)
                recordable.class::EXPORT_KEYS
-             elsif recordable&.respond_to?(:export_key)
+             elsif recordable.respond_to?(:export_key)
                recordable.export_key
              else
                []
@@ -190,9 +198,13 @@ module RecordingStudioExportable
 
     def capability_options_for(context_recording)
       type_name = context_recording.respond_to?(:recordable_type) ? context_recording.recordable_type : nil
-      return if type_name.blank? || !RecordingStudio.respond_to?(:capability_options)
+      return unless RecordingStudio.respond_to?(:capability_options)
 
-      RecordingStudio.capability_options(:exportable, for: type_name)
+      if type_name.present?
+        RecordingStudio.capability_options(:exportable, for: type_name)
+      else
+        RecordingStudio.capability_options(:exportable)
+      end
     end
 
     def test_environment?

@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
 ENV["RAILS_ENV"] = "test"
-require_relative "test_helper"
-require_relative "dummy/config/environment"
+require_relative "dummy/test/test_helper"
 
 require "rails/test_help"
 
 class RecordingStudioV3Test < ActiveSupport::TestCase
   test "dummy recordable declarations validate and expose v3 introspection" do
     assert RecordingStudio.validate_recordable_declarations!
-    assert_equal ["DemoDashboard", "Workspace"], RecordingStudio.root_recordable_types
+    assert_equal %w[Article DemoDashboard Document Workspace], RecordingStudio.root_recordable_types.sort
     assert_equal %w[Workspace Folder], RecordingStudio.allowed_parent_types_for("Folder")
     assert_equal %w[Workspace Folder], RecordingStudio.allowed_parent_types_for(Page)
   end

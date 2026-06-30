@@ -12,6 +12,7 @@ DUMMY_APP_ROOT = File.expand_path("test/dummy", __dir__)
 TEST_ROOT = File.expand_path("test", __dir__)
 ROOT_TEST_EXCLUSIONS = %w[
   test/controllers/docs_controller_test.rb
+  test/controllers/documents_controller_test.rb
   test/dummy/**/*_test.rb
   test/recording_studio_v3_test.rb
   test/rename_verification_test.rb
@@ -21,7 +22,6 @@ DUMMY_BUNDLE_CLEARED_ENV = {
   "BUNDLE_BIN_PATH" => nil,
   "BUNDLE_GEMFILE" => DUMMY_GEMFILE,
   "BUNDLE_LOCKFILE" => nil,
-  "BUNDLE_PATH" => nil,
   "BUNDLER_SETUP" => nil,
   "BUNDLER_VERSION" => nil,
   "RUBYLIB" => nil,
@@ -39,10 +39,18 @@ def dummy_bundle_env
 end
 
 def dummy_bundle_base_env
-  {
+  env = {
     "BUNDLE_GEMFILE" => DUMMY_GEMFILE,
-    "DISABLE_SIMPLECOV" => "true"
+    "DISABLE_SIMPLECOV" => "true",
+    "RAILS_ENV" => "test",
+    "DB_HOST" => ENV.fetch("DB_HOST", "localhost"),
+    "DB_PORT" => ENV.fetch("DB_PORT", "5432"),
+    "DB_USER" => ENV.fetch("DB_USER", "postgres"),
+    "DB_PASSWORD" => ENV.fetch("DB_PASSWORD", "postgres"),
+    "DB_NAME" => ENV.fetch("DB_NAME", "gem_template_test")
   }
+  env["BUNDLE_PATH"] = ENV.fetch("BUNDLE_PATH", nil) if ENV["BUNDLE_PATH"].to_s != ""
+  env
 end
 
 Rake::TestTask.new(:test) do |t|

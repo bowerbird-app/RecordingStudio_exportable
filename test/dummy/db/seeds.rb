@@ -83,14 +83,14 @@ demo_dashboard = DemoDashboard.find_or_create_by!(name: "Export Demo Dashboard")
 document = Document.find_or_create_by!(title: "Export Governance Handbook")
 
 document_items = [
-  ["Owner", "Document ownership and escalation contact."],
-  ["Retention", "How long exports are retained and archived."],
-  ["Encryption", "At-rest and in-transit requirements for exported data."],
-  ["Redaction", "Fields that must be filtered before CSV generation."],
-  ["Auditing", "Event trail requirements for export actions."],
-  ["Incident SOP", "Steps to follow when an export contains sensitive data."],
-  ["Vendor Review", "Checklist for third-party transfer approvals."],
-  ["Rotation", "Credential rotation cadence for export integrations."]
+  [ "Owner", "Document ownership and escalation contact." ],
+  [ "Retention", "How long exports are retained and archived." ],
+  [ "Encryption", "At-rest and in-transit requirements for exported data." ],
+  [ "Redaction", "Fields that must be filtered before CSV generation." ],
+  [ "Auditing", "Event trail requirements for export actions." ],
+  [ "Incident SOP", "Steps to follow when an export contains sensitive data." ],
+  [ "Vendor Review", "Checklist for third-party transfer approvals." ],
+  [ "Rotation", "Credential rotation cadence for export integrations." ]
 ]
 
 document.items.where.not(name: document_items.map(&:first)).delete_all
@@ -102,8 +102,8 @@ document_items.each do |name, description|
 end
 
 authors = [
-  ["Ava Editor", "Leads the editorial voice for export documentation and examples."],
-  ["Noah Analyst", "Focuses on analytics exports and practical reporting workflows."]
+  [ "Ava Editor", "Leads the editorial voice for export documentation and examples." ],
+  [ "Noah Analyst", "Focuses on analytics exports and practical reporting workflows." ]
 ].map do |name, bio|
   Author.find_or_create_by!(name: name) { |record| record.bio = bio }
 end
@@ -113,13 +113,13 @@ article_data = [
     "Recording Studio Export Walkthrough",
     "Recording Studio exports can be attached directly to recordable models and streamed as sanitized CSV files.",
     "Ava Editor",
-    ["Exports", "CSV", "Security"]
+    [ "Exports", "CSV", "Security" ]
   ],
   [
     "Access Control and Export Roles",
     "Role-aware exports should match the effective access policy from RecordingStudioAccessible.",
     "Noah Analyst",
-    ["Authorization", "Roles", "Policies"]
+    [ "Authorization", "Roles", "Policies" ]
   ]
 ]
 
@@ -138,15 +138,15 @@ shared_topic_bases = [
 shared_topics = shared_topic_bases.each_with_index.map { |name, index| "#{name} #{index + 1}" }
 article_data = article_data.map do |title, body, author_name, base_topics|
   unique_topic_words = if title.include?("Walkthrough")
-    ["Onboarding", "Pipelines", "Payload", "Schema", "Retries", "Backfill", "Snapshots", "Diffs"]
+    [ "Onboarding", "Pipelines", "Payload", "Schema", "Retries", "Backfill", "Snapshots", "Diffs" ]
   else
-    ["Ownership", "Permissions", "Escalation", "Boundaries", "Delegation", "Approvals", "Review", "Signoff"]
+    [ "Ownership", "Permissions", "Escalation", "Boundaries", "Delegation", "Approvals", "Review", "Signoff" ]
   end
   unique_topics = (1..37).map do |index|
     stem = unique_topic_words[(index - 1) % unique_topic_words.length]
     "#{stem} Pattern #{index}"
   end
-  [title, body, author_name, (base_topics + shared_topics + unique_topics)]
+  [ title, body, author_name, (base_topics + shared_topics + unique_topics) ]
 end
 
 articles = article_data.map do |title, body, author_name, topic_names|
@@ -168,12 +168,12 @@ articles = article_data.map do |title, body, author_name, topic_names|
 end
 
 [
-  ["/api/pages", "GET", 200, 42],
-  ["/api/folders", "GET", 200, 31],
-  ["/api/recordings", "POST", 201, 87],
-  ["/api/exports", "GET", 200, 53],
-  ["/api/exports", "POST", 202, 96],
-  ["/api/articles", "GET", 200, 38]
+  [ "/api/pages", "GET", 200, 42 ],
+  [ "/api/folders", "GET", 200, 31 ],
+  [ "/api/recordings", "POST", 201, 87 ],
+  [ "/api/exports", "GET", 200, 53 ],
+  [ "/api/exports", "POST", 202, 96 ],
+  [ "/api/articles", "GET", 200, 38 ]
 ].each do |path, http_method, status, duration_ms|
   demo_dashboard.demo_api_requests.find_or_create_by!(path: path, http_method: http_method) do |request|
     request.status = status

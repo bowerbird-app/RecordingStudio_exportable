@@ -6,11 +6,13 @@ module RecordingStudioExportable
 
     class << self
       def apply_model_extensions(target)
-        apply_extensions(target, RecordingStudioExportable.configuration.hooks.model_extensions_for(extension_keys_for(target)))
+        apply_extensions(target,
+                         RecordingStudioExportable.configuration.hooks.model_extensions_for(extension_keys_for(target)))
       end
 
       def apply_controller_extensions(target)
-        apply_extensions(target, RecordingStudioExportable.configuration.hooks.controller_extensions_for(extension_keys_for(target)))
+        apply_extensions(target,
+                         RecordingStudioExportable.configuration.hooks.controller_extensions_for(extension_keys_for(target)))
       end
 
       private

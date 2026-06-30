@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 ENV["RAILS_ENV"] = "test"
-require_relative "../test_helper"
-require_relative "../dummy/config/environment"
+require_relative "../dummy/test/test_helper"
 
 require "devise/test/integration_helpers"
 require "rails/test_help"

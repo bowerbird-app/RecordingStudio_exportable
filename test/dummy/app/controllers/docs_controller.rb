@@ -40,6 +40,28 @@ class DocsController < ApplicationController
     @demo_recording = RecordingStudio::Recording.reorder(:id).first
   end
 
+  def trusted_exports
+    @demo_recording = RecordingStudio::Recording.reorder(:id).first
+
+    return unless @demo_recording.present? && Current.actor.present?
+
+    @demo_token = RecordingStudioExportable.issue_trusted_token(
+      context_recording: @demo_recording,
+      actor: Current.actor,
+      source: "RecordingStudioAdmin",
+      screen_identifier: "Docs Trusted Export Demo",
+      columns: [
+        { key: :title, label: "Title", value: :title },
+        { key: :word_count, label: "Word count", value: ->(article) { article.body.to_s.split.size } }
+      ],
+      row_resolver: -> { Article.order(:title).to_a },
+      ttl: 30.seconds
+    )
+  rescue StandardError
+    # Token issuance failed — page still renders with setup hint.
+    @demo_token = nil
+  end
+
   private
 
   def normalize_recordable_declaration(declaration)

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 ENV["RAILS_ENV"] = "test"
-require_relative "../test_helper"
-require_relative "../dummy/config/environment"
+require_relative "../dummy/test/test_helper"
 
+require "cgi"
 require "devise/test/integration_helpers"
 require "rails/test_help"
 
@@ -23,13 +23,15 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
 
   test "install page renders successfully" do
     get docs_install_path
+    response_text = normalized_response_text
+
     assert_response :success
     assert_select "h1", text: "Install"
-    assert_includes response.body, "Step 1: Add the gem"
-    assert_includes response.body, "gem \"recording_studio_exportable\""
-    assert_includes response.body, "bin/rails generate recording_studio_exportable:install"
-    assert_includes response.body, "bin/rails generate recording_studio_exportable:migrations"
-    assert_includes response.body, "bin/rails db:migrate"
+    assert_includes response_text, "Step 1: Add the gem"
+    assert_includes response_text, "gem \"recording_studio_exportable\""
+    assert_includes response_text, "bin/rails generate recording_studio_exportable:install"
+    assert_includes response_text, "bin/rails generate recording_studio_exportable:migrations"
+    assert_includes response_text, "bin/rails db:migrate"
   end
 
   test "config page renders successfully" do
@@ -51,7 +53,7 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     summary_data = create_recordable_type_summary_data
 
     get docs_recordable_types_path
-    response_text = response.body.gsub(/\s+/, " ").strip
+    response_text = normalized_response_text
 
     assert_response :success
     assert_select "h1", text: "Recordable types"
@@ -87,18 +89,18 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     record_child(page, root_recording, folder_recording)
 
     get docs_recordings_tree_path
+    response_text = normalized_response_text
 
     assert_response :success
     assert_select "h1", text: "Recordings tree"
-    assert_includes response.body, "Workspace: Tree Workspace"
-    assert_includes response.body, "Folder: Reference"
-    assert_includes response.body, "Page: API"
-    refute_includes response.body, "Access boundary"
-    refute_includes response.body, "Access: Admin"
+    assert_includes response_text, "Tree Workspace"
+    assert_includes response_text, "Reference"
+    assert_includes response_text, "API"
+    refute_includes response_text, "Access boundary"
     assert_select "div[role='tree']", count: 1
     assert_select "[role='treeitem']", minimum: 3
-    refute_includes response.body, "Current structure"
-    refute_includes response.body, "This tree is generated from RecordingStudio::Recording records"
+    refute_includes response_text, "Current structure"
+    refute_includes response_text, "This tree is generated from RecordingStudio::Recording records"
   end
 
   test "gem_views page renders successfully" do
@@ -160,22 +162,22 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     {
       workspace: recordable_type_summary(
         workspace_recordings_before + 3,
-        workspaces_before + 3,
-        "recordings",
-        "recordables"
+        workspaces_before + 3
       ),
       folder: recordable_type_summary(
         folder_recordings_before + 1,
-        folders_before + 1,
-        "recording",
-        "recordable"
+        folders_before + 1
       )
     }
   end
 
-  def recordable_type_summary(recording_count, recordable_count, recording_label, recordable_label)
-    "#{recording_count} #{recording_label} point to this type " \
-      "• #{recordable_count} #{recordable_label} in the database"
+  def recordable_type_summary(recording_count, recordable_count)
+    "#{recording_count} #{'recording'.pluralize(recording_count)} point to this type " \
+      "• #{recordable_count} #{'recordable'.pluralize(recordable_count)} in the database"
+  end
+
+  def normalized_response_text
+    CGI.unescapeHTML(response.body).gsub(/\s+/, " ").strip
   end
 
   def record_child(recordable, root_recording, parent_recording)

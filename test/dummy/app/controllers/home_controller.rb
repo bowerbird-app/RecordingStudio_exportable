@@ -1,7 +1,7 @@
 class HomeController < ApplicationController
   ARTICLE_TOPICS_PER_PAGE = 20
   TOPICS_PER_PAGE = 20
-  TOPICS_TABLE_COLUMNS = ["topic_name", "article_titles", "topic_created_at"].freeze
+  TOPICS_TABLE_COLUMNS = [ "topic_name", "article_titles", "topic_created_at" ].freeze
   DEFAULT_TOPICS_TABLE_COLUMNS = TOPICS_TABLE_COLUMNS.freeze
 
   def index
@@ -48,7 +48,7 @@ class HomeController < ApplicationController
     @article_topics_total_rows = @article_topic_rows.length
     @article_topics_page = params[:article_topics_page].to_i
     @article_topics_page = 1 if @article_topics_page < 1
-    @article_topics_total_pages = [(@article_topics_total_rows.to_f / ARTICLE_TOPICS_PER_PAGE).ceil, 1].max
+    @article_topics_total_pages = [ (@article_topics_total_rows.to_f / ARTICLE_TOPICS_PER_PAGE).ceil, 1 ].max
     @article_topics_page = @article_topics_total_pages if @article_topics_page > @article_topics_total_pages
 
     article_topics_offset = (@article_topics_page - 1) * ARTICLE_TOPICS_PER_PAGE
@@ -83,11 +83,21 @@ class HomeController < ApplicationController
     @topics_total_rows = @topic_article_rows.length
     @topics_page = params[:topics_page].to_i
     @topics_page = 1 if @topics_page < 1
-    @topics_total_pages = [(@topics_total_rows.to_f / TOPICS_PER_PAGE).ceil, 1].max
+    @topics_total_pages = [ (@topics_total_rows.to_f / TOPICS_PER_PAGE).ceil, 1 ].max
     @topics_page = @topics_total_pages if @topics_page > @topics_total_pages
 
     topics_offset = (@topics_page - 1) * TOPICS_PER_PAGE
     @topic_article_rows_page = @topic_article_rows.slice(topics_offset, TOPICS_PER_PAGE) || []
+
+    # --- Token-based export demo ---
+    @trusted_token = nil
+    if @demo_recording.present? && Current.actor.present?
+      begin
+        @trusted_token = issue_demo_token(@demo_recording)
+      rescue StandardError
+        @trusted_token = nil
+      end
+    end
   end
 
   private
@@ -104,5 +114,21 @@ class HomeController < ApplicationController
     Date.iso8601(value.to_s)
   rescue ArgumentError
     nil
+  end
+
+  def issue_demo_token(recording)
+    RecordingStudioExportable.issue_trusted_token(
+      context_recording: recording,
+      actor: Current.actor,
+      source: "RecordingStudioAdmin",
+      screen_identifier: "Homepage Demo Export",
+      columns: [
+        { key: :title, label: "Title", value: :title },
+        { key: :body, label: "Body", value: :body },
+        { key: :word_count, label: "Word count", value: ->(article) { article.body.to_s.split.size } }
+      ],
+      row_resolver: -> { Article.order(:title).to_a },
+      ttl: 30.seconds
+    )
   end
 end

@@ -4,6 +4,12 @@ require "test_helper"
 
 class HomeTopicsFilterTest < ActionDispatch::IntegrationTest
   test "topics created_at date range filters the visible rows" do
+    user = User.find_or_create_by!(email: "topics-filter@example.com") do |record|
+      record.password = "Password123!"
+      record.password_confirmation = "Password123!"
+    end
+    sign_in user
+
     dashboard = DemoDashboard.create!(name: "Topics Filter Dashboard")
     RecordingStudio.root_recording_for(dashboard)
 
@@ -19,11 +25,11 @@ class HomeTopicsFilterTest < ActionDispatch::IntegrationTest
     }
 
     assert_response :success
-    assert_includes response.body, "Visible Topic"
-    refute_includes response.body, "Hidden Topic"
-    assert_includes response.body, "Created at"
     assert_select "section#topics"
     assert_select "section#topics h2", text: "Topics"
+    assert_select "section#topics", text: /Visible Topic/
+    assert_select "section#topics", text: /Hidden Topic/, count: 0
+    assert_select "section#topics", text: /Created at/
     assert_select "form[action='#{root_path(anchor: "topics")}']", minimum: 1
     assert_select "a[href='#{root_path(anchor: "topics")}']", text: "Reset"
   end

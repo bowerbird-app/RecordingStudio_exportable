@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "devise/test/integration_helpers"
 
 class RootSwitchDropdownTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-
   test "home page renders the root switch dropdown trigger" do
     user = User.find_or_create_by!(email: "root-switch-test@example.com") do |record|
       record.password = "Password123!"

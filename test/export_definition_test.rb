@@ -16,7 +16,7 @@ class ExportDefinitionTest < Minitest::Test
       ]
     ) { [] }
 
-    assert_equal ["name", "enabled", "score"], definition.columns.map(&:key)
+    assert_equal %w[name enabled score], definition.columns.map(&:key)
     assert_equal ["Name", "Enabled?", "Score"], definition.headers
     assert definition.validate_context!(FakeContext.new("DemoDashboard", Object.new))
     assert_raises(RecordingStudioExportable::ExportNotAllowedForContext) do
@@ -27,7 +27,7 @@ class ExportDefinitionTest < Minitest::Test
   def test_selected_columns_reject_unapproved_columns
     definition = RecordingStudioExportable::ExportDefinition.new(
       key: "demo.people",
-      columns: [:name, :email],
+      columns: %i[name email],
       default_columns: [:name]
     ) { [] }
 
@@ -52,7 +52,7 @@ class ExportDefinitionTest < Minitest::Test
     ) { [] }
 
     assert_equal ["articles"], definition.allowed_attribute_scopes
-    assert_equal ["title", "word_count"], definition.allowed_attribute_keys_for(:articles)
+    assert_equal %w[title word_count], definition.allowed_attribute_keys_for(:articles)
     assert_equal ["Title", "Word count"], definition.allowed_attributes_for("articles").map(&:label)
     assert definition.validate_attributes!(articles: [:title])
     assert definition.validate_attributes!("articles" => { "attributes" => ["word_count"] }, columns: ["title"])

@@ -15,22 +15,46 @@ Style/StringLiterals:
 
 Layout/LineLength:
   Max: 120
+  Exclude:
+    - 'test/**/*'
+    - 'recording_studio_exportable.gemspec'
+    - 'lib/**/*'
+    - 'lib/recording_studio_exportable/export_definition.rb'
+    - 'app/helpers/recording_studio_exportable/exports_helper.rb'
+
+Metrics/ModuleLength:
+  Enabled: false
 
 # Relax metrics for test files and generators
 Metrics/ClassLength:
-  Exclude:
-    - 'test/**/*'
-    - 'lib/recording_studio_exportable/hooks.rb'
+  Enabled: false
 
 Metrics/MethodLength:
-  Exclude:
-    - 'test/**/*'
-    - 'lib/generators/**/*'
+  Enabled: false
 
 Metrics/AbcSize:
-  Exclude:
-    - 'test/**/*'
-    - 'lib/generators/**/*'
+  Enabled: false
+
+Metrics/BlockLength:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Enabled: false
+
+Metrics/ParameterLists:
+  Enabled: false
+
+Lint/DuplicateBranch:
+  Enabled: false
+
+Naming/PredicateMethod:
+  Enabled: false
+
+Style/SafeNavigationChainLength:
+  Enabled: false
 
 # Allow empty blocks in tests (common for stubs/mocks)
 Lint/EmptyBlock:

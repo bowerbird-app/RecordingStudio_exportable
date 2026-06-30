@@ -12,14 +12,14 @@ module RecordingStudioExportable
     DEFAULT_FILENAME = "export.csv"
 
     attr_reader :key, :label, :description, :context_types, :screen_keys, :columns,
-          :default_columns, :filename, :required_role, :max_rows, :formats,
-          :resolver, :context_predicate, :allowed_attributes
+                :default_columns, :filename, :required_role, :max_rows, :formats,
+                :resolver, :context_predicate, :allowed_attributes
 
     def initialize(key:, label: nil, description: nil, context_types: nil, screen_keys: nil,
-             columns: nil, default_columns: nil, headers: nil, filename: nil,
-             required_role: :view, max_rows: nil, row_limit: nil, formats: [:csv],
-             resolver: nil, context_predicate: nil, context_key: nil, exporter: nil,
-             allowed_attributes: nil, &block)
+                   columns: nil, default_columns: nil, headers: nil, filename: nil,
+                   required_role: :view, max_rows: nil, row_limit: nil, formats: [:csv],
+                   resolver: nil, context_predicate: nil, context_key: nil, exporter: nil,
+                   allowed_attributes: nil, &block)
       @key = normalize_key!(key)
       @label = label.presence || @key.titleize
       @description = description.to_s
@@ -107,9 +107,7 @@ module RecordingStudioExportable
         raise InvalidExportAttributes, "unknown export attribute scope #{scope}" if allowed_keys.empty?
 
         unknown = requested_keys - allowed_keys
-        if unknown.any?
-          raise InvalidExportAttributes, "unknown export attributes for #{scope}: #{unknown.join(', ')}"
-        end
+        raise InvalidExportAttributes, "unknown export attributes for #{scope}: #{unknown.join(', ')}" if unknown.any?
       end
 
       true
@@ -156,7 +154,11 @@ module RecordingStudioExportable
       raise InvalidExportDefinition, "resolver must respond to call" unless resolver.respond_to?(:call)
       raise InvalidExportDefinition, "columns are required" if columns.empty?
       raise InvalidExportDefinition, "formats are required" if formats.empty?
-      raise InvalidExportDefinition, "context_predicate must respond to call" if context_predicate && !context_predicate.respond_to?(:call)
+
+      return unless context_predicate && !context_predicate.respond_to?(:call)
+
+      raise InvalidExportDefinition,
+            "context_predicate must respond to call"
     end
 
     def valid_for_context?(context_recording, screen_key:)
@@ -235,7 +237,7 @@ module RecordingStudioExportable
     end
 
     def column_options_hash?(definition)
-      definition.keys.map { |key| key.to_s }.intersect?(%w[key label value])
+      definition.keys.map(&:to_s).intersect?(%w[key label value])
     end
 
     def normalize_default_columns(values)
@@ -248,9 +250,7 @@ module RecordingStudioExportable
 
     def normalize_allowed_attributes(definitions)
       return {} if definitions.blank?
-      unless definitions.respond_to?(:each)
-        raise InvalidExportDefinition, "allowed_attributes must be grouped by scope"
-      end
+      raise InvalidExportDefinition, "allowed_attributes must be grouped by scope" unless definitions.respond_to?(:each)
 
       definitions.each_with_object({}) do |(scope, attributes), normalized|
         normalized_scope = normalize_scope(scope)
@@ -287,7 +287,8 @@ module RecordingStudioExportable
     end
 
     def normalize_scope(value)
-      value.to_s.strip.downcase.tr("-", "_").gsub(/[^a-z0-9_]/, "_").gsub(/_+/, "_").delete_prefix("_").delete_suffix("_")
+      value.to_s.strip.downcase.tr("-", "_").gsub(/[^a-z0-9_]/, "_").gsub(/_+/,
+                                                                          "_").delete_prefix("_").delete_suffix("_")
     end
 
     def normalize_key!(value)

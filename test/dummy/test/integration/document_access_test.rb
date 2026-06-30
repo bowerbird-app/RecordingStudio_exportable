@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "devise/test/integration_helpers"
 
 class DocumentAccessTest < ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
-
   setup do
     load Rails.root.join("db/seeds.rb").to_s
     @document = Document.find_by!(title: "Export Governance Handbook")
