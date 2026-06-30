@@ -41,6 +41,10 @@ module Dummy
       g.orm :active_record, primary_key_type: :uuid
     end
 
+    initializer "dummy.ignore_recording_studio_export_definitions", before: :set_autoload_paths do |app|
+      Rails.autoloaders.main.ignore(app.root.join("app/services/exports"))
+    end
+
     # Don't generate system test files.
     config.generators.system_tests = nil
   end
