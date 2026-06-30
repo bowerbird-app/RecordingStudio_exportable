@@ -25,11 +25,11 @@ class HomeTopicsFilterTest < ActionDispatch::IntegrationTest
     }
 
     assert_response :success
-    assert_includes response.body, "Visible Topic"
-    refute_includes response.body, "Hidden Topic"
-    assert_includes response.body, "Created at"
     assert_select "section#topics"
     assert_select "section#topics h2", text: "Topics"
+    assert_select "section#topics", text: /Visible Topic/
+    assert_select "section#topics", text: /Hidden Topic/, count: 0
+    assert_select "section#topics", text: /Created at/
     assert_select "form[action='#{root_path(anchor: "topics")}']", minimum: 1
     assert_select "a[href='#{root_path(anchor: "topics")}']", text: "Reset"
   end
