@@ -3,15 +3,23 @@
 /* Include dummy app views for Tailwind CSS */
 @source "../../views/**/*.erb";
 
-/* Include RecordingStudio engine views for Tailwind CSS */
-@source "../../../vendor/bundle/**/recording_studio/app/views/**/*.erb";
-@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/recordingstudio-*/app/views/**/*.erb";
+/* Local vendor links created by bin/setup and CI (`bundle show` targets) */
+@source "../../../vendor/flat_pack/app/components/**/*.rb";
+@source "../../../vendor/flat_pack/app/components/**/*.erb";
+@source "../../../vendor/recording_studio/app/views/**/*.erb";
 
-/* Scan FlatPack components for classes used by the bundled ViewComponents */
-@source "../../../vendor/bundle/**/flat_pack/app/components/**/*.{rb,erb}";
-@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/flat_pack-*/app/components/**/*.{rb,erb}";
-@source "../../../vendor/bundle/**/flatpack/app/components/**/*.{rb,erb}";
-@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";
+/* Include RecordingStudio engine views for Tailwind CSS */
+@source "../../../vendor/bundle/**/bundler/gems/recordingstudio-*/app/views/**/*.erb";
+@source "../../../../../vendor/bundle/**/bundler/gems/recordingstudio-*/app/views/**/*.erb";
+@source "../../../../../../usr/local/bundle/**/bundler/gems/recordingstudio-*/app/views/**/*.erb";
+
+/* Scan FlatPack components when gems are installed into vendor/bundle */
+@source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.rb";
+@source "../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.erb";
+@source "../../../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.rb";
+@source "../../../../../vendor/bundle/**/bundler/gems/flatpack-*/app/components/**/*.erb";
+@source "../../../../../../usr/local/bundle/**/bundler/gems/flatpack-*/app/components/**/*.rb";
+@source "../../../../../../usr/local/bundle/**/bundler/gems/flatpack-*/app/components/**/*.erb";
 
 /* Include the engine's views in the Tailwind build */
 @source "../../../../../app/views/**/*.erb";

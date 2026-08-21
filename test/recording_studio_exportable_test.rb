@@ -31,12 +31,12 @@ class RecordingStudioExportableTest < Minitest::Test
   def test_dummy_tailwind_keeps_flatpack_theme_selection_in_flatpack
     tailwind_source = File.read(File.expand_path("dummy/app/assets/tailwind/application.css", __dir__))
 
-    assert_includes tailwind_source, "../../../vendor/bundle/**/flatpack/app/components/**/*.{rb,erb}"
-    assert_includes tailwind_source, "flatpack-*/app/components/**/*.{rb,erb}"
-    assert_includes tailwind_source, "../../../vendor/bundle/**/flat_pack/app/components/**/*.{rb,erb}"
-    assert_includes tailwind_source, "flat_pack-*/app/components/**/*.{rb,erb}"
-    assert_includes tailwind_source, "../../../vendor/bundle/**/recording_studio/app/views/**/*.erb"
-    assert_includes tailwind_source, "recordingstudio-*/app/views/**/*.erb"
+    assert_includes tailwind_source, "../../../vendor/flat_pack/app/components/**/*.rb"
+    assert_includes tailwind_source, "../../../vendor/flat_pack/app/components/**/*.erb"
+    assert_includes tailwind_source, "bundler/gems/flatpack-*/app/components/**/*.rb"
+    assert_includes tailwind_source, "bundler/gems/flatpack-*/app/components/**/*.erb"
+    assert_includes tailwind_source, "../../../vendor/recording_studio/app/views/**/*.erb"
+    assert_includes tailwind_source, "bundler/gems/recordingstudio-*/app/views/**/*.erb"
     refute_includes tailwind_source, "@theme"
     refute_includes tailwind_source, ":root {"
     refute_includes tailwind_source, "--color-fp-primary"

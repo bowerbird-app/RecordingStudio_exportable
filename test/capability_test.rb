@@ -17,160 +17,254 @@ class CapabilityTest < Minitest::Test
         articles: [{ key: :title, label: "Title", value: :title }]
       }
     ) { [] }
+
+    @original_capabilities =
+      RecordingStudio.configuration.instance_variable_get(:@capabilities)&.transform_values(&:dup) || {}
+    @original_capability_options =
+      RecordingStudio.configuration.instance_variable_get(:@capability_options)&.dup || {}
+    @defined_recordables = []
   end
 
   def teardown
+    Array(@defined_recordables).each do |const_name|
+      Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
+    end
     RecordingStudioExportable.instance_variable_set(:@configuration, @original_configuration)
+    RecordingStudio.configuration.instance_variable_set(:@capabilities, @original_capabilities)
+    RecordingStudio.configuration.instance_variable_set(:@capability_options, @original_capability_options)
   end
 
-  def test_enabled_registers_recording_studio_capability_options
-    enabled_calls = []
-    option_calls = []
+  def test_to_is_a_thin_wrapper_around_include_for
+    captured_name = nil
+    captured_options = nil
 
-    RecordingStudio.stub(:enable_capability, ->(capability, on:) { enabled_calls << [capability, on] }) do
-      RecordingStudio.stub(:set_capability_options, lambda { |capability, on:, **options|
-        option_calls << [capability, on, options]
-      }) do
-        assert RecordingStudio::Exportable::Capabilities::Exportable.enabled(
-          "Workspace",
-          export_keys: ["demo/people"],
-          required_role: :view,
-          max_rows: 25,
-          formats: [:csv]
-        )
-      end
+    RecordingStudio::Capabilities.stub(:include_for, lambda { |name, **options, &block|
+      captured_name = name
+      captured_options = options
+      block&.call(Class.new)
+      Module.new
+    }) do
+      RecordingStudio::Capabilities::Exportable.to(
+        export_keys: ["demo/people"],
+        required_role: :view,
+        max_rows: 25,
+        formats: [:csv]
+      )
     end
 
-    assert_equal [[:exportable, "Workspace"]], enabled_calls
-    assert_equal [[:exportable, "Workspace", { export_keys: ["demo.people"], required_role: :view, max_rows: 25, formats: [:csv] }]],
-                 option_calls
+    assert_equal :exportable, captured_name
+    assert_equal(
+      { export_keys: ["demo.people"], required_role: :view, max_rows: 25, formats: [:csv] },
+      captured_options
+    )
   end
 
-  def test_enabled_validates_only_exportable_options
-    assert_raises(ArgumentError) do
-      RecordingStudio::Exportable::Capabilities::Exportable.enabled("Workspace", max_rows: "many")
+  def test_to_enables_exportable_and_sets_options
+    host = define_recordable(:ToEnablementRecordable)
+
+    host.include RecordingStudio::Capabilities::Exportable.to(
+      export_keys: ["demo/people"],
+      required_role: :view,
+      max_rows: 25,
+      formats: [:csv]
+    )
+
+    assert RecordingStudio.capability_enabled?(:exportable, for: host)
+    assert_equal(
+      { export_keys: ["demo.people"], required_role: :view, max_rows: 25, formats: [:csv] },
+      RecordingStudio.capability_options(:exportable, for: host)
+    )
+  end
+
+  def test_to_accepts_exports_alias
+    host = define_recordable(:ToExportsAliasRecordable)
+
+    host.include RecordingStudio::Capabilities::Exportable.to(exports: ["demo/people"])
+
+    assert RecordingStudio.capability_enabled?(:exportable, for: host)
+    assert_equal({ export_keys: ["demo.people"] }, RecordingStudio.capability_options(:exportable, for: host))
+  end
+
+  def test_to_validates_exportable_options
+    error = assert_raises(ArgumentError) do
+      RecordingStudio::Capabilities::Exportable.to(max_rows: "many")
     end
+
+    assert_match(/max_rows must be an integer/, error.message)
   end
 
-  def test_enabled_infers_recordable_from_class_context
-    enabled_calls = []
-    option_calls = []
-    const_name = :CapabilityInferenceRecordable
-
-    Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
-
-    RecordingStudio.stub(:enable_capability, ->(capability, on:) { enabled_calls << [capability, on] }) do
-      RecordingStudio.stub(:set_capability_options, lambda { |capability, on:, **options|
-        option_calls << [capability, on, options]
-      }) do
-        Object.class_eval <<~RUBY, __FILE__, __LINE__ + 1
-          class CapabilityInferenceRecordable
-            RecordingStudio::Exportable::Capabilities::Exportable.enabled(
-              export_keys: ["demo/people"],
-              required_role: :view
-            )
-          end
-        RUBY
-      end
+  def test_to_rejects_unknown_options
+    error = assert_raises(ArgumentError) do
+      RecordingStudio::Capabilities::Exportable.to(not_a_real_option: true)
     end
 
-    assert_equal [[:exportable, "CapabilityInferenceRecordable"]], enabled_calls
-    assert_equal [[:exportable, "CapabilityInferenceRecordable", { export_keys: ["demo.people"], required_role: :view }]],
-                 option_calls
-  ensure
-    Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
+    assert_match(/unknown exportable option/, error.message)
   end
 
-  def test_enabled_installs_instance_export_key_helpers
-    const_name = :CapabilityInstanceHelpersRecordable
+  def test_to_does_not_register_the_capability
+    host = define_recordable(:ToDoesNotRegisterRecordable)
+    registered_before = RecordingStudio.registered_capabilities.dup
 
-    Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
+    host.include RecordingStudio::Capabilities::Exportable.to(export_keys: ["demo/people"])
 
-    RecordingStudio.stub(:enable_capability, true) do
-      RecordingStudio.stub(:set_capability_options, true) do
-        RecordingStudio.stub(:capability_options, { export_keys: ["demo/people", "demo/summary"] }) do
-          Object.class_eval <<~RUBY, __FILE__, __LINE__ + 1
-            class CapabilityInstanceHelpersRecordable
-              RecordingStudio::Exportable::Capabilities::Exportable.enabled(
-                export_keys: ["demo/people", "demo/summary"]
-              )
-            end
-          RUBY
+    assert_equal registered_before.keys.sort, RecordingStudio.registered_capabilities.keys.sort
+  end
 
-          instance = CapabilityInstanceHelpersRecordable.new
-          assert_equal ["demo.people", "demo.summary"], instance.export_keys
-          assert_nil instance.export_key
+  def test_installing_the_mixin_without_to_does_not_enable_exportable
+    host = define_recordable(:InstallDoesNotEnableRecordable)
+
+    refute RecordingStudio.capability_enabled?(:exportable, for: host)
+    refute_includes RecordingStudio.capabilities_for(host), :exportable
+  end
+
+  def test_enabled_still_enables_through_to_and_is_deprecated
+    host = define_recordable(:DeprecatedEnabledRecordable)
+    stderr = capture_io do
+      Object.class_eval <<~RUBY, __FILE__, __LINE__ + 1
+        class DeprecatedEnabledRecordable
+          RecordingStudio::Capabilities::Exportable.enabled(
+            export_keys: ["demo/people"],
+            required_role: :view
+          )
         end
-      end
-    end
-  ensure
-    Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
+      RUBY
+    end.last
+
+    assert_match(/DEPRECATION/, stderr)
+    assert_match(/Exportable.enabled is deprecated/, stderr)
+    assert_match(/Exportable\.to/, stderr)
+    assert RecordingStudio.capability_enabled?(:exportable, for: host)
+    assert_equal(
+      { export_keys: ["demo.people"], required_role: :view },
+      RecordingStudio.capability_options(:exportable, for: host)
+    )
   end
 
-  def test_enabled_does_not_override_existing_export_keys_methods
-    const_name = :CapabilityCustomExportKeysRecordable
+  def test_enabled_accepts_an_explicit_recordable
+    host = define_recordable(:ExplicitEnabledRecordable)
+    stderr = capture_io do
+      RecordingStudio::Capabilities::Exportable.enabled(
+        host,
+        export_keys: ["demo/people"]
+      )
+    end.last
 
-    Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
+    assert_match(/DEPRECATION/, stderr)
+    assert RecordingStudio.capability_enabled?(:exportable, for: host)
+  end
 
-    RecordingStudio.stub(:enable_capability, true) do
-      RecordingStudio.stub(:set_capability_options, true) do
-        RecordingStudio.stub(:capability_options, { export_keys: ["demo/people"] }) do
-          Object.class_eval <<~RUBY, __FILE__, __LINE__ + 1
-            class CapabilityCustomExportKeysRecordable
-              def export_keys
-                ["custom.key"]
-              end
+  def test_enabled_accepts_a_recordable_type_name
+    host = define_recordable(:NamedEnabledRecordable)
+    stderr = capture_io do
+      RecordingStudio::Capabilities::Exportable.enabled(
+        "NamedEnabledRecordable",
+        export_keys: ["demo/people"]
+      )
+    end.last
 
-              def export_key
-                "custom.key"
-              end
+    assert_match(/DEPRECATION/, stderr)
+    assert RecordingStudio.capability_enabled?(:exportable, for: host)
+  end
 
-              RecordingStudio::Exportable::Capabilities::Exportable.enabled(
-                export_keys: ["demo/people"]
-              )
-            end
-          RUBY
+  def test_enabled_requires_a_resolvable_recordable
+    stderr = capture_io do
+      error = assert_raises(ArgumentError) do
+        RecordingStudio::Capabilities::Exportable.enabled(export_keys: ["demo/people"])
+      end
 
-          instance = CapabilityCustomExportKeysRecordable.new
-          assert_equal ["custom.key"], instance.export_keys
-          assert_equal "custom.key", instance.export_key
-        end
+      assert_match(/recordable is required/, error.message)
+    end.last
+
+    assert_match(/DEPRECATION/, stderr)
+  end
+
+  def test_to_rejects_blank_required_role
+    error = assert_raises(ArgumentError) do
+      RecordingStudio::Capabilities::Exportable.to(required_role: "")
+    end
+
+    assert_match(/required_role cannot be blank/, error.message)
+  end
+
+  def test_to_rejects_blank_formats
+    error = assert_raises(ArgumentError) do
+      RecordingStudio::Capabilities::Exportable.to(formats: [""])
+    end
+
+    assert_match(/formats cannot be blank/, error.message)
+  end
+
+  def test_legacy_constant_path_aliases_capabilities_exportable
+    assert_same RecordingStudio::Capabilities::Exportable,
+                RecordingStudio::Exportable::Capabilities::Exportable
+  end
+
+  def test_to_installs_instance_export_key_helpers
+    host = define_recordable(:ToInstanceHelpersRecordable)
+
+    host.include RecordingStudio::Capabilities::Exportable.to(
+      export_keys: ["demo/people", "demo/summary"]
+    )
+
+    instance = host.new
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo/people", "demo/summary"] }) do
+      assert_equal ["demo.people", "demo.summary"], instance.export_keys
+      assert_nil instance.export_key
+    end
+  end
+
+  def test_to_does_not_override_existing_export_keys_methods
+    host = define_recordable(:ToCustomExportKeysRecordable)
+    host.class_eval do
+      def export_keys
+        ["custom.key"]
+      end
+
+      def export_key
+        "custom.key"
       end
     end
-  ensure
-    Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
+
+    host.include RecordingStudio::Capabilities::Exportable.to(export_keys: ["demo/people"])
+
+    instance = host.new
+    assert_equal ["custom.key"], instance.export_keys
+    assert_equal "custom.key", instance.export_key
   end
 
   def test_export_key_with_argument_returns_definition_metadata_for_enabled_key
-    const_name = :CapabilityExportKeyDefinitionRecordable
+    host = define_recordable(:ToExportKeyDefinitionRecordable)
+    host.include RecordingStudio::Capabilities::Exportable.to(export_keys: ["demo/articles"])
 
-    Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
+    instance = host.new
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo/articles"] }) do
+      definition = instance.export_key("demo/articles")
 
-    RecordingStudio.stub(:enable_capability, true) do
-      RecordingStudio.stub(:set_capability_options, true) do
-        RecordingStudio.stub(:capability_options, { export_keys: ["demo/articles"] }) do
-          Object.class_eval <<~RUBY, __FILE__, __LINE__ + 1
-            class CapabilityExportKeyDefinitionRecordable
-              RecordingStudio::Exportable::Capabilities::Exportable.enabled(
-                export_keys: ["demo/articles"]
-              )
-            end
-          RUBY
-
-          instance = CapabilityExportKeyDefinitionRecordable.new
-          definition = instance.export_key("demo/articles")
-
-          refute_nil definition
-          assert_equal "demo.articles", definition.key
-          assert_equal "Articles export", definition.label
-          assert_equal "Exports article records", definition.description
-          assert_equal :admin, definition.required_role
-          assert_equal ["articles"], definition.allowed_attribute_scopes
-          assert_nil instance.export_key("demo.people")
-        end
-      end
+      refute_nil definition
+      assert_equal "demo.articles", definition.key
+      assert_equal "Articles export", definition.label
+      assert_equal "Exports article records", definition.description
+      assert_equal :admin, definition.required_role
+      assert_equal ["articles"], definition.allowed_attribute_scopes
+      assert_nil instance.export_key("demo.people")
     end
-  ensure
+  end
+
+  def test_documented_host_verb_is_include_to
+    readme = File.read(File.expand_path("../README.md", __dir__))
+    dummy_dashboard = File.read(File.expand_path("dummy/app/models/demo_dashboard.rb", __dir__))
+
+    assert_includes readme, "include RecordingStudio::Capabilities::Exportable.to"
+    refute_match(/Capabilities::Exportable\.enabled\(/, readme)
+    assert_includes dummy_dashboard, "include RecordingStudio::Capabilities::Exportable.to"
+    refute_includes dummy_dashboard, ".enabled("
+  end
+
+  private
+
+  def define_recordable(const_name)
     Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
+    @defined_recordables << const_name
+    Object.const_set(const_name, Class.new)
   end
 end

@@ -3,7 +3,7 @@ class Document < ApplicationRecord
 
   has_many :items, dependent: :destroy
 
-  RecordingStudio::Exportable::Capabilities::Exportable.enabled(
+  include RecordingStudio::Capabilities::Exportable.to(
     export_keys: [ "recording_studio_document_items_export" ]
   )
 end

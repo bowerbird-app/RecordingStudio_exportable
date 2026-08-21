@@ -8,7 +8,7 @@ class Article < ApplicationRecord
     "#{title} - #{author_label}"
   end
 
-  RecordingStudio::Exportable::Capabilities::Exportable.enabled(
+  include RecordingStudio::Capabilities::Exportable.to(
     export_keys: [
       "recording_studio_article_export",
       "recording_studio_article_topics_authors_export"

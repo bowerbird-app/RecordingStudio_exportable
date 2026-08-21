@@ -1,7 +1,10 @@
 # RecordingStudioExportable
 
 CSV export capability addon for RecordingStudio. Host apps register namespaced export definitions, enable the
-`:exportable` capability on supported recordables, and stream authorized in-memory CSV downloads.
+`:exportable` capability on supported recordables with `include RecordingStudio::Capabilities::Exportable.to(...)`,
+and stream authorized in-memory CSV downloads.
+
+Installing this gem registers `:exportable`. It does not turn exports on for every recordable.
 
 ## What's Included
 
@@ -73,7 +76,7 @@ end
 class Workspace < ApplicationRecord
   recording_studio_recordable label: "Workspace", root: true
 
-  RecordingStudio::Exportable::Capabilities::Exportable.enabled(
+  include RecordingStudio::Capabilities::Exportable.to(
     export_keys: ["reports.example"],
     required_role: :view,
     max_rows: 1_000,
@@ -218,9 +221,9 @@ To add new recordable types:
    end
    ```
 
-### RecordingStudio v3 Declarations
+### RecordingStudio declarations
 
-RecordingStudio v3 expects every configured ActiveRecord recordable type to declare its hierarchy rules:
+RecordingStudio expects every configured ActiveRecord recordable type to declare its hierarchy rules:
 
 - `Workspace` declares `root: true`
 - `Folder` and `Page` declare `root: false, allowed_parent_types: ["Workspace", "Folder"]`
@@ -261,7 +264,7 @@ See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full do
 | Rails           | 8.1+    |
 | PostgreSQL      | 16      |
 | TailwindCSS     | 4       |
-| RecordingStudio | v3.0.0 (pinned to `recording_studio/v3.0.0` in `test/dummy/Gemfile`) |
+| RecordingStudio | v4.2.0 (pinned to `v4.2.0` in `Gemfile` and `test/dummy/Gemfile`) |
 | FlatPack        | v0.1.95 (pinned in `test/dummy/Gemfile`) |
 | Devise          | latest  |
 

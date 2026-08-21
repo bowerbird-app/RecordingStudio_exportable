@@ -41,11 +41,11 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "How to configure RecordingStudioExportable across initializer"
     assert_includes response.body, "What goes where"
     assert_includes response.body, "All config parameters"
-    assert_includes response.body, "enabled(...) parameters"
+    assert_includes response.body, "include .to parameters"
     assert_includes response.body, "register_export(...) parameters"
     assert_includes response.body, "config.current_actor"
     assert_includes response.body, "config.context_export_keys_resolver"
-    assert_includes response.body, "RecordingStudio::Exportable::Capabilities::Exportable.enabled"
+    assert_includes response.body, "include RecordingStudio::Capabilities::Exportable.to"
     assert_includes response.body, "context_predicate"
   end
 
