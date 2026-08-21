@@ -84,9 +84,16 @@ This creates the database, runs migrations (including enabling `pgcrypto` for UU
 
 ### 6. Build TailwindCSS
 
+Link the bundled Flatpack and RecordingStudio gems so Tailwind can scan their classes, then build:
+
 ```bash
+mkdir -p vendor
+ln -sfn "$(bundle show flat_pack)" vendor/flat_pack
+ln -sfn "$(bundle show recording_studio)" vendor/recording_studio
 bin/rails tailwindcss:build
 ```
+
+`bin/setup` creates those links automatically. Without them, table cell padding and other gem-only utilities are missing from the dummy CSS.
 
 ### 7. Start the Development Server
 

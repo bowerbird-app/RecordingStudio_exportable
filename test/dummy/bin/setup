@@ -15,6 +15,16 @@ FileUtils.chdir APP_ROOT do
   puts "== Installing dependencies =="
   system("bundle check") || system!("bundle install")
 
+  puts "\n== Linking Tailwind scan sources =="
+  FileUtils.mkdir_p("vendor")
+  %w[flat_pack recording_studio].each do |gem_name|
+    source = `bundle show #{gem_name}`.strip
+    next if source.empty?
+
+    FileUtils.rm_f(File.join("vendor", gem_name))
+    FileUtils.ln_s(source, File.join("vendor", gem_name))
+  end
+
   # puts "\n== Copying sample files =="
   # unless File.exist?("config/database.yml")
   #   FileUtils.cp "config/database.yml.sample", "config/database.yml"

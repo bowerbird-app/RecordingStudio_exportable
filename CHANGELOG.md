@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Require RecordingStudio `~> 4.2` and pin the gem and dummy app to tag `v4.2.0`.
 - Dummy recordables now opt in with `include .to`. Installing the gem still does not enable `:exportable`.
 - Engine screens use RecordingStudio's shared default layout when the host has not set `config.layout`.
+- Dummy Tailwind scans a `vendor/flat_pack` symlink so table padding and other Flatpack utilities load.
 
 ### Deprecated
 - `RecordingStudio::Capabilities::Exportable.enabled` remains available and calls through to `.to`, but it is no longer the documented host verb.

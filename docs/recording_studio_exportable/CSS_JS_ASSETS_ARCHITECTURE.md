@@ -256,11 +256,11 @@ The file `test/dummy/app/assets/tailwind/application.css` configures Tailwind:
 ```css
 @import "tailwindcss";
 
-/* Include the engine's views in the Tailwind build */
+@source "../../../vendor/flat_pack/app/components/**/*.rb";
 @source "../../../../../app/views/**/*.erb";
 ```
 
-> **Note:** The relative path `../../../../../app/views/**/*.erb` points from the dummy app up to the engine's `app/views` folder so Tailwind can detect classes used in engine templates. Host applications will use the gem path instead.
+> **Note:** `../../../../../app/views/**/*.erb` points from the dummy app up to this engine's templates. `vendor/flat_pack` is a `bundle show` symlink created by `bin/setup` and CI so table and other Flatpack utilities are included even when gems are not installed under `vendor/bundle`. Host applications scan their own bundle path instead.
 
 ------------------------------------------------------------
 5.3 Auto-Rebuild in Development
