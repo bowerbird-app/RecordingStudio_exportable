@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 RecordingStudioAccessible.configure do |config|
+  config.access_actor_types = [ "User" ]
   config.access_management_current_actor_resolver = ->(controller: nil) { controller&.send(:current_user) || Current.actor }
 
   config.access_management_authorizer = lambda do |recording:, actor: nil, controller: nil|

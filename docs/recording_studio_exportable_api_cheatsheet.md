@@ -3,7 +3,7 @@
 This note explains the two main APIs used in the dummy app configuration:
 
 - `config.register_export(...)`
-- `RecordingStudio::Exportable::Capabilities::Exportable.enabled(...)`
+- `include RecordingStudio::Capabilities::Exportable.to(...)`
 
 It also explains how `context_recording`, `context_types`, and `required_role` fit into the access model.
 
@@ -149,7 +149,7 @@ This is the definition of a single export.
 
 If you need two exports, you call `register_export` twice with two different keys.
 
-## 2. `RecordingStudio::Exportable::Capabilities::Exportable.enabled(...)`
+## 2. `include RecordingStudio::Capabilities::Exportable.to(...)`
 
 This enables export keys for a recordable type.
 
@@ -158,29 +158,28 @@ Think of it as:
 - the allowlist for a recordable type
 - the second lock after the export is defined globally
 
-Example:
+Installing the gem registers `:exportable`. It does not turn exports on. Each recordable opts in:
 
 ```ruby
 class DemoDashboard < ApplicationRecord
   recording_studio_recordable label: "Demo Dashboard", root: true
 
-  RecordingStudio::Exportable::Capabilities::Exportable.enabled(
+  include RecordingStudio::Capabilities::Exportable.to(
     export_keys: ["recording_studio_demo_dashboard_requests_export"]
   )
 end
 ```
 
-### What can be passed to `enabled`
+`.to` is a thin wrapper around `RecordingStudio::Capabilities.include_for(:exportable, **options)`.
+Option validation stays in this gem. `register_capability` stays at engine boot.
 
-The capability method is used like this:
+### What can be passed to `.to`
+
+The capability include is used like this:
 
 ```ruby
-enabled(export_keys: [...], **options)
+include RecordingStudio::Capabilities::Exportable.to(export_keys: [...], **options)
 ```
-
-#### Required
-
-- call `enabled(...)` from inside the recordable model class body so the recordable type can be inferred
 
 #### Optional
 
@@ -196,23 +195,23 @@ This does not define the export itself.
 
 It only says which export keys are allowed on that context type.
 
-If you want the same export on another context type, you need another `enabled(...)` call for that other type.
-
-Example:
+If you want the same export on another context type, include `.to` on that other type.
 
 ```ruby
 class DemoDashboard < ApplicationRecord
-  RecordingStudio::Exportable::Capabilities::Exportable.enabled(
+  include RecordingStudio::Capabilities::Exportable.to(
     export_keys: ["recording_studio_demo_dashboard_requests_export"]
   )
 end
 
 class Workspace < ApplicationRecord
-  RecordingStudio::Exportable::Capabilities::Exportable.enabled(
+  include RecordingStudio::Capabilities::Exportable.to(
     export_keys: ["recording_studio_demo_dashboard_requests_export"]
   )
 end
 ```
+
+`RecordingStudio::Capabilities::Exportable.enabled` still calls through to the same path and prints a deprecation warning. Do not use it in new hosts.
 
 ## 3. The two-lock model
 
@@ -224,7 +223,7 @@ An export must pass two gates:
 That means:
 
 - `register_export(...)` creates the export definition
-- `enabled(...)` allows that definition on a particular recordable type
+- `include RecordingStudio::Capabilities::Exportable.to(...)` allows that definition on a particular recordable type
 
 If either one is missing, the export should fail.
 
@@ -368,7 +367,7 @@ So the resolver should still be scoped carefully:
 ## 9. Short version
 
 - `register_export(...)` = define the export
-- `enabled(...)` = allow that export key on a context type
+- `include RecordingStudio::Capabilities::Exportable.to(...)` = allow that export key on a context type
 - `context_recording` = the export boundary and permission anchor
 - `context_types` = allowed context types, not table names
 - `context_key` / `context_keys` = extra optional screen/section restriction inside the context

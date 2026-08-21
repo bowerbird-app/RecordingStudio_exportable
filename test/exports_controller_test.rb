@@ -38,7 +38,7 @@ class ExportsControllerTest < Minitest::Test
 
     assert_includes source, "layout :recording_studio_exportable_layout"
     assert_includes source, "RecordingStudioExportable.configuration.layout"
-    assert_includes source, 'lookup_context.exists?("layouts/flat_pack_sidebar") ? "flat_pack_sidebar" : "application"'
+    assert_includes source, "recording_studio/default_layout"
   end
 
   def test_token_expired_page_uses_refresh_prompt_only

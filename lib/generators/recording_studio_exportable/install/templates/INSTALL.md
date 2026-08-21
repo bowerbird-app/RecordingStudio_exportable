@@ -8,5 +8,5 @@ Next steps:
 4. Apply the migrations with `bin/rails db:migrate`.
 5. Run `bin/rails tailwindcss:build` if you use Tailwind CSS.
 6. Mount routes are added at the configured mount path. Adjust auth, layout, and current actor integration to match your host app.
-7. Enable the capability inside each supported recordable model with `RecordingStudio::Exportable::Capabilities::Exportable.enabled(exports: ["reports.example"])`.
-8. If your host app uses RecordingStudio v3, keep strict declarations enabled and add `recording_studio_recordable(...)` to every configured recordable before running `RecordingStudio.validate_recordable_declarations!`.
+7. Enable the capability inside each supported recordable model with `include RecordingStudio::Capabilities::Exportable.to(export_keys: ["reports.example"])`.
+8. Keep strict declarations enabled and add `recording_studio_recordable(...)` to every configured recordable before running `RecordingStudio.validate_recordable_declarations!`.

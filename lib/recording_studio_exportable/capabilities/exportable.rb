@@ -1,126 +1,156 @@
 # frozen_string_literal: true
 
+require "active_support/concern"
 require "active_support/core_ext/object/blank"
 
 module RecordingStudio
-  module Exportable
-    module Capabilities
-      module Exportable
-        CAPABILITY_NAME = :exportable
-        VALID_OPTION_KEYS = %i[required_role max_rows formats export_keys exports].freeze
+  module Capabilities
+    module Exportable
+      extend ActiveSupport::Concern
 
-        def self.enabled(recordable = nil, export_keys: nil, exports: nil, **options)
-          recordable ||= infer_recordable_from_caller
-          raise ArgumentError, "recordable is required" if recordable.blank?
+      CAPABILITY_NAME = :exportable
+      VALID_OPTION_KEYS = %i[required_role max_rows formats export_keys exports].freeze
 
-          options = options.dup
-          options[:export_keys] ||= export_keys || exports if export_keys || exports
-          validate_options!(options)
+      included do |base|
+        RecordingStudio::Capabilities::Exportable.install_recordable_methods!(base)
+      end
 
-          type_name = if RecordingStudio.respond_to?(:recordable_type_name)
-                        RecordingStudio.recordable_type_name(recordable)
-                      elsif recordable.respond_to?(:name)
-                        recordable.name
-                      else
-                        recordable.to_s
-                      end
-          raise ArgumentError, "recordable type is required" if type_name.blank?
+      def self.to(**options)
+        prepared = prepare_options(options)
+        mixin = self
 
-          normalized_options = normalize_options(options)
-          install_recordable_methods!(recordable)
-          RecordingStudio.enable_capability(CAPABILITY_NAME, on: type_name)
-          RecordingStudio.set_capability_options(CAPABILITY_NAME, on: type_name, **normalized_options)
-          true
+        RecordingStudio::Capabilities.include_for(CAPABILITY_NAME, **prepared) do |base|
+          base.include mixin unless base < mixin
         end
+      end
 
-        def self.infer_recordable_from_caller
-          location = caller_locations(2, 10)&.find { |entry| entry.label.to_s.start_with?("<class:") }
-          return if location.nil?
+      def self.enabled(recordable = nil, export_keys: nil, exports: nil, **options)
+        warn(
+          "[DEPRECATION] RecordingStudio::Capabilities::Exportable.enabled is deprecated. " \
+          "Use `include RecordingStudio::Capabilities::Exportable.to(**options)` instead.",
+          uplevel: 1
+        )
 
-          class_name = location.label[/\A<class:(.+)>\z/, 1]
-          return if class_name.nil? || class_name.start_with?("#<")
+        options = options.dup
+        options[:export_keys] ||= export_keys || exports if export_keys || exports
 
-          Object.const_get(class_name)
-        rescue NameError
-          nil
+        host = resolve_recordable(recordable || infer_recordable_from_caller)
+        host.include(to(**options))
+        true
+      end
+
+      def self.resolve_recordable(recordable)
+        host = recordable
+        host = host.safe_constantize if host.is_a?(String) && host.respond_to?(:safe_constantize)
+        host = host.to_s.safe_constantize if host.is_a?(String)
+        raise ArgumentError, "recordable is required" if host.blank?
+        raise ArgumentError, "recordable type is required" unless host.is_a?(Module)
+
+        host
+      end
+
+      def self.infer_recordable_from_caller
+        location = caller_locations(2, 10)&.find { |entry| entry.label.to_s.start_with?("<class:") }
+        return if location.nil?
+
+        class_name = location.label[/\A<class:(.+)>\z/, 1]
+        return if class_name.nil? || class_name.start_with?("#<")
+
+        Object.const_get(class_name)
+      rescue NameError
+        nil
+      end
+
+      def self.prepare_options(options)
+        options = options.dup
+        options[:export_keys] ||= options.delete(:exports) if options.key?(:exports)
+        validate_options!(options)
+        normalize_options(options)
+      end
+
+      def self.validate_options!(options)
+        unknown = options.keys.map(&:to_sym) - VALID_OPTION_KEYS
+        raise ArgumentError, "unknown exportable option(s): #{unknown.join(', ')}" if unknown.any?
+
+        if options.key?(:max_rows)
+          begin
+            Integer(options[:max_rows])
+          rescue ArgumentError, TypeError
+            raise ArgumentError, "max_rows must be an integer"
+          end
         end
-
-        def self.validate_options!(options)
-          unknown = options.keys.map(&:to_sym) - VALID_OPTION_KEYS
-          raise ArgumentError, "unknown exportable option(s): #{unknown.join(', ')}" if unknown.any?
-
-          if options.key?(:max_rows)
-            begin
-              Integer(options[:max_rows])
-            rescue ArgumentError, TypeError
-              raise ArgumentError, "max_rows must be an integer"
-            end
+        if options.key?(:formats)
+          Array(options[:formats]).each do |format|
+            raise ArgumentError, "formats cannot be blank" if format.blank?
           end
-          if options.key?(:formats)
-            Array(options[:formats]).each do |format|
-              raise ArgumentError, "formats cannot be blank" if format.blank?
-            end
-          end
-          return unless options.key?(:required_role) && options[:required_role].blank?
-
-          raise ArgumentError,
-                "required_role cannot be blank"
         end
+        return unless options.key?(:required_role) && options[:required_role].blank?
 
-        def self.normalize_options(options)
-          options = options.dup
-          options[:export_keys] ||= options.delete(:exports) if options.key?(:exports)
-          if options.key?(:export_keys)
-            options[:export_keys] = Array(options[:export_keys]).map do |key|
-              RecordingStudioExportable.configuration.normalize_key(key)
-            end
+        raise ArgumentError,
+              "required_role cannot be blank"
+      end
+
+      def self.normalize_options(options)
+        options = options.dup
+        options[:export_keys] ||= options.delete(:exports) if options.key?(:exports)
+        if options.key?(:export_keys)
+          options[:export_keys] = Array(options[:export_keys]).map do |key|
+            RecordingStudioExportable.configuration.normalize_key(key)
           end
-          if options.key?(:formats)
-            options[:formats] = Array(options[:formats]).map do |format|
-              format.to_s.downcase.to_sym
-            end
-          end
-          options[:required_role] = options[:required_role].to_sym if options.key?(:required_role)
-          options[:max_rows] = Integer(options[:max_rows]) if options.key?(:max_rows)
-          options
         end
+        if options.key?(:formats)
+          options[:formats] = Array(options[:formats]).map do |format|
+            format.to_s.downcase.to_sym
+          end
+        end
+        options[:required_role] = options[:required_role].to_sym if options.key?(:required_role)
+        options[:max_rows] = Integer(options[:max_rows]) if options.key?(:max_rows)
+        options
+      end
 
-        def self.install_recordable_methods!(recordable)
-          return unless recordable.respond_to?(:class_eval)
+      def self.install_recordable_methods!(recordable)
+        return unless recordable.respond_to?(:class_eval)
 
-          recordable.class_eval do
-            unless method_defined?(:export_keys)
-              define_method(:export_keys) do
-                options = if RecordingStudio.respond_to?(:capability_options)
-                            RecordingStudio.capability_options(:exportable, for: self.class.name) || {}
-                          else
-                            {}
-                          end
+        recordable.class_eval do
+          unless method_defined?(:export_keys)
+            define_method(:export_keys) do
+              options = if RecordingStudio.respond_to?(:capability_options)
+                          RecordingStudio.capability_options(:exportable, for: self.class.name) || {}
+                        else
+                          {}
+                        end
 
-                if options.respond_to?(:values_at)
-                  keys = options.values_at(:export_keys, "export_keys", :exports,
-                                           "exports").compact.first
-                end
-                Array(keys).map { |key| RecordingStudioExportable.configuration.normalize_key(key) }.uniq
+              if options.respond_to?(:values_at)
+                keys = options.values_at(:export_keys, "export_keys", :exports,
+                                         "exports").compact.first
               end
+              Array(keys).map { |key| RecordingStudioExportable.configuration.normalize_key(key) }.uniq
             end
+          end
 
-            unless method_defined?(:export_key)
-              define_method(:export_key) do |key = nil|
-                if key.present?
-                  normalized_key = RecordingStudioExportable.configuration.normalize_key(key)
-                  return unless export_keys.include?(normalized_key)
+          unless method_defined?(:export_key)
+            define_method(:export_key) do |key = nil|
+              if key.present?
+                normalized_key = RecordingStudioExportable.configuration.normalize_key(key)
+                return unless export_keys.include?(normalized_key)
 
-                  return RecordingStudioExportable.configuration.export_definition_for(normalized_key)
-                end
-
-                keys = export_keys
-                keys.one? ? keys.first : nil
+                return RecordingStudioExportable.configuration.export_definition_for(normalized_key)
               end
+
+              keys = export_keys
+              keys.one? ? keys.first : nil
             end
           end
         end
       end
+    end
+  end
+end
+
+module RecordingStudio
+  module Exportable
+    module Capabilities
+      Exportable = ::RecordingStudio::Capabilities::Exportable
     end
   end
 end
