@@ -268,6 +268,15 @@ See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full do
 | FlatPack        | v0.1.95 (pinned in `test/dummy/Gemfile`) |
 | Devise          | latest  |
 
+## Cloud Agent boot
+
+Cloud Agent Builds run `.cursor/install.sh`, then `.cursor/fetch-skills.sh`.
+The install hook provisions a cold image. On a warm snapshot it skips apt,
+ruby-build, db:prepare, and tailwind when Ruby, bundle, and Postgres are
+already usable. Fetch-skills always runs last. `.cursor/start.sh` starts
+PostgreSQL on each boot. Rebuild with Draft off to load a new pack. See
+[Cursor skills in Cloud Agents](docs/cursor-skills.md).
+
 ## Documentation
 
 The original gem template documentation is preserved in `docs/recording_studio_exportable/` as architectural reference material. Use it as background on the engine conventions; the README and dummy app are the source of truth for the Recording Studio addon workflow.
