@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-# Cloud Agent install hook for Recording Studio Exportable.
-#
-# Cold image: provision Ruby, PostgreSQL 16, gems, the dummy database, and CSS.
-# Warm snapshot: skip apt, ruby-build, db:prepare, and tailwind when Ruby, bundle,
-# and Postgres are already usable. Always fetch skills last. A skippable
-# provision failure must not fail the Build.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

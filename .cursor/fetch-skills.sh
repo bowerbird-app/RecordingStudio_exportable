@@ -1,12 +1,4 @@
 #!/usr/bin/env bash
-# Cloud Agent Build hook. Fetches project skills into .cursor/skills and plugin
-# *.mdc rules into .cursor/rules (both gitignored). Lists recording-studio-*
-# from the plugin skills directory, then extra skills from skill-sources.json,
-# then type=file *.mdc from the plugin rules directory. Discover ids via the
-# public GitHub contents API, then GET each file from raw.githubusercontent.com.
-# Never clones. Never writes ~/.cursor/skills or ~/.cursor/rules. Fetch failures
-# warn on stderr and continue; always exit 0 so the Build succeeds.
-
 set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
