@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Pin RecordingStudio to git tag `v4.2.2` in the gem and dummy Gemfiles.
+
 ## [0.2.1] - 2026-09-03
 
 Cloud Agent Builds fetch Cursor skills at Build. Warm rebuilds skip provision.
