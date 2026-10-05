@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Pin RecordingStudio to git tag `v4.2.2` in the gem and dummy Gemfiles.
+- Pin RecordingStudio Accessible to git tag `v0.11.1` in the gem and dummy Gemfiles.
 
 ## [0.2.1] - 2026-09-03
 
