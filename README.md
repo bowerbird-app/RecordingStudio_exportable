@@ -33,6 +33,8 @@ The dummy app ships with a starter sidebar documentation shell for authenticated
 
 The dummy app is intended as a host-app validation surface for authentication, FlatPack rendering, Tailwind source scanning, and RecordingStudio route wiring. It pins RecordingStudio Accessible to `v0.11.1`, runs Accessible 0.8–0.11 migrations, and seeds access grants through `RecordingStudioAccessible.grant_access` (Access records are readonly).
 
+Dummy credentials (`test/dummy/config/credentials.yml.enc`) are encrypted with the shared RecordingStudio_* development master key. Set `RAILS_MASTER_KEY` or put that key in `test/dummy/config/master.key` (gitignored). Keep the encrypted file; do not generate a per-repo dummy key.
+
 ### Login Credentials
 
 | Field    | Value             |
@@ -274,8 +276,10 @@ See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full do
 Cloud Agent Builds run `.cursor/install.sh`, then `.cursor/fetch-skills.sh`.
 The install hook provisions a cold image. On a warm snapshot it skips apt,
 ruby-build, db:prepare, and tailwind when Ruby, bundle, and Postgres are
-already usable. Fetch-skills always runs last. `.cursor/start.sh` starts
-PostgreSQL on each boot. Rebuild with Draft off to load a new pack. See
+already usable. If `RAILS_MASTER_KEY` is set, `install.sh` writes gitignored
+`test/dummy/config/master.key` so dummy credentials decrypt. Fetch-skills
+always runs last. `.cursor/start.sh` starts PostgreSQL on each boot. Rebuild
+with Draft off to load a new pack. See
 [Cursor skills in Cloud Agents](docs/cursor-skills.md).
 
 ## Documentation

@@ -1,6 +1,6 @@
 > **Architecture Documentation**
 > *   **Canonical Source:** [bowerbird-app/recording_studio_exportable](https://github.com/bowerbird-app/recording_studio_exportable/tree/main/docs/recording_studio_exportable)
-> *   **Last Updated:** May 5, 2026
+> *   **Last Updated:** October 5, 2026
 >
 > *Maintainers: Please update the date above when modifying this file.*
 
@@ -38,14 +38,27 @@ cd RecordingStudio_recording_studio_exportable
 bundle install
 ```
 
-### 3. Setup the Dummy App
+### 3. Dummy App Credentials
+
+Recording Studio gems share one development master key for `test/dummy/config/credentials.yml.enc`. Keep that encrypted file. Do not generate a new per-repo key.
+
+Set `RAILS_MASTER_KEY` to the shared RecordingStudio_* dummy master key, or write that same value to `test/dummy/config/master.key` (gitignored). Do not commit the key, and do not run `rails credentials:edit` to mint a new one.
+
+Confirm decrypt works from the dummy app:
+
+```bash
+cd test/dummy
+bin/rails credentials:show
+```
+
+### 4. Setup the Dummy App
 
 ```bash
 cd test/dummy
 bundle install
 ```
 
-### 4. Configure Database
+### 5. Configure Database
 
 Edit `test/dummy/config/database.yml` if your PostgreSQL setup differs from defaults:
 
@@ -73,7 +86,7 @@ export DB_USER=your_user
 export DB_PASSWORD=your_password
 ```
 
-### 5. Prepare the Database
+### 6. Prepare the Database
 
 ```bash
 cd test/dummy
@@ -82,7 +95,7 @@ bin/rails db:prepare
 
 This creates the database, runs migrations (including enabling `pgcrypto` for UUIDs), and seeds data.
 
-### 6. Build TailwindCSS
+### 7. Build TailwindCSS
 
 Link the bundled Flatpack and RecordingStudio gems so Tailwind can scan their classes, then build:
 
@@ -95,7 +108,7 @@ bin/rails tailwindcss:build
 
 `bin/setup` creates those links automatically. Without them, table cell padding and other gem-only utilities are missing from the dummy CSS.
 
-### 7. Start the Development Server
+### 8. Start the Development Server
 
 ```bash
 bin/dev
@@ -109,11 +122,11 @@ Alternatively, run just the Rails server:
 bin/rails server
 ```
 
-### 8. Visit the App
+### 9. Visit the App
 
 Open http://localhost:3000
 
-### 9. Run Tests
+### 10. Run Tests
 
 ```bash
 cd ..
@@ -172,6 +185,7 @@ bin/rails db:migrate
 | `DB_NAME` | `app_development` | Database name |
 | `REDIS_URL` | `redis://localhost:6379/0` | Redis connection URL |
 | `PORT` | `3000` | Rails server port |
+| `RAILS_MASTER_KEY` | (unset) | Shared dummy-app master key. Decrypts `test/dummy/config/credentials.yml.enc`. |
 
 ---
 
@@ -185,6 +199,7 @@ bin/rails db:migrate
 | Port 3000 in use | Use `PORT=3001 bin/dev`. |
 | Redis connection refused | Start Redis: `redis-server` or `brew services start redis`. |
 | Bundle install fails | Check Ruby version matches `.ruby-version` (3.3.0). |
+| Couldn't decrypt credentials | Set `RAILS_MASTER_KEY` to the shared Recording Studio dummy key, or write it to `test/dummy/config/master.key`. Do not generate a new key. |
 
 ---
 
