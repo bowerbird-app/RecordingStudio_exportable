@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Pin RecordingStudio to git tag `v4.2.2` in the gem and dummy Gemfiles.
+- Pin RecordingStudio Accessible to git tag `v0.11.1` in the gem and dummy Gemfiles.
+- Dummy app applies Accessible 0.8–0.11 migrations (`depends_on_recording_id`, access invitations, string `role`) and seeds grants through `RecordingStudioAccessible.grant_access` and revoke services. `RecordingStudio::Access` is readonly in 0.11.
 
 ## [0.2.1] - 2026-09-03
 
