@@ -17,6 +17,9 @@ find_or_record_child = lambda do |recordable, root_recording, parent_recording|
 end
 
 ensure_access_role = lambda do |recording:, actor:, role:, manager_actor:|
+  current_role = RecordingStudioAccessible.role_for(actor: actor, recording: recording)
+  return if current_role.to_s == role.to_s
+
   grant_result = RecordingStudioAccessible.grant_access(
     recording: recording,
     actor: actor,
@@ -24,42 +27,21 @@ ensure_access_role = lambda do |recording:, actor:, role:, manager_actor:|
     manager_actor: manager_actor
   )
   raise grant_result.error if grant_result.failure?
-
-  access_recording = RecordingStudio::Recording
-    .joins("INNER JOIN recording_studio_accesses ON recording_studio_accesses.id = recording_studio_recordings.recordable_id")
-    .where(
-      trashed_at: nil,
-      parent_recording_id: recording.id,
-      recordable_type: "RecordingStudio::Access",
-      "recording_studio_accesses.actor_type" => actor.class.name,
-      "recording_studio_accesses.actor_id" => actor.id
-    )
-    .order(created_at: :desc, id: :desc)
-    .first
-
-  access_recordable = access_recording&.recordable
-  return unless access_recordable&.respond_to?(:role) && access_recordable.role.to_s != role.to_s
-
-  access_recordable.update!(role: role)
 end
 
-find_access_recording_for = lambda do |recording:, actor:|
-  RecordingStudio::Recording
-    .joins("INNER JOIN recording_studio_accesses ON recording_studio_accesses.id = recording_studio_recordings.recordable_id")
-    .where(
-      trashed_at: nil,
-      parent_recording_id: recording.id,
-      recordable_type: "RecordingStudio::Access",
-      "recording_studio_accesses.actor_type" => actor.class.name,
-      "recording_studio_accesses.actor_id" => actor.id
-    )
-    .order(created_at: :desc, id: :desc)
-    .first
-end
+clear_access_for = lambda do |recording:, actor:, manager_actor:|
+  access_recording = RecordingStudioAccessible.access_recordings_for_actor(
+    recording: recording,
+    actor: actor
+  ).first
+  return unless access_recording
 
-clear_access_for = lambda do |recording:, actor:|
-  access_recording = find_access_recording_for.call(recording: recording, actor: actor)
-  access_recording&.update!(trashed_at: Time.current)
+  revoke_result = RecordingStudioAccessible::Services::RevokeRecordingAccess.call(
+    recording: recording,
+    access_recording: access_recording,
+    manager_actor: manager_actor
+  )
+  raise revoke_result.error if revoke_result.failure?
 end
 
 # Create the demo users
@@ -195,7 +177,7 @@ begin
   ensure_access_role.call(recording: demo_dashboard_recording, actor: user, role: :admin, manager_actor: user)
   ensure_access_role.call(recording: demo_dashboard_recording, actor: viewer_user, role: :view, manager_actor: user)
   ensure_access_role.call(recording: document_recording, actor: user, role: :admin, manager_actor: user)
-  clear_access_for.call(recording: document_recording, actor: viewer_user)
+  clear_access_for.call(recording: document_recording, actor: viewer_user, manager_actor: user)
 
   article_recordings.each_value do |article_recording|
     ensure_access_role.call(recording: article_recording, actor: user, role: :admin, manager_actor: user)

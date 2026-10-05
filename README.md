@@ -31,7 +31,7 @@ The dummy app ships with a starter sidebar documentation shell for authenticated
    ```
 4. Open port 3000 — you'll land on the dummy app home page and can sign in at `/users/sign_in`
 
-The dummy app is intended as a host-app validation surface for authentication, FlatPack rendering, Tailwind source scanning, and RecordingStudio route wiring.
+The dummy app is intended as a host-app validation surface for authentication, FlatPack rendering, Tailwind source scanning, and RecordingStudio route wiring. It pins RecordingStudio Accessible to `v0.11.1`, runs Accessible 0.8–0.11 migrations, and seeds access grants through `RecordingStudioAccessible.grant_access` (Access records are readonly).
 
 ### Login Credentials
 
