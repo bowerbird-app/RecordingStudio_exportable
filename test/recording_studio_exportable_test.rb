@@ -187,11 +187,11 @@ class RecordingStudioExportableTest < Minitest::Test
     sidebar_path = File.expand_path("dummy/app/views/layouts/flat_pack/_sidebar.html.erb", __dir__)
     sidebar_source = File.read(sidebar_path)
 
-    assert_includes sidebar_source, 'label: "Recordable types"'
+    assert_includes sidebar_source, 'text: "Recordable types"'
     assert_includes sidebar_source, "docs_recordable_types_path"
-    assert_includes sidebar_source, 'label: "Recordings tree"'
+    assert_includes sidebar_source, 'text: "Recordings tree"'
     assert_includes sidebar_source, "docs_recordings_tree_path"
-    refute_includes sidebar_source, 'label: "Recording Studio"'
+    refute_includes sidebar_source, 'text: "Recording Studio"'
     refute_includes sidebar_source, 'href: "/recording_studio"'
   end
 
@@ -199,9 +199,9 @@ class RecordingStudioExportableTest < Minitest::Test
     sidebar_path = File.expand_path("dummy/app/views/layouts/flat_pack/_sidebar.html.erb", __dir__)
     sidebar_source = File.read(sidebar_path)
 
-    assert_includes sidebar_source, 'label: "Install"'
+    assert_includes sidebar_source, 'text: "Install"'
     assert_includes sidebar_source, "icon: :arrow_down_tray"
-    assert_includes sidebar_source, 'label: "Methods"'
+    assert_includes sidebar_source, 'text: "Methods"'
     assert_includes sidebar_source, "icon: :code_bracket"
     refute_includes sidebar_source, "icon: :download"
     refute_includes sidebar_source, "icon: :code\n"
