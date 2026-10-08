@@ -196,7 +196,7 @@ The `recording_studio_exportable` helper provides access to all engine routes.
 
 ## RecordingStudio host-app check
 
-This template's dummy app uses RecordingStudio `v4.2.2`. Keep
+This template's dummy app uses RecordingStudio `v4.3.0`. Keep
 `config.require_recordable_declarations = true`, declare every configured recordable with
 `recording_studio_recordable(...)`, and create roots with `RecordingStudio.root_recording_for(recordable)`.
 Child recordings must be created with an explicit `parent_recording`. Enable exports on each type with
