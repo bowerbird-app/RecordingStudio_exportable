@@ -18,17 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `I18n.load_path`
 
 ### Changed
+- Pin RecordingStudio to git tag `v4.2.2` in the gem and dummy Gemfiles.
+- Pin RecordingStudio Accessible to git tag `v0.11.1` in the gem and dummy Gemfiles.
+- Dummy app applies Accessible 0.8–0.11 migrations (`depends_on_recording_id`, access invitations, string `role`) and seeds grants through `RecordingStudioAccessible.grant_access` and revoke services. `RecordingStudio::Access` is readonly in 0.11.
 - Token expired / not found PageNav titles, page titles, and subtitles resolve
   through `t(...)` (English output unchanged)
 - Default `recording_studio_export_button` / `recording_studio_export_access_button`
   label resolves through `t("recording_studio.exportable.buttons.export_csv")`
   when callers omit `text:` (English output unchanged)
-- Pin RecordingStudio to git tag `v4.4.0` in the gem and dummy Gemfiles
-- Pin RecordingStudio Accessible to git tag `v0.13.0` in the gem and dummy Gemfiles
-- Dummy app applies Accessible 0.8–0.11 migrations (`depends_on_recording_id`,
-  access invitations, string `role`) and seeds grants through
-  `RecordingStudioAccessible.grant_access` and revoke services.
-  `RecordingStudio::Access` is readonly in 0.11
 
 ### Upgrade notes
 - No migration or host code change is required for English.
