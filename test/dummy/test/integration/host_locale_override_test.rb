@@ -42,7 +42,7 @@ class HostLocaleOverrideTest < ActionDispatch::IntegrationTest
       id: id,
       context_recording: @recording,
       actor: @user,
-      columns: [{ key: :title, label: "Title", value: :title }],
+      columns: [ { key: :title, label: "Title", value: :title } ],
       row_resolver: -> { [] },
       source: "RecordingStudioAdmin",
       screen_identifier: "Host Override",
