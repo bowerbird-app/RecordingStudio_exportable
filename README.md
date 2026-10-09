@@ -153,6 +153,12 @@ Use `recording_studio_export_button` to render a POST form and FlatPack submit b
 ) %>
 ```
 
+Omit `text:` to use the gem default label (`Export CSV`), which ships as
+`recording_studio.exportable.buttons.export_csv` in `config/locales/en.yml`.
+Token error pages use keys under `recording_studio.exportable.tokens`. Hosts
+override those keys in their own `config/locales`. This gem does not depend on
+`recording_studio_internationalization`.
+
 ### Attributes vs columns
 
 `columns:` are definition-time allowed columns.

@@ -5,12 +5,13 @@ module RecordingStudioExportable
     UNAUTHORIZED_EXPORT_BUTTON_BEHAVIORS = %i[hide disable].freeze
 
     def recording_studio_export_button(context_recording:, export_key: nil, columns: nil, attributes: nil, filters: {}, format: :csv,
-                                       filename: nil, text: "Export CSV", icon: "arrow-down-tray", style: :secondary,
+                                       filename: nil, text: nil, icon: "arrow-down-tray", style: :secondary,
                                        size: :sm, icon_only: false, data: {}, aria: {}, **system_arguments)
       raise ArgumentError, "context_recording is required" unless context_recording.respond_to?(:id)
       raise ArgumentError, "FlatPack::Button::Component is required" unless defined?(FlatPack::Button::Component)
 
       attributes = merge_export_columns(attributes, columns)
+      button_text = text.nil? ? t("recording_studio.exportable.buttons.export_csv") : text
 
       tag.form(action: recording_studio_exportable_exports_path, method: :post, data: data, aria: aria) do
         safe_join(
@@ -23,7 +24,7 @@ module RecordingStudioExportable
             hidden_nested_fields("attributes", attributes),
             hidden_nested_fields("filters", filters),
             render(FlatPack::Button::Component.new(
-                     text: text,
+                     text: button_text,
                      icon: icon,
                      type: "submit",
                      style: style,
@@ -37,7 +38,7 @@ module RecordingStudioExportable
     end
 
     def recording_studio_export_access_button(context_recording:, export_key: nil, columns: nil, attributes: nil, filters: {}, format: :csv,
-                                              filename: nil, text: "Export CSV", icon: "arrow-down-tray", style: :secondary,
+                                              filename: nil, text: nil, icon: "arrow-down-tray", style: :secondary,
                                               size: :sm, icon_only: false, unauthorized_behavior: :hide,
                                               unauthorized_text: nil, data: {}, aria: {}, **system_arguments)
       behavior = unauthorized_behavior.to_sym
@@ -51,6 +52,8 @@ module RecordingStudioExportable
       authorized = export_authorized_for_actor?(context_recording: context_recording, export_key: effective_export_key)
       return if !authorized && behavior == :hide
 
+      button_text = text.nil? ? t("recording_studio.exportable.buttons.export_csv") : text
+
       if authorized
         return recording_studio_export_button(
           context_recording: context_recording,
@@ -60,7 +63,7 @@ module RecordingStudioExportable
           filters: filters,
           format: format,
           filename: filename,
-          text: text,
+          text: button_text,
           icon: icon,
           style: style,
           size: size,
@@ -74,7 +77,7 @@ module RecordingStudioExportable
       disabled_aria = { disabled: true }.merge(aria || {})
 
       render(FlatPack::Button::Component.new(
-               text: unauthorized_text || text,
+               text: unauthorized_text || button_text,
                icon: icon,
                type: "button",
                style: style,
