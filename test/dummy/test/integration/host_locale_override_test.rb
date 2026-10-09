@@ -4,6 +4,7 @@ require "test_helper"
 
 class HostLocaleOverrideTest < ActionDispatch::IntegrationTest
   HOST_NOT_FOUND_NAV = "HOST export expired nav"
+  OVERRIDE_LOCALE = Rails.root.join("test/locales/exportable_host_override.en.yml").to_s
 
   setup do
     @user = User.find_or_create_by!(email: "admin@admin.com") do |record|
@@ -12,13 +13,22 @@ class HostLocaleOverrideTest < ActionDispatch::IntegrationTest
     end
     workspace = Workspace.create!(name: "Host Locale Override Workspace #{SecureRandom.hex(4)}")
     @recording = RecordingStudio.root_recording_for(workspace)
+    @original_load_path = I18n.load_path.dup
   end
 
-  test "host config/locales English override wins on the token not found page" do
-    override_path = Rails.root.join("config/locales/exportable_host_override.en.yml")
+  teardown do
+    I18n.load_path.replace(@original_load_path)
+    I18n.reload!
+  end
 
-    assert_path_exists override_path, "expected host override file in test/dummy/config/locales/"
-    refute_includes File.read(override_path), "I18n.load_path"
+  test "test-only locale override wins on the token not found page when loaded last" do
+    assert_path_exists OVERRIDE_LOCALE, "expected test-only host override fixture"
+    refute_includes File.read(OVERRIDE_LOCALE), "I18n.load_path"
+    assert_equal "Export expired", I18n.t("recording_studio.exportable.tokens.not_found.nav_title")
+
+    I18n.load_path << OVERRIDE_LOCALE
+    I18n.reload!
+
     assert_equal HOST_NOT_FOUND_NAV, I18n.t("recording_studio.exportable.tokens.not_found.nav_title")
 
     sign_in @user
@@ -32,9 +42,12 @@ class HostLocaleOverrideTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Export Expired"
     assert_includes response.body, "Refresh the original page"
     refute_includes response.body, "<title>Export expired</title>"
+  ensure
+    I18n.load_path.replace(@original_load_path)
+    I18n.reload!
   end
 
-  test "token expired page keeps gem English nav title outside the host override" do
+  test "token expired page keeps gem English nav title without the test override" do
     sign_in @user
 
     id = "expired-token-for-host-override"

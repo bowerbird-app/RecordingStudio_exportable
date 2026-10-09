@@ -13,9 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - English Rails I18n keys for static interface copy in the gem's own export token
   error views and default export button label (`config/locales/en.yml` under
   `recording_studio.exportable`)
-- Dummy integration test proves a host English override in
-  `test/dummy/config/locales/` wins over the gem without appending to
-  `I18n.load_path`
+- Dummy integration test proves a test-only host English override fixture
+  (appended last to `I18n.load_path` for that test) wins over the gem
 
 ### Changed
 - Pin RecordingStudio to git tag `v4.2.2` in the gem and dummy Gemfiles.

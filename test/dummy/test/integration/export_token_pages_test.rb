@@ -21,9 +21,10 @@ class ExportTokenPagesTest < ActionDispatch::IntegrationTest
     }
 
     assert_response :not_found
+    assert_includes response.body, "Export expired"
     assert_includes response.body, "Export Expired"
     assert_includes response.body, "Refresh the original page"
-    assert_includes response.body, "HOST export expired nav"
+    refute_includes response.body, "HOST export expired nav"
   end
 
   test "token expired page renders literal English interface copy" do

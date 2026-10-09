@@ -37,15 +37,15 @@ class LocalesTest < Minitest::Test
   end
 
   def test_engine_does_not_reappend_locales_to_i18n_load_path
-    engine_paths = Dir[File.expand_path("../lib/**/engine.rb", __dir__)]
-    assert_predicate engine_paths, :any?
+    lib_paths = Dir[File.expand_path("../lib/**/*.rb", __dir__)]
+    assert_predicate lib_paths, :any?
 
-    engine_paths.each do |path|
-      engine_source = File.read(path)
+    lib_paths.each do |path|
+      source = File.read(path)
 
-      refute_includes engine_source, "i18n.load_path",
+      refute_includes source, "i18n.load_path",
                       "#{path} must not append app.config.i18n.load_path"
-      refute_includes engine_source, "I18n.load_path",
+      refute_includes source, "I18n.load_path",
                       "#{path} must not append I18n.load_path"
     end
   end
