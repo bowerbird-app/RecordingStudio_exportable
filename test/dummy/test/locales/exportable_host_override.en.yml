@@ -1,0 +1,9 @@
+# Test-only host English override. Appended last in HostLocaleOverrideTest,
+# then removed in teardown. Not under config/locales, so the default dummy UI
+# keeps gem English.
+en:
+  recording_studio:
+    exportable:
+      tokens:
+        not_found:
+          nav_title: "HOST export expired nav"

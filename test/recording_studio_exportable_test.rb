@@ -142,6 +142,13 @@ class RecordingStudioExportableTest < Minitest::Test
     assert_includes helper_source, "def merge_export_columns(attributes, columns)"
   end
 
+  def test_export_button_helper_defaults_label_through_i18n
+    helper_source = File.read(File.expand_path("../app/helpers/recording_studio_exportable/exports_helper.rb", __dir__))
+
+    assert_includes helper_source, 't("recording_studio.exportable.buttons.export_csv")'
+    refute_includes helper_source, 'text: "Export CSV"'
+  end
+
   def test_dummy_docs_pages_use_minimal_flatpack_documentation_components
     docs_view_paths = Dir[File.expand_path("dummy/app/views/docs/*.html.erb", __dir__)].reject do |view_path|
       File.basename(view_path).start_with?("_")

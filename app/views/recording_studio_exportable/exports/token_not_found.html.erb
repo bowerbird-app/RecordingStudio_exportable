@@ -1,9 +1,9 @@
-<% recording_studio_page_nav(title: "Export expired") if respond_to?(:recording_studio_page_nav) %>
+<% recording_studio_page_nav(title: t("recording_studio.exportable.tokens.not_found.nav_title")) if respond_to?(:recording_studio_page_nav) %>
 
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
-    title: "Export Expired",
-    subtitle: "Refresh the original page",
+    title: t("recording_studio.exportable.tokens.not_found.title"),
+    subtitle: t("recording_studio.exportable.tokens.not_found.subtitle"),
     variant: :h1
   ) %>
 </div>

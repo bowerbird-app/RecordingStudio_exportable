@@ -7,10 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-09
+
+### Added
+- English Rails I18n keys for static interface copy in the gem's own export token
+  error views and default export button label (`config/locales/en.yml` under
+  `recording_studio.exportable`)
+- Dummy integration test proves a test-only host English override fixture
+  (appended last to `I18n.load_path` for that test) wins over the gem
+
 ### Changed
 - Pin RecordingStudio to git tag `v4.2.2` in the gem and dummy Gemfiles.
 - Pin RecordingStudio Accessible to git tag `v0.11.1` in the gem and dummy Gemfiles.
 - Dummy app applies Accessible 0.8–0.11 migrations (`depends_on_recording_id`, access invitations, string `role`) and seeds grants through `RecordingStudioAccessible.grant_access` and revoke services. `RecordingStudio::Access` is readonly in 0.11.
+- Token expired / not found PageNav titles, page titles, and subtitles resolve
+  through `t(...)` (English output unchanged)
+- Default `recording_studio_export_button` / `recording_studio_export_access_button`
+  label resolves through `t("recording_studio.exportable.buttons.export_csv")`
+  when callers omit `text:` (English output unchanged)
+
+### Upgrade notes
+- No migration or host code change is required for English.
+- To translate or override the defaults, add keys under
+  `recording_studio.exportable` in the host's `config/locales`.
+- The engine relies on Rails' automatic `config/locales` loading. Do not add an
+  explicit `i18n.load_path` initializer for this gem.
+- Callers that pass `text:` (or `unauthorized_text:`) keep their own labels.
 
 ## [0.2.1] - 2026-09-03
 
@@ -90,7 +112,8 @@ end
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.3.0
 [0.2.1]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.1.1...v0.1.2

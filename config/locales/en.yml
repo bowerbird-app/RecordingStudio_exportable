@@ -1,0 +1,14 @@
+en:
+  recording_studio:
+    exportable:
+      buttons:
+        export_csv: "Export CSV"
+      tokens:
+        expired:
+          nav_title: "Export expired"
+          title: "Export Expired"
+          subtitle: "Refresh the original page"
+        not_found:
+          nav_title: "Export expired"
+          title: "Export Expired"
+          subtitle: "Refresh the original page"
