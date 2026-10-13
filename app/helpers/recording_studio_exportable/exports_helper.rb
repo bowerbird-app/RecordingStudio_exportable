@@ -11,7 +11,7 @@ module RecordingStudioExportable
       raise ArgumentError, "FlatPack::Button::Component is required" unless defined?(FlatPack::Button::Component)
 
       attributes = merge_export_columns(attributes, columns)
-      button_text = text.nil? ? t("recording_studio.exportable.buttons.export_csv") : text
+      button_text = text.nil? ? t("recording_studio.exportable.buttons.export_csv", default: "Export CSV") : text
 
       tag.form(action: recording_studio_exportable_exports_path, method: :post, data: data, aria: aria) do
         safe_join(
@@ -52,7 +52,7 @@ module RecordingStudioExportable
       authorized = export_authorized_for_actor?(context_recording: context_recording, export_key: effective_export_key)
       return if !authorized && behavior == :hide
 
-      button_text = text.nil? ? t("recording_studio.exportable.buttons.export_csv") : text
+      button_text = text.nil? ? t("recording_studio.exportable.buttons.export_csv", default: "Export CSV") : text
 
       if authorized
         return recording_studio_export_button(

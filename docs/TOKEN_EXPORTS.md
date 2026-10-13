@@ -225,7 +225,9 @@ directory.
 
 Static copy on those pages (PageNav title, heading, and subtitle) uses English
 Rails I18n keys under `recording_studio.exportable.tokens` in the gem's
-`config/locales/en.yml`. Hosts override the same keys in their own
+`config/locales/en.yml`. Plain-text controller errors
+(`Export is not available`, `Export request is invalid`) use keys under
+`recording_studio.exportable.errors`. Hosts override the same keys in their own
 `config/locales`. The engine does not append its own `i18n.load_path`.
 
 ---

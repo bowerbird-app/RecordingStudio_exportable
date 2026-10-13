@@ -3,6 +3,10 @@ en:
     exportable:
       buttons:
         export_csv: "Export CSV"
+      errors:
+        not_available: "Export is not available"
+        request_invalid: "Export request is invalid"
+        format_blank: "can't be blank"
       tokens:
         expired:
           nav_title: "Export expired"

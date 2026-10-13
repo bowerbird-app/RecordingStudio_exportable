@@ -30,7 +30,18 @@ module RecordingStudioExportable
     def format_value_must_be_present
       return unless format_column?
 
-      errors.add(:format, "can't be blank") if self[:format].blank?
+      return unless self[:format].blank?
+
+      # String type (not a symbol): ActiveModel 8.1 ignores message: for String
+      # types, so pass the translated string as the type. English stays
+      # byte-identical to main ("can't be blank").
+      errors.add(
+        :format,
+        I18n.t(
+          "recording_studio.exportable.errors.format_blank",
+          default: "can't be blank"
+        )
+      )
     end
 
     def format_column?

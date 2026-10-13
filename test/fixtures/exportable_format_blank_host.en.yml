@@ -1,0 +1,6 @@
+# Test-only fixture for ExportLog format_blank host override (unit suite).
+en:
+  recording_studio:
+    exportable:
+      errors:
+        format_blank: "HOST format blank"

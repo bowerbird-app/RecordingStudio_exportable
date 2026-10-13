@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-13
+
+### Added
+- English Rails I18n keys for non-view interface copy under
+  `recording_studio.exportable.errors` (`not_available`, `request_invalid`,
+  `format_blank`) in `config/locales/en.yml`
+- Dummy always-loaded host override fixture for the rarely shown
+  `errors.not_available` key (`test/dummy/config/locales/recording_studio_exportable_host.en.yml`)
+  as a real boot-order guard
+- Render-level tests for the default Export CSV button label, helper
+  `text:` / `unauthorized_text:` variants, controller plain responses, and
+  ExportLog format validation (English `errors.details`, French
+  `full_messages`, and host override)
+
+### Changed
+- Export controller plain-text responses (`Export is not available`,
+  `Export request is invalid`) resolve through `t(..., default: ...)`
+- ExportLog blank-format validation keeps a String error type and passes the
+  translated string as that type (English output unchanged). In non-English
+  locales, `errors.details` carries the translated string
+- Every existing `t(...)` call for exportable interface copy now passes an
+  English `default:` so a host locale with no fallback never shows
+  "translation missing"
+
+### Upgrade notes
+- No migration or host code change is required for English.
+- To translate or override the new error strings, add keys under
+  `recording_studio.exportable.errors` in the host's `config/locales`.
+- English output remains byte-identical to 0.3.0. Non-English locales that
+  override `errors.format_blank` will see the translated string in
+  `errors.details` (String type, same as main).
+
 ## [0.3.0] - 2026-10-09
 
 ### Added
@@ -112,7 +144,8 @@ end
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.4.0
 [0.3.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.3.0
 [0.2.1]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.1.2...v0.2.0
