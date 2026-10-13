@@ -145,7 +145,8 @@ class RecordingStudioExportableTest < Minitest::Test
   def test_export_button_helper_defaults_label_through_i18n
     helper_source = File.read(File.expand_path("../app/helpers/recording_studio_exportable/exports_helper.rb", __dir__))
 
-    assert_includes helper_source, 't("recording_studio.exportable.buttons.export_csv")'
+    assert_includes helper_source,
+                    't("recording_studio.exportable.buttons.export_csv", default: "Export CSV")'
     refute_includes helper_source, 'text: "Export CSV"'
   end
 

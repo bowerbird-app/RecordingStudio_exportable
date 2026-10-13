@@ -54,11 +54,13 @@ module RecordingStudioExportable
     end
 
     def render_forbidden(_exception)
-      render plain: "Export is not available", status: :forbidden
+      render plain: t("recording_studio.exportable.errors.not_available", default: "Export is not available"),
+             status: :forbidden
     end
 
     def render_bad_request(_exception)
-      render plain: "Export request is invalid", status: :bad_request
+      render plain: t("recording_studio.exportable.errors.request_invalid", default: "Export request is invalid"),
+             status: :bad_request
     end
 
     def render_token_expired(_exception)

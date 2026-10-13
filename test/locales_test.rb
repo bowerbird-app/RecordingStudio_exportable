@@ -9,6 +9,12 @@ class LocalesTest < Minitest::Test
     "export_csv" => "Export CSV"
   }.freeze
 
+  ERROR_KEYS = {
+    "not_available" => "Export is not available",
+    "request_invalid" => "Export request is invalid",
+    "format_blank" => "can't be blank"
+  }.freeze
+
   TOKEN_EXPIRED_KEYS = {
     "nav_title" => "Export expired",
     "title" => "Export Expired",
@@ -61,6 +67,14 @@ class LocalesTest < Minitest::Test
           assert_equal english, I18n.t(full_key, raise: true)
         end
 
+        ERROR_KEYS.each do |key, english|
+          full_key = "recording_studio.exportable.errors.#{key}"
+          translation = I18n.t(full_key, default: nil)
+
+          assert_equal english, translation, "#{full_key} should resolve to #{english.inspect}"
+          assert_equal english, I18n.t(full_key, raise: true)
+        end
+
         TOKEN_EXPIRED_KEYS.each do |key, english|
           full_key = "recording_studio.exportable.tokens.expired.#{key}"
           translation = I18n.t(full_key, default: nil)
@@ -86,6 +100,7 @@ class LocalesTest < Minitest::Test
            .fetch("exportable")
 
     assert_equal BUTTON_KEYS, tree.fetch("buttons").transform_keys(&:to_s)
+    assert_equal ERROR_KEYS, tree.fetch("errors").transform_keys(&:to_s)
     assert_equal TOKEN_EXPIRED_KEYS, tree.fetch("tokens").fetch("expired").transform_keys(&:to_s)
     assert_equal TOKEN_NOT_FOUND_KEYS, tree.fetch("tokens").fetch("not_found").transform_keys(&:to_s)
   end
