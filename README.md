@@ -275,9 +275,10 @@ See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full do
 | PostgreSQL      | 16      |
 | TailwindCSS     | 4       |
 | RecordingStudio | v4.5.0 (pinned to `v4.5.0` in `Gemfile` and `test/dummy/Gemfile`) |
-| RecordingStudio Accessible | v0.15.0 (pinned to `v0.15.0` in `Gemfile` and `test/dummy/Gemfile`) |
+| RecordingStudio Accessible | v0.17.0 (pinned to `v0.17.0` in `Gemfile` and `test/dummy/Gemfile`) |
+| RecordingStudio Trashable | v0.10.0 (pinned in `Gemfile` and `test/dummy/Gemfile`; query-only for Accessible ≥ 0.17) |
 | RecordingStudio Root Switchable | v0.9.0 (pinned in `test/dummy/Gemfile`) |
-| RecordingStudio Metrics | v0.2.0 (pinned in `test/dummy/Gemfile`; required by Root Switchable ≥ 0.7) |
+| RecordingStudio Metrics | v0.2.0 (pinned in `Gemfile` and `test/dummy/Gemfile`; required by Root Switchable ≥ 0.7 and Trashable ≥ 0.10) |
 | RecordingStudio Cache | v0.5.0 (pinned in `test/dummy/Gemfile`; required by Root Switchable ≥ 0.9) |
 | FlatPack        | v0.1.198 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
 | Devise          | latest  |
