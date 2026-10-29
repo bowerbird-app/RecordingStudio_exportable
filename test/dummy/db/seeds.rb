@@ -19,6 +19,15 @@ ensure_access_role = lambda do |recording:, actor:, role:, manager_actor:|
   current_role = RecordingStudioAccessible.role_for(actor: actor, recording: recording)
   return if current_role.to_s == role.to_s
 
+  if actor == manager_actor
+    bootstrap_result = RecordingStudioAccessible.bootstrap_owner_access!(
+      recording: recording,
+      actor: actor
+    )
+    raise bootstrap_result.error if bootstrap_result.failure?
+    return
+  end
+
   grant_result = RecordingStudioAccessible.grant_access(
     recording: recording,
     actor: actor,

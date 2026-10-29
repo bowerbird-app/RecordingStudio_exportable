@@ -36,9 +36,9 @@ class ExportsControllerTest < Minitest::Test
   def test_engine_pages_use_configurable_flatpack_layout
     source = File.read(File.expand_path("../app/controllers/recording_studio_exportable/application_controller.rb", __dir__))
 
-    assert_includes source, "layout :recording_studio_exportable_layout"
+    assert_includes source, "include RecordingStudio::ControllerLayout"
+    assert_includes source, "recording_studio_layout { RecordingStudioExportable.configuration.layout }"
     assert_includes source, "RecordingStudioExportable.configuration.layout"
-    assert_includes source, "recording_studio/default_layout"
   end
 
   def test_token_expired_page_uses_refresh_prompt_only

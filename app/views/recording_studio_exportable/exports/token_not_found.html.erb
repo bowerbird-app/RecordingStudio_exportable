@@ -1,9 +1,6 @@
-<% recording_studio_page_nav(title: t("recording_studio.exportable.tokens.not_found.nav_title", default: "Export expired")) if respond_to?(:recording_studio_page_nav) %>
+<% content_for :title, t("recording_studio.exportable.tokens.not_found.title", default: "Export Expired") %>
+<% content_for :subtitle, t("recording_studio.exportable.tokens.not_found.subtitle", default: "Refresh the original page") %>
+<% content_for :page_nav_right, t("recording_studio.exportable.tokens.not_found.nav_title", default: "Export expired") %>
 
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
-  <%= render FlatPack::PageTitle::Component.new(
-    title: t("recording_studio.exportable.tokens.not_found.title", default: "Export Expired"),
-    subtitle: t("recording_studio.exportable.tokens.not_found.subtitle", default: "Refresh the original page"),
-    variant: :h1
-  ) %>
 </div>
