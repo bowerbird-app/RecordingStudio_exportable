@@ -51,11 +51,11 @@ GIT
 PATH
   remote: .
   specs:
-    recording_studio_exportable (0.4.1)
+    recording_studio_exportable (0.5.0)
       csv
       flat_pack (>= 0.1.95)
       rails (~> 8.1.0)
-      recording_studio (>= 4.2, < 7)
+      recording_studio (>= 6.1.0, < 7)
       recording_studio_accessible (>= 0.6)
 
 GEM
@@ -419,7 +419,7 @@ CHECKSUMS
   rdoc (8.1.0) sha256=befc37880a5cfd36dcb176c748b5fd5ee39dd3536a75e81824e4972ce230f60a
   recording_studio (6.3.0)
   recording_studio_accessible (0.24.0)
-  recording_studio_exportable (0.4.1)
+  recording_studio_exportable (0.5.0)
   recording_studio_metrics (0.7.0)
   recording_studio_trashable (0.12.0)
   regexp_parser (2.11.3) sha256=ca13f381a173b7a93450e53459075c9b76a10433caadcb2f1180f2c741fc55a4

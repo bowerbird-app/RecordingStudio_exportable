@@ -8,8 +8,8 @@ RecordingStudioRootSwitchable.configure do |config|
 
   # Render the mounted switcher pages inside the app shell when users visit them.
   config.layout = ->(controller:) {
-    if controller.respond_to?(:application_layout, true)
-      controller.send(:application_layout)
+    if controller.respond_to?(:application_layout)
+      controller.application_layout
     else
       "flat_pack_sidebar"
     end
