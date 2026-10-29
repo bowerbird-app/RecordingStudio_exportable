@@ -9,6 +9,9 @@ require "active_record"
 require "action_controller"
 require "recording_studio_exportable"
 
+layout_helper = RecordingStudio::Engine.root.join("app/helpers/recording_studio/layout_helper.rb")
+require layout_helper if layout_helper.file?
+
 # Explicitly require engine models and controllers that aren't auto-loaded
 # outside of a full Rails application boot. These must be loaded after the
 # engine initializes but before tests run.

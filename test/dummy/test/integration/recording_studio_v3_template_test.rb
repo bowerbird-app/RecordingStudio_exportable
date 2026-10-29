@@ -7,7 +7,7 @@ class RecordingStudioV3TemplateTest < ActiveSupport::TestCase
   if defined?(RecordingStudioRootSwitchable)
     test "dummy app loads root switchable config and controller support" do
       assert_equal [ "all_workspaces" ], RecordingStudioRootSwitchable.configuration.scopes.keys
-      assert_equal :application_layout, RecordingStudioRootSwitchable.configuration.layout
+      assert_respond_to RecordingStudioRootSwitchable.configuration.layout, :call
       assert_includes ApplicationController.ancestors, RecordingStudio::RootSwitchable::ControllerSupport
     end
   end

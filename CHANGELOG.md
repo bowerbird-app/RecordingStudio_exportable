@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-29
+
+### Changed
+- Allow Recording Studio `>= 6.1.0, < 7`. Development and dummy pins are core
+  `v6.3.0` and FlatPack `v0.1.329`. Dummy companion pins are Accessible
+  `v0.24.0`, Trashable `v0.12.0`, Metrics `v0.7.0`, Cache `v0.6.0`, and
+  Root Switchable `v0.11.0`.
+- Engine controllers use `recording_studio_layout`. Token error views set
+  `content_for :title`, `:subtitle`, and `:page_nav_right` instead of
+  `recording_studio_page_nav`.
+
+### Upgrade notes
+- Pin Recording Studio `>= 6.1` (dummy uses `v6.3.0`) and FlatPack
+  `>= 0.1.315` (dummy uses `v0.1.329`). No schema change.
+
 ## [0.4.0] - 2026-10-13
 
 ### Added
@@ -144,7 +159,8 @@ end
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.4.0
 [0.3.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.3.0
 [0.2.1]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.2.0...v0.2.1
