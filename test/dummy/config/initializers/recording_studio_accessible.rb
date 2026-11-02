@@ -17,6 +17,7 @@ end
 
 ActiveSupport.on_load(:active_record) do
   Rails.application.config.to_prepare do
+    RecordingStudio.enable_capability(:accessible, on: "Workspace") if defined?(Workspace)
     RecordingStudio.enable_capability(:accessible, on: "DemoDashboard") if defined?(DemoDashboard)
     RecordingStudio.enable_capability(:accessible, on: "Article") if defined?(Article)
     RecordingStudio.enable_capability(:accessible, on: "Author") if defined?(Author)

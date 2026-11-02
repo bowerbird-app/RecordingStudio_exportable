@@ -91,7 +91,8 @@ class HomeController < ApplicationController
 
     # --- Token-based export demo ---
     @trusted_token = nil
-    if @demo_recording.present? && Current.actor.present?
+    if @demo_recording.present? && Current.actor.present? &&
+       RecordingStudioAccessible.authorized?(actor: Current.actor, recording: @demo_recording, role: :view)
       begin
         @trusted_token = issue_demo_token(@demo_recording)
       rescue StandardError
@@ -120,7 +121,7 @@ class HomeController < ApplicationController
     RecordingStudioExportable.issue_trusted_token(
       context_recording: recording,
       actor: Current.actor,
-      source: "RecordingStudioAdmin",
+      source: "RecordingStudioExportable",
       screen_identifier: "Homepage Demo Export",
       columns: [
         { key: :title, label: "Title", value: :title },

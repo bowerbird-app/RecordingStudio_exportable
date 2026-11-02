@@ -16,7 +16,7 @@
       token = RecordingStudioExportable.issue_trusted_token(
         context_recording: recording,
         actor: Current.actor,
-        source: "RecordingStudioAdmin",
+        source: "RecordingStudioExportable",
         screen_identifier: "Admin Users Export",
         columns: [
           { key: :title, label: "Title", value: :title },
@@ -87,7 +87,7 @@
   <% else %>
     <div class="space-y-3 rounded-lg border border-(--surface-border-color) p-4">
       <p class="text-sm text-(--surface-muted-content-color)">
-        To see a live token, add <code>RecordingStudioAdmin</code> to
+        To see a live token, add <code>RecordingStudioExportable</code> to
         <code>config.trusted_export_sources</code> in your initializer:
       </p>
 
@@ -97,7 +97,7 @@
           # config/initializers/recording_studio_exportable.rb
           Rails.application.reloader.to_prepare do
             RecordingStudioExportable.configure do |config|
-              config.trusted_export_sources = %w[RecordingStudioAdmin]
+              config.trusted_export_sources = %w[RecordingStudioExportable]
             end
           end
         CODE
@@ -137,7 +137,7 @@
       token = RecordingStudioExportable.issue_trusted_token(
         context_recording: recording,
         actor: actor,
-        source: "RecordingStudioAdmin",
+        source: "RecordingStudioExportable",
         screen_identifier: "Weekly Report Export",
         columns: [
           { key: :name, label: "Name", value: :name },

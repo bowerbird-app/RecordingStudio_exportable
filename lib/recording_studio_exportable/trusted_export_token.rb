@@ -39,6 +39,9 @@ module RecordingStudioExportable
 
       allowed = RecordingStudioExportable.configuration.trusted_export_sources
       raise Error, "source #{source.inspect} is not allowed" unless Array(allowed).map(&:to_s).include?(source.to_s)
+      unless RecordingStudioAccessible.authorized?(actor: actor, recording: context_recording, role: :view)
+        raise NotAuthorized, "export is not allowed for this actor"
+      end
 
       ttl_seconds = [ttl.to_i, DEFAULT_TTL.to_i].min
       id = SecureRandom.urlsafe_base64(32)

@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
+## 0.5.7 - 2026-11-02
+
+### Changed
+- **Breaking.** `issue_trusted_token` requires
+  `RecordingStudioAccessible.authorized?` with role `:view`.
+- **Breaking.** `export_from_token` requires `actor:`. The actor must be the
+  token's actor and still be allowed to view the context recording.
+- The dummy trusted export source is `RecordingStudioExportable`.
+- The dummy root switcher uses Root Switchable's access check.
+
+### Upgrade notes
+- Pass `actor:` to `export_from_token`. The exports controller passes
+  `export_actor`.
+- Issue tokens only for actors who can view the context recording.
+- Allow `RecordingStudioExportable` in `trusted_export_sources` when using the
+  dummy issuer, or set your own source string.
+- Remove a host `access_check` that always returns true if it was copied from
+  the dummy. The default checks view access.
 ## 0.5.6 - 2026-11-02
 
 ### Changed

@@ -34,8 +34,6 @@ RecordingStudioRootSwitchable.configure do |config|
         RecordingStudio.root_recording_for(workspace)
       end
     end
-    scope.access_check = ->(**) { true }
-
     scope.default_root = lambda do |roots:, **|
       roots.first
     end
