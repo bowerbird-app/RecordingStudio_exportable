@@ -296,4 +296,4 @@ with Draft off to load a new pack. See
 
 ## Documentation
 
-The original gem template documentation is preserved in `docs/recording_studio_exportable/` as architectural reference material. Use it as background on the engine conventions; the README and dummy app are the source of truth for the Recording Studio addon workflow.
+Trusted export tokens are documented in `docs/TOKEN_EXPORTS.md`. The API cheatsheet sits next to that file. The README and the dummy app are the source of truth for the addon workflow.

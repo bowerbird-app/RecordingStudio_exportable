@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
+## [0.5.1] - 2026-11-02
+
+### Removed
+- Template leftovers: `UPDATE_SUMMARY.md`, `MIGRATION_NOTES.md`, the
+  `docs/recording_studio_exportable/` reference set, `bin/rename_gem`, the
+  rename verification suite and its rake tasks, `test_codespaces_setup.sh`,
+  and unused dummy scaffold (`install_page.html`, `hello_controller.js`, and
+  the makeup artist keep file).
+- Tracked SimpleCov output under `coverage/` and `test/dummy/coverage/`.
+  Both paths are gitignored. `docs/TOKEN_EXPORTS.md` and the API cheatsheet
+  stay.
+
 ## [0.5.0] - 2026-10-29
 
 ### Changed
@@ -163,7 +175,8 @@ end
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.4.0
 [0.3.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.3.0
