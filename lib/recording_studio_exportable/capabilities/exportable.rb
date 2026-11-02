@@ -24,43 +24,6 @@ module RecordingStudio
         end
       end
 
-      def self.enabled(recordable = nil, export_keys: nil, exports: nil, **options)
-        warn(
-          "[DEPRECATION] RecordingStudio::Capabilities::Exportable.enabled is deprecated. " \
-          "Use `include RecordingStudio::Capabilities::Exportable.to(**options)` instead.",
-          uplevel: 1
-        )
-
-        options = options.dup
-        options[:export_keys] ||= export_keys || exports if export_keys || exports
-
-        host = resolve_recordable(recordable || infer_recordable_from_caller)
-        host.include(to(**options))
-        true
-      end
-
-      def self.resolve_recordable(recordable)
-        host = recordable
-        host = host.safe_constantize if host.is_a?(String) && host.respond_to?(:safe_constantize)
-        host = host.to_s.safe_constantize if host.is_a?(String)
-        raise ArgumentError, "recordable is required" if host.blank?
-        raise ArgumentError, "recordable type is required" unless host.is_a?(Module)
-
-        host
-      end
-
-      def self.infer_recordable_from_caller
-        location = caller_locations(2, 10)&.find { |entry| entry.label.to_s.start_with?("<class:") }
-        return if location.nil?
-
-        class_name = location.label[/\A<class:(.+)>\z/, 1]
-        return if class_name.nil? || class_name.start_with?("#<")
-
-        Object.const_get(class_name)
-      rescue NameError
-        nil
-      end
-
       def self.prepare_options(options)
         options = options.dup
         options[:export_keys] ||= options.delete(:exports) if options.key?(:exports)
@@ -143,14 +106,6 @@ module RecordingStudio
           end
         end
       end
-    end
-  end
-end
-
-module RecordingStudio
-  module Exportable
-    module Capabilities
-      Exportable = ::RecordingStudio::Capabilities::Exportable
     end
   end
 end

@@ -11,9 +11,4 @@ module RecordingStudioExportable
   class InvalidExportAttributes < Error; end
   class InvalidExportFormat < Error; end
   class ExportTooLarge < Error; end
-
-  # Backward-compatible aliases for earlier template tests/apps.
-  UnknownExportDefinition = UnknownExportKey
-  AuthorizationError = NotAuthorized
-  RowLimitExceeded = ExportTooLarge
 end

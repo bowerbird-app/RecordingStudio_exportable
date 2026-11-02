@@ -14,7 +14,7 @@
     language: :markdown,
     code: <<~'CODE'
       1) config/initializers/recording_studio_exportable.rb
-         - global defaults and runtime hooks
+         - global defaults
          - current actor resolver
          - auto-registration of classes in services/exports/**/*_export.rb
 
@@ -69,7 +69,6 @@
       config.default_format = :csv
       config.default_required_role = :view
       config.max_rows = 50_000
-      config.default_row_limit = 50_000 # alias for max_rows
       config.include_bom = false
       config.allow_request_filename_override = false
 
@@ -82,7 +81,6 @@
       # Export registration
       config.register_export(...)
       config.replace_export(...)
-      config.export(...) # alias for register_export
     CODE
   ) %>
 
