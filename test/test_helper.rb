@@ -4,6 +4,7 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require_relative "simplecov_helper"
 require "minitest/autorun"
+require "securerandom"
 require "minitest/mock"
 require "rails"
 require "active_record"
@@ -17,6 +18,11 @@ require layout_helper if layout_helper.file?
 # outside of a full Rails application boot. These must be loaded after the
 # engine initializes but before tests run.
 require_relative "../app/models/recording_studio_exportable/export_log"
+
+# The unit suite uses SQLite without a uuid default. Postgres generates ids.
+RecordingStudioExportable::ExportLog.before_create do
+  self.id ||= SecureRandom.uuid
+end
 require_relative "../app/controllers/recording_studio_exportable/application_controller"
 require_relative "../app/controllers/recording_studio_exportable/exports_controller"
 
@@ -97,30 +103,8 @@ end
 
 Minitest::Test.include(ExportableConfigurationIsolation)
 
-# Define RecordingStudio::Event stub
-module RecordingStudio
-  class Event < ActiveRecord::Base
-    self.table_name = "recording_studio_events"
-  end
-end
-
 # Create the recordings table needed by ExportLog's foreign key
 ActiveRecord::Base.connection.create_table :recording_studio_recordings, id: :string, if_not_exists: true do |t|
   t.string :recordable_type
   t.string :recordable_id
-end
-
-# Create the events table
-ActiveRecord::Base.connection.create_table :recording_studio_events, id: :string, if_not_exists: true do |t|
-  t.string :action
-  t.string :recording_id
-  t.string :recordable_type
-  t.string :recordable_id
-  t.string :actor_type
-  t.string :actor_id
-  t.string :impersonator_type
-  t.string :impersonator_id
-  t.json :metadata
-  t.datetime :created_at, null: false
-  t.datetime :updated_at, null: false
 end

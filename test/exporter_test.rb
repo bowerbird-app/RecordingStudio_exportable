@@ -3,8 +3,21 @@
 require "test_helper"
 
 class ExporterTest < Minitest::Test
-  FakeContext = Struct.new(:recordable_type, :recordable)
+  FakeContext = Struct.new(:recordable_type, :recordable) do
+    def log_event!(**_kwargs)
+      nil
+    end
+  end
   FakeRecordable = Struct.new(:name)
+  FakeExportLog = Struct.new(:updates) do
+    def id
+      "log-1"
+    end
+
+    def update!(**kwargs)
+      updates << kwargs
+    end
+  end
 
   def setup
     save_exportable_configuration!
@@ -329,17 +342,12 @@ class ExporterTest < Minitest::Test
 
   def test_export_log_and_event_include_runtime_metadata_on_success
     created_attrs = nil
-    event_attrs = nil
     logged_event = nil
-    fake_log = Struct.new(:updates) do
-      def id
-        "log-1"
-      end
-
-      def update!(**kwargs)
-        updates << kwargs
-      end
-    end.new([])
+    fake_log = FakeExportLog.new([])
+    context = FakeContext.new("DemoDashboard", FakeRecordable.new("Dash"))
+    context.define_singleton_method(:log_event!) do |**kwargs|
+      logged_event = kwargs
+    end
 
     RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
       RecordingStudioAccessible.stub(:authorized?, true) do
@@ -347,26 +355,17 @@ class ExporterTest < Minitest::Test
           created_attrs = kwargs
           fake_log
         }) do
-          logger = Object.new
-          logger.define_singleton_method(:log_event) do |context_recording, **kwargs|
-            logged_event = kwargs.merge(context_recording: context_recording)
-          end
-
-          RecordingStudio.stub(:root_recording_or_self, logger) do
-            RecordingStudio::Event.stub(:create!, ->(**kwargs) { event_attrs = kwargs }) do
-              RecordingStudioExportable.export(
-                context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
-                actor: Struct.new(:id).new("actor-1"),
-                filters: { status: "ok" },
-                attributes: { columns: ["name"] }
-              )
-            end
-          end
+          RecordingStudioExportable.export(
+            context_recording: context,
+            actor: Struct.new(:id).new("actor-1"),
+            filters: { status: "ok" },
+            attributes: { columns: ["name"] }
+          )
         end
       end
     end
 
-    metadata = (logged_event || event_attrs).fetch(:metadata)
+    metadata = logged_event.fetch(:metadata)
 
     assert_equal :running, created_attrs.fetch(:status)
     assert_equal :csv, created_attrs.fetch(:format)
@@ -374,9 +373,27 @@ class ExporterTest < Minitest::Test
     refute created_attrs.key?(:context_recording)
     assert_equal ["name"], fake_log.updates.last.fetch(:selected_columns)
     assert_equal :completed, fake_log.updates.last.fetch(:status)
+    assert_equal "exported", logged_event.fetch(:action)
+    assert_equal "export:log-1", logged_event.fetch(:idempotency_key)
     assert_equal "demo.people", metadata.fetch(:export_key)
     assert_equal "log-1", metadata.fetch(:export_log_id)
     assert_equal [:name], metadata.fetch(:attributes).map(&:to_sym)
+  end
+
+  def test_export_fails_when_the_export_log_cannot_be_created
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
+      RecordingStudioAccessible.stub(:authorized?, true) do
+        RecordingStudioExportable::ExportLog.stub(:create!, ->(**_kwargs) {}) do
+          error = assert_raises(RecordingStudioExportable::Error) do
+            RecordingStudioExportable.export(
+              context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+              actor: Object.new
+            )
+          end
+          assert_equal "export log could not be created", error.message
+        end
+      end
+    end
   end
 
   def test_export_log_is_marked_failed_when_validation_raises_after_log_creation
@@ -518,16 +535,14 @@ class ExporterTest < Minitest::Test
 
   def test_trusted_export_event_includes_trusted_metadata
     logged_event = nil
-    logger = Object.new
-    logger.define_singleton_method(:log_event) do |context_recording, **kwargs|
-      logged_event = kwargs.merge(context_recording: context_recording)
-    end
+    context = FakeContext.new("DemoDashboard", FakeRecordable.new("Dash"))
+    context.define_singleton_method(:log_event!) { |**kwargs| logged_event = kwargs }
 
-    RecordingStudio.stub(:root_recording_or_self, logger) do
-      trusted_export
-    end
+    trusted_export(context_recording: context)
 
     metadata = logged_event.fetch(:metadata)
+    assert_equal "exported", logged_event.fetch(:action)
+    assert_equal "export:#{metadata.fetch(:export_log_id)}", logged_event.fetch(:idempotency_key)
     assert_equal "RecordingStudioAdmin", metadata.fetch(:trusted_source)
     assert_equal "users", metadata.fetch(:screen_identifier)
     assert_equal "admin.users", metadata.fetch(:export_key)
@@ -538,7 +553,7 @@ class ExporterTest < Minitest::Test
 
     RecordingStudioExportable::ExportLog.stub(:create!, lambda { |**kwargs|
       created_attrs = kwargs
-      nil
+      FakeExportLog.new([])
     }) do
       trusted_export(export_key: nil)
     end
@@ -589,9 +604,10 @@ class ExporterTest < Minitest::Test
   private
 
   def trusted_export(rows: [{ name: "Ada" }], columns: [trusted_column(:name)], actor: Object.new,
-                     export_key: "admin.users", format: :csv)
+                     export_key: "admin.users", format: :csv,
+                     context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")))
     RecordingStudioExportable::Exporter.call(
-      context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+      context_recording: context_recording,
       actor: actor,
       export_key: export_key,
       trusted_export: true,

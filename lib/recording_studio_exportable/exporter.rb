@@ -42,6 +42,7 @@ module RecordingStudioExportable
       definition = resolved_definition
       logged_filters = sanitized_filters_for_log
       export_log = create_export_log(definition: definition, filters: logged_filters)
+      raise Error, "export log could not be created" if export_log.nil?
 
       begin
         @capability_options = validate_capability!(definition)
@@ -76,7 +77,7 @@ module RecordingStudioExportable
           selected_attributes: selected_attributes,
           metadata: metadata
         )
-        create_recording_studio_event(
+        record_exported_event(
           definition,
           export_log: export_log,
           filename: filename,
@@ -110,6 +111,7 @@ module RecordingStudioExportable
       definition = build_anonymous_definition(export_key, @columns)
       logged_filters = sanitized_filters_for_log
       export_log = create_export_log(definition: definition, filters: logged_filters)
+      raise Error, "export log could not be created" if export_log.nil?
 
       begin
         validate_trusted_format!
@@ -139,13 +141,17 @@ module RecordingStudioExportable
           selected_attributes: selected_attributes,
           metadata: metadata
         )
-        create_trusted_recording_studio_event(
+        record_exported_event(
           definition,
           export_log: export_log,
           filename: filename,
           row_count: rows.size,
           selected_attributes: selected_attributes,
-          logged_filters: logged_filters
+          logged_filters: logged_filters,
+          extra_metadata: {
+            trusted_source: @trusted_source,
+            screen_identifier: @screen_identifier
+          }
         )
 
         Result.new(
@@ -401,7 +407,7 @@ module RecordingStudioExportable
     end
 
     def create_export_log(definition:, filters:)
-      return unless defined?(RecordingStudioExportable::ExportLog)
+      raise Error, "export log could not be created" unless defined?(RecordingStudioExportable::ExportLog)
 
       recordable = @context_recording.respond_to?(:recordable) ? @context_recording.recordable : nil
       context_recording_value = context_recording_record
@@ -429,9 +435,6 @@ module RecordingStudioExportable
       filtered_attrs = filter_known_log_attributes(attrs)
 
       RecordingStudioExportable::ExportLog.create!(**filtered_attrs)
-    rescue ActiveRecord::StatementInvalid, ActiveRecord::NoDatabaseError,
-           ActiveRecord::UnknownAttributeError, ActiveRecord::AssociationTypeMismatch
-      nil
     end
 
     def mark_completed(export_log, filename:, row_count:, byte_size:, selected_attributes:, metadata:)
@@ -478,107 +481,25 @@ module RecordingStudioExportable
       attrs
     end
 
-    def create_recording_studio_event(definition, export_log:, filename:, row_count:, selected_attributes:,
-                                      logged_filters:)
+    def record_exported_event(definition, export_log:, filename:, row_count:, selected_attributes:,
+                              logged_filters:, extra_metadata: {})
       return unless @context_recording
 
-      recordable = @context_recording.respond_to?(:recordable) ? @context_recording.recordable : nil
-
-      if RecordingStudio.respond_to?(:root_recording_or_self)
-        root = RecordingStudio.root_recording_or_self(@context_recording)
-        if root.respond_to?(:log_event)
-          root.log_event(
-            @context_recording,
-            action: "exported",
-            actor: @actor,
-            impersonator: @impersonator,
-            metadata: {
-              export_log_id: export_log&.id,
-              export_key: definition.key,
-              format: @format,
-              attributes: selected_attributes,
-              filters: logged_filters,
-              filename: filename,
-              row_count: row_count
-            }
-          )
-          return
-        end
-      end
-
-      return unless defined?(RecordingStudio::Event)
-
-      RecordingStudio::Event.create!(
+      @context_recording.log_event!(
         action: "exported",
-        recording_id: @context_recording.id,
-        recordable_type: recordable&.class&.name || @context_recording.recordable_type,
-        recordable_id: (recordable.id if recordable.respond_to?(:id)) ||
-          (@context_recording.recordable_id if @context_recording.respond_to?(:recordable_id)),
-        actor_type: @actor&.class&.name,
-        actor_id: @actor.respond_to?(:id) ? @actor.id : nil,
-        impersonator_type: @impersonator&.class&.name,
-        impersonator_id: @impersonator.respond_to?(:id) ? @impersonator.id : nil,
+        actor: @actor,
+        impersonator: @impersonator,
         metadata: {
-          export_log_id: export_log&.id,
+          export_log_id: export_log.id,
           export_key: definition.key,
           format: @format,
           attributes: selected_attributes,
           filters: logged_filters,
           filename: filename,
           row_count: row_count
-        }
+        }.merge(extra_metadata),
+        idempotency_key: "export:#{export_log.id}"
       )
-    rescue ActiveRecord::ActiveRecordError, NoMethodError
-      nil
-    end
-
-    def create_trusted_recording_studio_event(definition, export_log:, filename:, row_count:,
-                                              selected_attributes:, logged_filters:)
-      return unless @context_recording
-
-      recordable = @context_recording.respond_to?(:recordable) ? @context_recording.recordable : nil
-      metadata = {
-        export_log_id: export_log&.id,
-        export_key: definition.key,
-        format: @format,
-        attributes: selected_attributes,
-        filters: logged_filters,
-        filename: filename,
-        row_count: row_count,
-        trusted_source: @trusted_source,
-        screen_identifier: @screen_identifier
-      }
-
-      if RecordingStudio.respond_to?(:root_recording_or_self)
-        root = RecordingStudio.root_recording_or_self(@context_recording)
-        if root.respond_to?(:log_event)
-          root.log_event(
-            @context_recording,
-            action: "exported",
-            actor: @actor,
-            impersonator: @impersonator,
-            metadata: metadata
-          )
-          return
-        end
-      end
-
-      return unless defined?(RecordingStudio::Event)
-
-      RecordingStudio::Event.create!(
-        action: "exported",
-        recording_id: @context_recording.id,
-        recordable_type: recordable&.class&.name || @context_recording.recordable_type,
-        recordable_id: (recordable.id if recordable.respond_to?(:id)) ||
-          (@context_recording.recordable_id if @context_recording.respond_to?(:recordable_id)),
-        actor_type: @actor&.class&.name,
-        actor_id: @actor.respond_to?(:id) ? @actor.id : nil,
-        impersonator_type: @impersonator&.class&.name,
-        impersonator_id: @impersonator.respond_to?(:id) ? @impersonator.id : nil,
-        metadata: metadata
-      )
-    rescue ActiveRecord::ActiveRecordError, NoMethodError
-      nil
     end
 
     def resolve_configured_actor(controller)
