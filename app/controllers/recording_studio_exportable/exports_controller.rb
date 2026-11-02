@@ -58,13 +58,11 @@ module RecordingStudioExportable
 
     def export_rate_key
       actor = export_actor
-      actor_key = actor.respond_to?(:id) && actor.id.present? ? actor.id : "anonymous"
-      export_key = if params[:export_token].present?
-                     "token"
-                   else
-                     permitted_export_params[:export_key].presence || "unknown"
-                   end
-      "exportable:#{actor_key}:#{export_key}"
+      if actor.respond_to?(:id) && actor.id.present?
+        "exportable:#{actor.class}:#{actor.id}"
+      else
+        "exportable:#{request.remote_ip}"
+      end
     end
 
     def context_recording

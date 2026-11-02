@@ -37,7 +37,7 @@ module RecordingStudioExportable
       @trusted_export_sources = []
       @trusted_export_token_store = nil
       @layout = nil
-      @export_rate_limit = 30
+      @export_rate_limit = 5
       @export_rate_period = 60
       @export_definitions = {}
       @mutex = Monitor.new

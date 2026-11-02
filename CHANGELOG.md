@@ -15,16 +15,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Exports return 429 after `export_rate_limit` hits in `export_rate_period`
-  seconds (defaults: 30 hits, 60 seconds) for the same actor and export key,
-  when `RecordingStudioCache::RateLimiter` is loaded. The limit is skipped
+  seconds (defaults: 5 hits, 60 seconds) for one actor. The bucket is
+  `exportable:<actor class>:<actor id>`, or the remote IP when no actor is
+  signed in. The caller’s export key is not part of the bucket. The limit
+  runs when `RecordingStudioCache::RateLimiter` is loaded and is skipped
   when Cache is not installed.
+- Boot warns when RecordingStudioCache is missing, or when the cache store
+  is missing, a null store, or a per-process memory store.
 - The dummy app registers a Metrics `exports.total` count on `ExportLog`.
   The gem does not depend on Metrics and does not register that metric.
 
 ### Upgrade notes
-- Set `config.export_rate_limit` and `config.export_rate_period` when 30
-  exports a minute is the wrong ceiling. Install Recording Studio Cache for
-  the limit to run.
+- Set `config.export_rate_limit` and `config.export_rate_period` when 5
+  exports a minute per actor is the wrong ceiling. Install Recording Studio
+  Cache with a shared store for the limit to hold across processes.
 - Copy the dummy metrics initializer if the host wants an exports count.
 ## 0.5.10 - 2026-11-02
 

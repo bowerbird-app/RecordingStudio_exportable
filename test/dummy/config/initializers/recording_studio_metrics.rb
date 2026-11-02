@@ -9,6 +9,7 @@ Rails.application.config.to_prepare do
   RecordingStudioMetrics.register(
     :exports,
     model: RecordingStudioExportable::ExportLog,
+    # Dummy only. A host should decide who can read this count.
     api_authorize: ->(_context) { true }
   ) do
     count :total, title: "Exports"

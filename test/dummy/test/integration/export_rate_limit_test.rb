@@ -35,4 +35,43 @@ class ExportRateLimitTest < ActionDispatch::IntegrationTest
     assert_equal "Too many exports. Try again soon.", response.body
     assert response.headers["Retry-After"].present?
   end
+
+  test "a different export key still shares the actor bucket" do
+    sign_in @admin
+
+    post "/recording_studio_exportable/exports", params: {
+      context_recording_id: @recording.id,
+      export_key: "recording_studio_document_items_export",
+      format: "csv"
+    }
+    assert_response :success
+
+    post "/recording_studio_exportable/exports", params: {
+      context_recording_id: @recording.id,
+      export_key: "some.other.export",
+      format: "csv"
+    }
+    assert_response :too_many_requests
+  end
+
+  test "another actor is not limited by the first actor" do
+    viewer = User.find_by!(email: "viewer@admin.com")
+    dashboard = DemoDashboard.find_by!(name: "Export Demo Dashboard")
+    recording = RecordingStudio.root_recording_for(dashboard)
+    params = {
+      context_recording_id: recording.id,
+      export_key: "recording_studio_demo_dashboard_requests_export",
+      format: "csv"
+    }
+
+    sign_in @admin
+    post "/recording_studio_exportable/exports", params: params
+    assert_response :success
+    post "/recording_studio_exportable/exports", params: params
+    assert_response :too_many_requests
+
+    sign_in viewer
+    post "/recording_studio_exportable/exports", params: params
+    assert_response :success
+  end
 end
