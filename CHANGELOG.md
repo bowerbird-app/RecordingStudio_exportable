@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
+  and a ghost `Button` for Reset, with the same query param names.
+
 ## [0.5.0] - 2026-10-29
 
 ### Changed

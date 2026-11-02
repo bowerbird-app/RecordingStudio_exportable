@@ -145,15 +145,19 @@
       <p class="text-sm text-(--surface-muted-content-color)">Required role: <code>admin</code></p>
 
       <%= form_with url: root_path(anchor: "topics"), method: :get, local: true, class: "grid gap-3 md:grid-cols-3" do %>
-        <label class="flex flex-col gap-1 text-sm">
-          <span class="text-(--surface-muted-content-color)">Filter by topic</span>
-          <input type="text" name="topic" value="<%= @topic_filter %>" class="rounded-md border border-(--surface-border-color) bg-(--surface-base-color) px-3 py-2 text-sm" placeholder="topic name" />
-        </label>
+        <%= render FlatPack::TextInput::Component.new(
+          name: "topic",
+          label: "Filter by topic",
+          value: @topic_filter,
+          placeholder: "topic name"
+        ) %>
 
-        <label class="flex flex-col gap-1 text-sm">
-          <span class="text-(--surface-muted-content-color)">Filter by article</span>
-          <input type="text" name="article" value="<%= @article_filter %>" class="rounded-md border border-(--surface-border-color) bg-(--surface-base-color) px-3 py-2 text-sm" placeholder="article title" />
-        </label>
+        <%= render FlatPack::TextInput::Component.new(
+          name: "article",
+          label: "Filter by article",
+          value: @article_filter,
+          placeholder: "article title"
+        ) %>
 
         <div class="md:col-span-3">
           <%= render FlatPack::DateRangeInput::Component.new(
@@ -172,7 +176,7 @@
             <%= hidden_field_tag "topics_columns[]", column_key %>
           <% end %>
           <%= render FlatPack::Button::Component.new(text: "Apply filters", type: "submit", style: :primary, size: :md) %>
-          <%= link_to "Reset", root_path(anchor: "topics"), class: "text-sm text-(--surface-muted-content-color) underline" %>
+          <%= render FlatPack::Button::Component.new(text: "Reset", href: root_path(anchor: "topics"), style: :ghost) %>
         </div>
       <% end %>
 

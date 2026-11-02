@@ -31,6 +31,41 @@ class HomeTopicsFilterTest < ActionDispatch::IntegrationTest
     assert_select "section#topics", text: /Hidden Topic/, count: 0
     assert_select "section#topics", text: /Created at/
     assert_select "form[action='#{root_path(anchor: "topics")}']", minimum: 1
-    assert_select "a[href='#{root_path(anchor: "topics")}']", text: "Reset"
+    assert_select "section#topics input[name=topic]"
+    assert_select "section#topics input[name=article]"
+    assert_select "section#topics a[href='#{root_path(anchor: "topics")}']", text: "Reset"
+  end
+
+  test "topics text filters keep query param names and reset clears them" do
+    user = User.find_or_create_by!(email: "topics-text-filter@example.com") do |record|
+      record.password = "Password123!"
+      record.password_confirmation = "Password123!"
+    end
+    sign_in user
+
+    dashboard = DemoDashboard.create!(name: "Topics Text Filter Dashboard")
+    RecordingStudio.root_recording_for(dashboard)
+
+    author = Author.create!(name: "Text Filter Author", bio: "")
+    matching_article = Article.create!(title: "Walkthrough Article", body: "Body", author: author)
+    other_article = Article.create!(title: "Other Article", body: "Body", author: author)
+    Topic.create!(article: matching_article, name: "Exports")
+    Topic.create!(article: other_article, name: "Hidden Topic")
+
+    get root_path, params: { topic: "Exports", article: "Walkthrough" }
+
+    assert_response :success
+    assert_select "section#topics input[name=topic][value=Exports]"
+    assert_select "section#topics input[name=article][value=Walkthrough]"
+    assert_select "section#topics", text: /Exports/
+    assert_select "section#topics", text: /Hidden Topic/, count: 0
+
+    get root_path(anchor: "topics")
+
+    assert_response :success
+    assert_select "section#topics input[name=topic][value=Exports]", count: 0
+    assert_select "section#topics input[name=article][value=Walkthrough]", count: 0
+    assert_select "section#topics input[name=topic]"
+    assert_select "section#topics input[name=article]"
   end
 end
