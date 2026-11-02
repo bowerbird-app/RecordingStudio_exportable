@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
+## 0.5.8 - 2026-11-02
+
+### Changed
+- **Breaking.** A corrupt `config/recording_studio_exportable.yml` fails boot.
+  A missing file is skipped.
+- **Breaking.** Export buttons and filter sanitizing no longer hide unexpected
+  errors. A gem `Error` still hides the button.
+- The default actor is `Current.actor`. Set `config.current_actor` when the
+  host resolves the actor another way. `resolve_actor` is the one lookup.
+- Capability export keys are read in one place.
+
+### Upgrade notes
+- Fix invalid exportable YAML instead of relying on a silent skip.
+- Set `config.current_actor` if the host does not assign `Current.actor`.
+  Call `current_user` in that lambda when it is public. Do not use `send`.
 ## 0.5.7 - 2026-11-02
 
 ### Changed

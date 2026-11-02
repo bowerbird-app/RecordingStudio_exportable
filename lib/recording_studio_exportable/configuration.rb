@@ -21,8 +21,8 @@ module RecordingStudioExportable
 
     def initialize
       @current_actor = lambda do |controller: nil|
-        (controller&.send(:current_user) if controller.respond_to?(:current_user, true)) ||
-          (defined?(Current) && Current.respond_to?(:actor) ? Current.actor : nil)
+        actor = Current.actor if defined?(Current) && Current.respond_to?(:actor)
+        actor.nil? && controller.nil? ? nil : actor
       end
       @current_impersonator = lambda { |*|
         defined?(Current) && Current.respond_to?(:impersonator) ? Current.impersonator : nil
@@ -85,8 +85,31 @@ module RecordingStudioExportable
       keys = (context_export_keys_resolver.call(context_recording) if context_export_keys_resolver.respond_to?(:call))
 
       Array(keys).map { |key| normalize_key(key) }.uniq
-    rescue StandardError
-      []
+    end
+
+    def resolve_actor(controller = nil)
+      resolver = current_actor
+      return unless resolver.respond_to?(:call)
+
+      resolver.call(controller: controller)
+    end
+
+    def capability_options_for(context_recording)
+      type_name = context_recording.respond_to?(:recordable_type) ? context_recording.recordable_type : nil
+      return unless RecordingStudio.respond_to?(:capability_options)
+
+      if type_name.present?
+        RecordingStudio.capability_options(:exportable, for: type_name)
+      else
+        RecordingStudio.capability_options(:exportable)
+      end
+    end
+
+    def capability_export_keys(options)
+      return [] unless options.respond_to?(:values_at)
+
+      keys = options.values_at(:export_keys, "export_keys", :exports, "exports").compact.first
+      Array(keys).map { |key| normalize_key(key) }.uniq
     end
 
     def export_enabled_for_recording?(key, recording)
@@ -163,14 +186,7 @@ module RecordingStudioExportable
     end
 
     def capability_export_keys_for(context_recording)
-      options = capability_options_for(context_recording)
-      return [] unless options.present?
-
-      if options.respond_to?(:values_at)
-        keys = options.values_at(:export_keys, "export_keys", :exports,
-                                 "exports").compact.first
-      end
-      Array(keys).map { |key| normalize_key(key) }.uniq
+      capability_export_keys(capability_options_for(context_recording))
     end
 
     def default_filter_log_sanitizer(filters)
@@ -189,17 +205,6 @@ module RecordingStudioExportable
     def effective_required_role(definition, context_recording)
       options = capability_options_for(context_recording)
       (options&.values_at(:required_role, "required_role")&.compact&.first || definition.required_role).to_sym
-    end
-
-    def capability_options_for(context_recording)
-      type_name = context_recording.respond_to?(:recordable_type) ? context_recording.recordable_type : nil
-      return unless RecordingStudio.respond_to?(:capability_options)
-
-      if type_name.present?
-        RecordingStudio.capability_options(:exportable, for: type_name)
-      else
-        RecordingStudio.capability_options(:exportable)
-      end
     end
 
     def test_environment?

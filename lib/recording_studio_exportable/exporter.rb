@@ -206,20 +206,11 @@ module RecordingStudioExportable
     end
 
     def capability_options
-      return {} unless RecordingStudio.respond_to?(:capability_options)
-      return {} unless @context_recording.respond_to?(:recordable_type)
-
-      RecordingStudio.capability_options(:exportable, for: @context_recording.recordable_type) || {}
-    rescue StandardError
-      {}
+      configuration.capability_options_for(@context_recording) || {}
     end
 
     def capability_export_keys(options)
-      if options.respond_to?(:values_at)
-        keys = options.values_at(:export_keys, "export_keys", :exports,
-                                 "exports").compact.first
-      end
-      Array(keys).map { |key| configuration.normalize_key(key) }.uniq
+      configuration.capability_export_keys(options)
     end
 
     def validate_format!(definition)
@@ -377,8 +368,6 @@ module RecordingStudioExportable
       return unless recordable.respond_to?(:export_filename)
 
       recordable.export_filename(format: @format)
-    rescue StandardError
-      nil
     end
 
     def sanitize_filename(value)
@@ -467,16 +456,16 @@ module RecordingStudioExportable
     end
 
     def filter_known_log_attributes(attrs, record: nil)
-      if record
+      if record.respond_to?(:has_attribute?)
         attrs.select do |key, _|
           record.has_attribute?(key) || (key == :context_recording && record.respond_to?(:context_recording=))
         end
+      elsif record
+        attrs
       else
         column_names = RecordingStudioExportable::ExportLog.column_names
         attrs.select { |key, _| column_names.include?(key.to_s) || key == :context_recording }
       end
-    rescue StandardError
-      attrs
     end
 
     def record_exported_event(definition, export_log:, filename:, row_count:, selected_attributes:,
@@ -501,8 +490,7 @@ module RecordingStudioExportable
     end
 
     def resolve_configured_actor(controller)
-      resolver = configuration.current_actor
-      resolver.respond_to?(:call) ? resolver.call(controller: controller) : nil
+      configuration.resolve_actor(controller)
     end
 
     def resolve_configured_impersonator(controller)
@@ -521,7 +509,7 @@ module RecordingStudioExportable
     def sanitized_filters_for_log
       sanitizer = configuration.filter_log_sanitizer
       sanitizer.respond_to?(:call) ? sanitizer.call(@filters) : @filters
-    rescue StandardError
+    rescue Error
       {}
     end
 

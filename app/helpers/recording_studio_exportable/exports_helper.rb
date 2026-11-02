@@ -102,7 +102,7 @@ module RecordingStudioExportable
         actor: actor
       )
       allowed_keys.include?(RecordingStudioExportable.configuration.normalize_key(export_key))
-    rescue StandardError
+    rescue RecordingStudioExportable::Error
       false
     end
 
@@ -114,13 +114,8 @@ module RecordingStudioExportable
     end
 
     def current_export_actor
-      resolver = RecordingStudioExportable.configuration.current_actor
-      actor = resolver.call(controller: (respond_to?(:controller) ? controller : nil)) if resolver.respond_to?(:call)
-      return actor if actor.present?
-
-      Current.actor if defined?(Current) && Current.respond_to?(:actor)
-    rescue StandardError
-      Current.actor if defined?(Current) && Current.respond_to?(:actor)
+      controller_for_actor = respond_to?(:controller) ? controller : nil
+      RecordingStudioExportable.configuration.resolve_actor(controller_for_actor)
     end
 
     def hidden_nested_fields(prefix, value)
