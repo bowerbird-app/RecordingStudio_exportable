@@ -4,8 +4,7 @@ require "test_helper"
 
 class CapabilityTest < Minitest::Test
   def setup
-    @original_configuration = RecordingStudioExportable.instance_variable_get(:@configuration)
-    RecordingStudioExportable.instance_variable_set(:@configuration, RecordingStudioExportable::Configuration.new)
+    save_exportable_configuration!
     RecordingStudioExportable.configuration.export("demo.people", columns: [:name]) { [] }
     RecordingStudioExportable.configuration.export(
       "demo.articles",
@@ -22,14 +21,10 @@ class CapabilityTest < Minitest::Test
       RecordingStudio.configuration.instance_variable_get(:@capabilities)&.transform_values(&:dup) || {}
     @original_capability_options =
       RecordingStudio.configuration.instance_variable_get(:@capability_options)&.dup || {}
-    @defined_recordables = []
   end
 
   def teardown
-    Array(@defined_recordables).each do |const_name|
-      Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
-    end
-    RecordingStudioExportable.instance_variable_set(:@configuration, @original_configuration)
+    restore_exportable_configuration!
     RecordingStudio.configuration.instance_variable_set(:@capabilities, @original_capabilities)
     RecordingStudio.configuration.instance_variable_set(:@capability_options, @original_capability_options)
   end
@@ -263,8 +258,8 @@ class CapabilityTest < Minitest::Test
   private
 
   def define_recordable(const_name)
-    Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
-    @defined_recordables << const_name
+    return Object.const_get(const_name) if Object.const_defined?(const_name, false)
+
     Object.const_set(const_name, Class.new)
   end
 end

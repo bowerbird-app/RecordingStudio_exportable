@@ -51,7 +51,7 @@ GIT
 PATH
   remote: .
   specs:
-    recording_studio_exportable (0.5.2)
+    recording_studio_exportable (0.5.3)
       csv
       flat_pack (>= 0.1.95)
       rails (~> 8.1.0)
@@ -186,6 +186,7 @@ GEM
     minitest (6.0.6)
       drb (~> 2.0)
       prism (~> 1.5)
+    minitest-mock (5.27.0)
     net-imap (0.6.8)
       date
       net-protocol
@@ -335,6 +336,7 @@ DEPENDENCIES
   debug
   devise
   flat_pack!
+  minitest-mock
   puma (>= 7.2.1)
   recording_studio!
   recording_studio_accessible!
@@ -390,6 +392,7 @@ CHECKSUMS
   marcel (1.2.1) sha256=1678e9360e32f9eafa917c80029e2f6d10b2715c66a4b87b6d0da9b9cd1f859f
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   minitest (6.0.6) sha256=153ea36d1d987a62942382b61075745042a2b3123b1cd48f4c3675af9cc7d6f1
+  minitest-mock (5.27.0) sha256=7040ed7185417a966920987eaa6eaf1be4ea1fc5b25bb03ff4703f98564a55b0
   net-imap (0.6.8) sha256=eb30bb62227b64a3af6b518b04b2375113d69f68f15de59b0193b07d98acf6d9
   net-pop (0.1.2) sha256=848b4e982013c15b2f0382792268763b748cce91c9e91e36b0f27ed26420dff3
   net-protocol (0.4.0) sha256=f9f90c8c6f64794a45160bf422177a336db12809de3beeeaa26b88fcd2e8c853
@@ -419,7 +422,7 @@ CHECKSUMS
   rdoc (8.1.0) sha256=befc37880a5cfd36dcb176c748b5fd5ee39dd3536a75e81824e4972ce230f60a
   recording_studio (6.3.0)
   recording_studio_accessible (0.24.0)
-  recording_studio_exportable (0.5.2)
+  recording_studio_exportable (0.5.3)
   recording_studio_metrics (0.7.0)
   recording_studio_trashable (0.12.0)
   regexp_parser (2.11.3) sha256=ca13f381a173b7a93450e53459075c9b76a10433caadcb2f1180f2c741fc55a4
