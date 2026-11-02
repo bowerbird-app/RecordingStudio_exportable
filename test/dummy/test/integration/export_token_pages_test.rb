@@ -21,9 +21,10 @@ class ExportTokenPagesTest < ActionDispatch::IntegrationTest
     }
 
     assert_response :not_found
-    assert_includes response.body, "Export expired"
-    assert_includes response.body, "Export Expired"
-    assert_includes response.body, "Refresh the original page"
+    assert_includes response.body, "Link not found"
+    assert_includes response.body, "That export link is missing"
+    assert_includes response.body, "Go back and start a fresh export"
+    refute_includes response.body, "Export Expired"
     refute_includes response.body, "HOST export expired nav"
   end
 

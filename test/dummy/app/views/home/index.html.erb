@@ -1,20 +1,12 @@
-<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
-    title: "Template Demo",
-    subtitle: "This dummy app is the browser-facing demo surface for the template, including access-aware export actions.",
+    title: "Exports",
+    subtitle: "Download a CSV from the pages you can open.",
     variant: :h1
   ) %>
 
-  <p class="text-sm text-(--surface-muted-content-color)">
-    Current actor: <code><%= @current_actor_email || "none" %></code>
-    • Dashboard view: <code><%= @dashboard_view_allowed ? "true" : "false" %></code>
-    • Dashboard admin: <code><%= @dashboard_admin_allowed ? "true" : "false" %></code>
-    • Article export allowed: <code><%= @article_export_allowed ? "true" : "false" %></code>
-  </p>
-
-  <p class="text-xs text-(--surface-muted-content-color)">
-    Dashboard export keys: <code><%= @dashboard_allowed_export_keys.join(", ") %></code>
-  </p>
+  <% if @current_actor_email %>
+    <p class="text-sm">Signed in as <%= @current_actor_email %>.</p>
+  <% end %>
 
   <div class="space-y-8">
     <section id="demo-api-requests" class="space-y-3">
@@ -353,3 +345,4 @@
       <% end %>
     </section>
   </div>
+ 

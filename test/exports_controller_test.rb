@@ -44,7 +44,7 @@ class ExportsControllerTest < Minitest::Test
   def test_token_expired_page_uses_refresh_prompt_only
     source = File.read(File.expand_path("../app/views/recording_studio_exportable/exports/token_expired.html.erb", __dir__))
 
-    assert_includes source, "max-w-6xl"
+    refute_includes source, "max-w-6xl"
     assert_includes source, 't("recording_studio.exportable.tokens.expired.nav_title", default: "Export expired")'
     assert_includes source, 't("recording_studio.exportable.tokens.expired.title", default: "Export Expired")'
     assert_includes source, 't("recording_studio.exportable.tokens.expired.subtitle", default: "Refresh the original page")'
@@ -56,10 +56,10 @@ class ExportsControllerTest < Minitest::Test
   def test_token_not_found_page_uses_refresh_prompt_only
     source = File.read(File.expand_path("../app/views/recording_studio_exportable/exports/token_not_found.html.erb", __dir__))
 
-    assert_includes source, "max-w-6xl"
-    assert_includes source, 't("recording_studio.exportable.tokens.not_found.nav_title", default: "Export expired")'
-    assert_includes source, 't("recording_studio.exportable.tokens.not_found.title", default: "Export Expired")'
-    assert_includes source, 't("recording_studio.exportable.tokens.not_found.subtitle", default: "Refresh the original page")'
+    refute_includes source, "max-w-6xl"
+    assert_includes source, 't("recording_studio.exportable.tokens.not_found.nav_title", default: "Link not found")'
+    assert_includes source, 't("recording_studio.exportable.tokens.not_found.title", default: "That export link is missing")'
+    assert_includes source, 't("recording_studio.exportable.tokens.not_found.subtitle", default: "Go back and start a fresh export")'
     refute_includes source, 'title: "Export Expired"'
     refute_includes source, "This export token does not exist"
     refute_includes source, "Return to the page where you generated the export"

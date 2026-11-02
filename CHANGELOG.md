@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
+## 0.5.9 - 2026-11-02
+
+### Changed
+- The dummy home page uses FlatPack inputs and a Reset button. The missing
+  export link page no longer repeats the expired-link title.
+- Docs pages drop the extra page wrapper and keep the sidebar shell.
+- README and dummy README describe this gem, not a template.
+
+### Upgrade notes
+- Hosts that copied the English `tokens.not_found` strings get new defaults:
+  "Link not found" and "That export link is missing". Override the locale
+  keys to keep the old wording.
+
 ## 0.5.8 - 2026-11-02
 
 ### Changed

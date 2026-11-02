@@ -64,8 +64,8 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Workspace"
     assert_includes response.body, "Folder"
     assert_includes response.body, "Page"
-    assert_includes response_text, "Root recordable"
-    assert_includes response_text, "Child recordable"
+    assert_includes response_text, "Top-level type"
+    assert_includes response_text, "Nested type"
     assert_includes response_text, "Allowed parents: Workspace, Folder"
     assert_includes response_text, summary_data[:workspace]
     assert_includes response_text, summary_data[:folder]

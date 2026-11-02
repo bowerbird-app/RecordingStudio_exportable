@@ -8,7 +8,10 @@ class LocalesTest < ActiveSupport::TestCase
 
     assert_includes I18n.load_path.map { |path| File.expand_path(path) }, File.expand_path(locale_path)
     assert_equal "Export CSV", I18n.t("recording_studio.exportable.buttons.export_csv", raise: true)
-    assert_equal "Export expired", I18n.t("recording_studio.exportable.tokens.not_found.nav_title", raise: true)
+    assert_equal "Link not found", I18n.t("recording_studio.exportable.tokens.not_found.nav_title", raise: true)
+    assert_equal "That export link is missing", I18n.t("recording_studio.exportable.tokens.not_found.title", raise: true)
+    refute_equal I18n.t("recording_studio.exportable.tokens.expired.title", raise: true),
+                 I18n.t("recording_studio.exportable.tokens.not_found.title", raise: true)
   end
 
   test "engine lib does not append i18n load path" do
