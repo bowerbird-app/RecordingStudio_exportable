@@ -381,19 +381,50 @@ class ExporterTest < Minitest::Test
   end
 
   def test_export_fails_when_the_export_log_cannot_be_created
+    wrote_event = false
+    context = FakeContext.new("DemoDashboard", FakeRecordable.new("Dash"))
+    context.define_singleton_method(:log_event!) { |**_kwargs| wrote_event = true }
+
     RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
       RecordingStudioAccessible.stub(:authorized?, true) do
-        RecordingStudioExportable::ExportLog.stub(:create!, ->(**_kwargs) {}) do
-          error = assert_raises(RecordingStudioExportable::Error) do
+        RecordingStudioExportable::ExportLog.stub(:create!, lambda { |**_kwargs|
+          raise ActiveRecord::StatementInvalid, "insert failed"
+        }) do
+          assert_raises(ActiveRecord::StatementInvalid) do
             RecordingStudioExportable.export(
-              context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+              context_recording: context,
               actor: Object.new
             )
           end
-          assert_equal "export log could not be created", error.message
         end
       end
     end
+
+    refute wrote_event
+  end
+
+  def test_history_failure_marks_the_log_failed_before_completion
+    fake_log = FakeExportLog.new([])
+    context = FakeContext.new("DemoDashboard", FakeRecordable.new("Dash"))
+    context.define_singleton_method(:log_event!) { |**_kwargs| raise "history failed" }
+
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
+      RecordingStudioAccessible.stub(:authorized?, true) do
+        RecordingStudioExportable::ExportLog.stub(:create!, ->(**_kwargs) { fake_log }) do
+          assert_raises(RuntimeError) do
+            RecordingStudioExportable.export(
+              context_recording: context,
+              actor: Object.new,
+              attributes: { columns: ["name"] }
+            )
+          end
+        end
+      end
+    end
+
+    statuses = fake_log.updates.map { |update| update[:status] }
+    assert_includes statuses, :failed
+    refute_includes statuses, :completed
   end
 
   def test_export_log_is_marked_failed_when_validation_raises_after_log_creation

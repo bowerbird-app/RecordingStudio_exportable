@@ -42,7 +42,6 @@ module RecordingStudioExportable
       definition = resolved_definition
       logged_filters = sanitized_filters_for_log
       export_log = create_export_log(definition: definition, filters: logged_filters)
-      raise Error, "export log could not be created" if export_log.nil?
 
       begin
         @capability_options = validate_capability!(definition)
@@ -69,14 +68,6 @@ module RecordingStudioExportable
           filename: filename
         }
 
-        mark_completed(
-          export_log,
-          filename: filename,
-          row_count: rows.size,
-          byte_size: data.bytesize,
-          selected_attributes: selected_attributes,
-          metadata: metadata
-        )
         record_exported_event(
           definition,
           export_log: export_log,
@@ -84,6 +75,14 @@ module RecordingStudioExportable
           row_count: rows.size,
           selected_attributes: selected_attributes,
           logged_filters: logged_filters
+        )
+        mark_completed(
+          export_log,
+          filename: filename,
+          row_count: rows.size,
+          byte_size: data.bytesize,
+          selected_attributes: selected_attributes,
+          metadata: metadata
         )
 
         Result.new(
@@ -111,7 +110,6 @@ module RecordingStudioExportable
       definition = build_anonymous_definition(export_key, @columns)
       logged_filters = sanitized_filters_for_log
       export_log = create_export_log(definition: definition, filters: logged_filters)
-      raise Error, "export log could not be created" if export_log.nil?
 
       begin
         validate_trusted_format!
@@ -133,14 +131,6 @@ module RecordingStudioExportable
           screen_identifier: @screen_identifier
         }
 
-        mark_completed(
-          export_log,
-          filename: filename,
-          row_count: rows.size,
-          byte_size: data.bytesize,
-          selected_attributes: selected_attributes,
-          metadata: metadata
-        )
         record_exported_event(
           definition,
           export_log: export_log,
@@ -152,6 +142,14 @@ module RecordingStudioExportable
             trusted_source: @trusted_source,
             screen_identifier: @screen_identifier
           }
+        )
+        mark_completed(
+          export_log,
+          filename: filename,
+          row_count: rows.size,
+          byte_size: data.bytesize,
+          selected_attributes: selected_attributes,
+          metadata: metadata
         )
 
         Result.new(
