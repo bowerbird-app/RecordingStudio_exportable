@@ -406,7 +406,7 @@ module RecordingStudioExportable
         context_recordable_id: (recordable.id if recordable.respond_to?(:id)),
         screen_key: screen_key,
         format: @format,
-        attributes: [],
+        selected_columns: [],
         metadata: {},
         actor: @actor,
         impersonator: @impersonator,
@@ -435,7 +435,7 @@ module RecordingStudioExportable
         filename: filename,
         row_count: row_count,
         byte_size: byte_size,
-        attributes: selected_attributes,
+        selected_columns: selected_attributes,
         metadata: metadata,
         completed_at: Time.current
       }
