@@ -43,7 +43,7 @@ module RecordingStudioExportable
       logged_filters = sanitized_filters_for_log
       export_log = create_export_log(definition: definition, filters: logged_filters)
 
-      begin
+      with_export_failure(export_log) do
         @capability_options = validate_capability!(definition)
         validate_context_export_key!(definition)
         definition.validate_context!(@context_recording, screen_key: screen_key)
@@ -92,12 +92,6 @@ module RecordingStudioExportable
           row_count: rows.size,
           export_log: export_log
         )
-      rescue Error => e
-        mark_failed(export_log, e)
-        raise
-      rescue StandardError => e
-        mark_failed(export_log, e)
-        raise
       end
     end
 
@@ -111,7 +105,7 @@ module RecordingStudioExportable
       logged_filters = sanitized_filters_for_log
       export_log = create_export_log(definition: definition, filters: logged_filters)
 
-      begin
+      with_export_failure(export_log) do
         validate_trusted_format!
         max_rows = effective_max_rows(nil)
         rows = materialized_trusted_rows(resolved_trusted_rows, max_rows: max_rows)
@@ -159,12 +153,6 @@ module RecordingStudioExportable
           row_count: rows.size,
           export_log: export_log
         )
-      rescue Error => e
-        mark_failed(export_log, e)
-        raise
-      rescue StandardError => e
-        mark_failed(export_log, e)
-        raise
       end
     end
 
@@ -172,6 +160,13 @@ module RecordingStudioExportable
 
     def configuration
       RecordingStudioExportable.configuration
+    end
+
+    def with_export_failure(export_log)
+      yield
+    rescue StandardError => e
+      mark_failed(export_log, e)
+      raise
     end
 
     def resolved_definition

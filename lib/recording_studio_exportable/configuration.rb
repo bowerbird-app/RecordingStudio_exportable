@@ -20,10 +20,9 @@ module RecordingStudioExportable
     attr_reader :export_definitions
 
     def initialize
-      @current_actor = lambda do |controller: nil|
-        actor = Current.actor if defined?(Current) && Current.respond_to?(:actor)
-        actor.nil? && controller.nil? ? nil : actor
-      end
+      @current_actor = lambda { |**|
+        Current.actor if defined?(Current) && Current.respond_to?(:actor)
+      }
       @current_impersonator = lambda { |*|
         defined?(Current) && Current.respond_to?(:impersonator) ? Current.impersonator : nil
       }

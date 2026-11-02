@@ -18,14 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   A missing file is skipped.
 - **Breaking.** Export buttons and filter sanitizing no longer hide unexpected
   errors. A gem `Error` still hides the button.
-- The default actor is `Current.actor`. Set `config.current_actor` when the
-  host resolves the actor another way. `resolve_actor` is the one lookup.
+- **Breaking.** The default actor resolver is `Current.actor`. It no longer
+  falls back to `controller.current_user`. Set `config.current_actor` when
+  the host resolves the actor another way. `resolve_actor` is the one lookup.
 - Capability export keys are read in one place.
 
 ### Upgrade notes
 - Fix invalid exportable YAML instead of relying on a silent skip.
-- Set `config.current_actor` if the host does not assign `Current.actor`.
-  Call `current_user` in that lambda when it is public. Do not use `send`.
+- Hosts that relied on the default `controller.current_user` fallback must
+  set `config.current_actor`. Call `current_user` in that lambda when it is
+  public. Do not use `send`. The dummy initializer still does that.
+
 ## 0.5.7 - 2026-11-02
 
 ### Changed
