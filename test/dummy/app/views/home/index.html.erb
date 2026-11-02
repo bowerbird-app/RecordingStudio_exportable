@@ -5,7 +5,7 @@
   ) %>
 
   <% if @current_actor_email %>
-    <p class="text-sm">Signed in as <%= @current_actor_email %>.</p>
+    <%= render FlatPack::Text::Component.new(size: :sm, text: "Signed in as #{@current_actor_email}.") %>
   <% end %>
 
   <div class="space-y-8">
@@ -14,7 +14,9 @@
         title: "Demo API requests"
       ) %>
 
-      <p class="text-sm text-(--surface-muted-content-color)">Required role: <code>view</code></p>
+      <%= render FlatPack::Text::Component.new(size: :sm, style: :muted) do %>
+        Required role: <code>view</code>
+      <% end %>
 
       <% if @demo_dashboard && @demo_recording %>
         <%= recording_studio_export_access_button(
@@ -39,11 +41,18 @@
         <%= render FlatPack::Table::Component.new(data: rows, class: "text-sm") do |table| %>
           <% table.column(title: "Path") { |row| row[:path] } %>
           <% table.column(title: "Method") { |row| row[:method] } %>
-          <% table.column(title: "Status") { |row| row[:status] } %>
+          <% table.column(title: "Status") { |row|
+            next if row[:status].blank?
+
+            badge_style = row[:status].to_i.between?(200, 299) ? :success : :default
+            render(FlatPack::Badge::Component.new(text: row[:status].to_s, style: badge_style, size: :sm))
+          } %>
           <% table.column(title: "Duration") { |row| row[:duration] } %>
         <% end %>
       <% else %>
-        <p class="text-sm leading-6">Run <code>bin/rails db:seed</code> to create demo dashboard data.</p>
+        <%= render FlatPack::Text::Component.new(size: :sm, style: :muted) do %>
+          Run <code>bin/rails db:seed</code> to create demo dashboard data.
+        <% end %>
       <% end %>
     </section>
 
@@ -52,7 +61,9 @@
         title: "Articles"
       ) %>
 
-      <p class="text-sm text-(--surface-muted-content-color)">Required role: <code>admin</code></p>
+      <%= render FlatPack::Text::Component.new(size: :sm, style: :muted) do %>
+        Required role: <code>admin</code>
+      <% end %>
 
       <% if @article_rows.any? %>
         <%= recording_studio_export_access_button(
@@ -72,7 +83,9 @@
           <% table.column(title: "Word count") { |row| row[:word_count] } %>
         <% end %>
       <% else %>
-        <p class="text-sm leading-6">Run <code>bin/rails db:seed</code> to create demo article data.</p>
+        <%= render FlatPack::Text::Component.new(size: :sm, style: :muted) do %>
+          Run <code>bin/rails db:seed</code> to create demo article data.
+        <% end %>
       <% end %>
     </section>
 
@@ -81,12 +94,12 @@
         title: "Article topics and authors"
       ) %>
 
-      <p class="text-sm text-(--surface-muted-content-color)">Required role: <code>view</code></p>
+      <%= render FlatPack::Text::Component.new(size: :sm, style: :muted) do %>
+        Required role: <code>view</code>
+      <% end %>
 
       <% if @article_topic_rows.any? %>
-        <p class="text-xs text-(--surface-muted-content-color)">
-          Showing <%= @article_topic_rows_page.length %> of <%= @article_topics_total_rows %> rows on page <%= @article_topics_page %> of <%= @article_topics_total_pages %>. Export includes all matching rows, not just this page.
-        </p>
+        <%= render FlatPack::Text::Component.new(size: :sm, style: :muted, text: "Showing #{@article_topic_rows_page.length} of #{@article_topics_total_rows} rows on page #{@article_topics_page} of #{@article_topics_total_pages}. Export includes all matching rows, not just this page.") %>
 
         <%= recording_studio_export_access_button(
           context_recording: @demo_recording || @article_rows.first[:context_recording],
@@ -104,28 +117,17 @@
           <% table.column(title: "Author") { |row| row[:author_name] } %>
         <% end %>
 
-        <% if @article_topics_total_pages > 1 %>
-          <div class="flex items-center gap-3 text-sm">
-            <% previous_page = @article_topics_page - 1 %>
-            <% next_page = @article_topics_page + 1 %>
-
-            <% if @article_topics_page > 1 %>
-              <%= link_to "Previous", url_for(request.query_parameters.merge(article_topics_page: previous_page)), class: "underline" %>
-            <% else %>
-              <span class="text-(--surface-muted-content-color)">Previous</span>
-            <% end %>
-
-            <span class="text-(--surface-muted-content-color)">Page <%= @article_topics_page %> / <%= @article_topics_total_pages %></span>
-
-            <% if @article_topics_page < @article_topics_total_pages %>
-              <%= link_to "Next", url_for(request.query_parameters.merge(article_topics_page: next_page)), class: "underline" %>
-            <% else %>
-              <span class="text-(--surface-muted-content-color)">Next</span>
-            <% end %>
-          </div>
-        <% end %>
+        <%= render FlatPack::Pagination::Component.new(
+          pagy: HomeHelper::PageNav.new(
+            page: @article_topics_page,
+            pages: @article_topics_total_pages,
+            page_param: :article_topics_page
+          )
+        ) %>
       <% else %>
-        <p class="text-sm leading-6">Run <code>bin/rails db:seed</code> to create article topics.</p>
+        <%= render FlatPack::Text::Component.new(size: :sm, style: :muted) do %>
+          Run <code>bin/rails db:seed</code> to create article topics.
+        <% end %>
       <% end %>
     </section>
 
@@ -134,7 +136,9 @@
         title: "Topics"
       ) %>
 
-      <p class="text-sm text-(--surface-muted-content-color)">Required role: <code>admin</code></p>
+      <%= render FlatPack::Text::Component.new(size: :sm, style: :muted) do %>
+        Required role: <code>admin</code>
+      <% end %>
 
       <%= form_with url: root_path(anchor: "topics"), method: :get, local: true, class: "grid gap-3 md:grid-cols-3" do %>
         <%= render FlatPack::TextInput::Component.new(
@@ -189,7 +193,7 @@
 
         <%= render FlatPack::Modal::Component.new(id: "topics-columns-modal", title: "Choose Topic Columns", size: :md) do |modal| %>
           <% modal.body do %>
-            <p class="mb-3 text-sm text-(--surface-muted-content-color)">Checked columns are shown in the table and sent as export columns.</p>
+            <%= render FlatPack::Text::Component.new(size: :sm, style: :muted, text: "Checked columns are shown in the table and sent as export columns.") %>
 
             <%= form_with url: root_path(anchor: "topics"), method: :get, local: true, class: "space-y-3" do %>
               <%= hidden_field_tag :topic, @topic_filter %>
@@ -222,9 +226,7 @@
           <% end %>
         <% end %>
 
-        <p class="text-xs text-(--surface-muted-content-color)">
-          Showing <%= @topic_article_rows_page.length %> of <%= @topics_total_rows %> rows on page <%= @topics_page %> of <%= @topics_total_pages %>. Export includes all matching rows, not just this page.
-        </p>
+        <%= render FlatPack::Text::Component.new(size: :sm, style: :muted, text: "Showing #{@topic_article_rows_page.length} of #{@topics_total_rows} rows on page #{@topics_page} of #{@topics_total_pages}. Export includes all matching rows, not just this page.") %>
 
         <%= recording_studio_export_access_button(
           context_recording: @demo_recording,
@@ -246,33 +248,27 @@
             <% table.column(title: "Articles") { |row| row[:article_titles] } %>
           <% end %>
           <% if @topics_selected_columns.include?("topic_created_at") %>
-            <% table.column(title: "Created at") { |row| row[:topic_created_at] } %>
+            <% table.column(title: "Created at") { |row|
+              safe_join(Array(row[:topic_created_at]).map { |time|
+                render(FlatPack::Timestamp::Component.new(timestamp: time, shorten_timestamp: true))
+              }, " ")
+            } %>
           <% end %>
         <% end %>
 
-        <% if @topics_total_pages > 1 %>
-          <% topics_query = request.query_parameters.merge(topics_columns: @topics_selected_columns) %>
-          <div class="flex items-center gap-3 text-sm">
-            <% previous_page = @topics_page - 1 %>
-            <% next_page = @topics_page + 1 %>
-
-            <% if @topics_page > 1 %>
-              <%= link_to "Previous", url_for(topics_query.merge(topics_page: previous_page, anchor: "topics")), class: "underline" %>
-            <% else %>
-              <span class="text-(--surface-muted-content-color)">Previous</span>
-            <% end %>
-
-            <span class="text-(--surface-muted-content-color)">Page <%= @topics_page %> / <%= @topics_total_pages %></span>
-
-            <% if @topics_page < @topics_total_pages %>
-              <%= link_to "Next", url_for(topics_query.merge(topics_page: next_page, anchor: "topics")), class: "underline" %>
-            <% else %>
-              <span class="text-(--surface-muted-content-color)">Next</span>
-            <% end %>
-          </div>
-        <% end %>
+        <%= render FlatPack::Pagination::Component.new(
+          pagy: HomeHelper::PageNav.new(
+            page: @topics_page,
+            pages: @topics_total_pages,
+            page_param: :topics_page,
+            extra: { topics_columns: @topics_selected_columns }
+          ),
+          anchor: "topics"
+        ) %>
       <% else %>
-        <p class="text-sm leading-6">Run <code>bin/rails db:seed</code> to create topic data.</p>
+        <%= render FlatPack::Text::Component.new(size: :sm, style: :muted) do %>
+          Run <code>bin/rails db:seed</code> to create topic data.
+        <% end %>
       <% end %>
     </section>
 
@@ -281,15 +277,21 @@
         title: "Documents"
       ) %>
 
-      <p class="text-sm text-(--surface-muted-content-color)">Page access role: <code>admin</code> • Export role: <code>view</code></p>
+      <%= render FlatPack::Text::Component.new(size: :sm, style: :muted) do %>
+        Page access role: <code>admin</code> • Export role: <code>view</code>
+      <% end %>
 
       <% if @documents.any? %>
         <%= render FlatPack::Table::Component.new(data: @documents, class: "text-sm") do |table| %>
-          <% table.column(title: "Document") { |row| link_to(row.title, document_path(row), class: "underline") } %>
+          <% table.column(title: "Document") { |row|
+            render(FlatPack::Link::Component.new(href: document_path(row))) { row.title }
+          } %>
           <% table.column(title: "Items") { |row| row.items.count } %>
         <% end %>
       <% else %>
-        <p class="text-sm leading-6">Run <code>bin/rails db:seed</code> to create document data.</p>
+        <%= render FlatPack::Text::Component.new(size: :sm, style: :muted) do %>
+          Run <code>bin/rails db:seed</code> to create document data.
+        <% end %>
       <% end %>
     </section>
 
@@ -298,22 +300,19 @@
         title: "Trusted export token demo"
       ) %>
 
-      <p class="text-sm text-(--surface-muted-content-color)">
-        This button uses a single-use token instead of the traditional
-        actor/authorization flow. The token is issued server-side when
-        the page loads, and the export link posts it to the engine.
-      </p>
+      <%= render FlatPack::Text::Component.new(size: :sm, style: :muted, text: "This button uses a single-use token. The page issues it, and the export link posts it to the engine.") %>
 
       <% if @trusted_token.present? %>
-        <div class="space-y-3 rounded-lg border border-(--surface-border-color) p-4">
-          <p class="text-sm">
+        <%= render FlatPack::Card::Component.new do |card| %>
+          <% card.body do %>
+          <%= render FlatPack::Text::Component.new(size: :sm) do %>
             <span class="font-medium">Token ID:</span>
             <code class="text-xs break-all"><%= @trusted_token.id %></code>
-          </p>
-          <p class="text-xs text-(--surface-muted-content-color)">
-            Token expires in 30 seconds &bull; Single use only &bull;
+          <% end %>
+          <%= render FlatPack::Text::Component.new(size: :sm, style: :muted) do %>
+            Token expires in 30 seconds. Single use only.
             Source: <code><%= @trusted_token.source %></code>
-          </p>
+          <% end %>
 
           <%= tag.form(action: recording_studio_exportable.exports_path, method: :post) do %>
             <%= hidden_field_tag(:authenticity_token, form_authenticity_token) %>
@@ -328,20 +327,22 @@
             ) %>
           <% end %>
 
-          <p class="text-xs text-(--surface-muted-content-color)">
-            After clicking, refresh the page to issue a new token.
-            The old one will return 400 (consumed or expired).
-          </p>
-        </div>
+          <%= render FlatPack::Text::Component.new(size: :sm, style: :muted, text: "After you export, refresh the page for a new token. The old one is used up.") %>
+          <% end %>
+        <% end %>
       <% else %>
-        <div class="space-y-3 rounded-lg border border-(--surface-border-color) p-4">
-          <p class="text-sm text-(--surface-muted-content-color)">
-            To enable the token demo, ensure <code>RecordingStudioExportable</code>
-            is in <code>config.trusted_export_sources</code>. See the
-            <%= link_to "trusted exports docs", docs_trusted_exports_path, class: "underline" %>
-            for setup instructions.
-          </p>
-        </div>
+        <%= render FlatPack::Card::Component.new do |card| %>
+          <% card.body do %>
+            <%= render FlatPack::Text::Component.new(size: :sm, style: :muted) do %>
+              To enable the token demo, add <code>RecordingStudioExportable</code>
+              to <code>config.trusted_export_sources</code>. See the
+              <%= render FlatPack::Link::Component.new(href: docs_trusted_exports_path) do %>
+                trusted exports docs
+              <% end %>
+              for setup.
+            <% end %>
+          <% end %>
+        <% end %>
       <% end %>
     </section>
   </div>

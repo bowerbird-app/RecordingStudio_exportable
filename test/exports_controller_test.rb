@@ -45,10 +45,11 @@ class ExportsControllerTest < Minitest::Test
     source = File.read(File.expand_path("../app/views/recording_studio_exportable/exports/token_expired.html.erb", __dir__))
 
     refute_includes source, "max-w-6xl"
-    assert_includes source, 't("recording_studio.exportable.tokens.expired.nav_title", default: "Export expired")'
-    assert_includes source, 't("recording_studio.exportable.tokens.expired.title", default: "Export Expired")'
-    assert_includes source, 't("recording_studio.exportable.tokens.expired.subtitle", default: "Refresh the original page")'
-    refute_includes source, 'title: "Export Expired"'
+    refute_includes source, "page_nav_right"
+    assert_includes source, 't("recording_studio.exportable.tokens.expired.title", default: "Export expired")'
+    assert_includes source, 't("recording_studio.exportable.tokens.expired.subtitle", default: "That link timed out. Start a fresh export.")'
+    assert_includes source, "token_failure"
+    refute_includes source, "Export Expired"
     refute_includes source, "Trusted export tokens are single-use"
     refute_includes source, "The export link you clicked is no longer valid."
   end
@@ -57,10 +58,11 @@ class ExportsControllerTest < Minitest::Test
     source = File.read(File.expand_path("../app/views/recording_studio_exportable/exports/token_not_found.html.erb", __dir__))
 
     refute_includes source, "max-w-6xl"
-    assert_includes source, 't("recording_studio.exportable.tokens.not_found.nav_title", default: "Link not found")'
+    refute_includes source, "page_nav_right"
     assert_includes source, 't("recording_studio.exportable.tokens.not_found.title", default: "That export link is missing")'
-    assert_includes source, 't("recording_studio.exportable.tokens.not_found.subtitle", default: "Go back and start a fresh export")'
-    refute_includes source, 'title: "Export Expired"'
+    assert_includes source, 't("recording_studio.exportable.tokens.not_found.subtitle", default: "Start a fresh export.")'
+    assert_includes source, "token_failure"
+    refute_includes source, "Export Expired"
     refute_includes source, "This export token does not exist"
     refute_includes source, "Return to the page where you generated the export"
   end

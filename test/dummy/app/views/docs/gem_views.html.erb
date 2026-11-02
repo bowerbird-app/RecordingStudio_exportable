@@ -1,12 +1,12 @@
-  <%= render FlatPack::PageTitle::Component.new(
+<%= render FlatPack::PageTitle::Component.new(
     title: "Gem Views",
-    subtitle: "These are the view templates currently shipped by the gem.",
+    subtitle: "File names under app/views/recording_studio_exportable/exports/.",
     variant: :h1
   ) %>
 
-  <% view_rows = Array(@engine_views).map { |view_path| { path: view_path, source: "Gem engine" } } %>
+<% view_rows = Array(@engine_views).map { |view_path| { path: File.basename(view_path), source: "Gem engine" } } %>
 
-  <%= render FlatPack::Table::Component.new(data: view_rows, class: "text-sm") do |table| %>
-    <% table.column(title: "View path") { |view| view[:path] } %>
-    <% table.column(title: "Source") { |view| view[:source] } %>
-  <% end %>
+<%= render FlatPack::Table::Component.new(data: view_rows) do |table| %>
+  <% table.column(title: "View") { |view| view[:path] } %>
+  <% table.column(title: "Source") { |view| view[:source] } %>
+<% end %>

@@ -75,7 +75,7 @@ class HomeController < ApplicationController
       {
         topic_name: topic_name,
         article_titles: topics.filter_map { |topic| topic.article&.title_with_author }.uniq.sort.join(", "),
-        topic_created_at: topics.filter_map(&:formatted_created_at).uniq.sort.join(", ")
+        topic_created_at: topics.filter_map(&:created_at).uniq
       }
     end
     @topic_article_rows = grouped_topic_rows.sort_by { |row| row[:topic_name].to_s.downcase }
@@ -95,6 +95,8 @@ class HomeController < ApplicationController
        RecordingStudioAccessible.authorized?(actor: Current.actor, recording: @demo_recording, role: :view)
       begin
         @trusted_token = issue_demo_token(@demo_recording)
+      rescue RecordingStudioExportable::NotAuthorized
+        raise
       rescue StandardError
         @trusted_token = nil
       end

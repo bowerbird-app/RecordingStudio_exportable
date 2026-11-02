@@ -5,11 +5,12 @@
   ) %>
 
   <%= render FlatPack::SectionTitle::Component.new(
-    title: "Step 1 — Issue a token server-side",
+    title: "Step 1: Issue a token server-side",
     subtitle: "Call issue_trusted_token from your sidecar (ActiveJob, admin panel, etc.)"
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Ruby",
     language: :ruby,
     code: <<~'CODE'
       token = RecordingStudioExportable.issue_trusted_token(
@@ -31,11 +32,12 @@
   ) %>
 
   <%= render FlatPack::SectionTitle::Component.new(
-    title: "Step 2 — Export from the token ID",
+    title: "Step 2: Export from the token ID",
     subtitle: "The consuming side posts to the engine with just the token."
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Terminal",
     language: :ruby,
     code: <<~'CODE'
       # POST to the engine route with just the token
@@ -91,6 +93,7 @@
       </p>
 
       <%= render FlatPack::CodeBlock::Component.new(
+        title: "config/initializers/recording_studio_exportable.rb",
         language: :ruby,
         code: <<~'CODE'
           # config/initializers/recording_studio_exportable.rb
@@ -106,7 +109,7 @@
   <% end %>
 
   <%= render FlatPack::SectionTitle::Component.new(
-    title: "Step 3 — Token lifecycle",
+    title: "Step 3: Token lifecycle",
     subtitle: "Single-use, time-limited, atomically consumed."
   ) %>
 
@@ -130,6 +133,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Ruby",
     language: :ruby,
     code: <<~'CODE'
       # In your sidecar (ActiveJob, admin notification, webhook handler):

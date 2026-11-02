@@ -1,0 +1,7 @@
+<% content_for :title, title %>
+<% content_for :subtitle, subtitle %>
+<%= render FlatPack::Button::Component.new(
+      text: t("recording_studio.exportable.tokens.back", default: "Back to exports"),
+      href: main_app.root_path,
+      style: :primary
+    ) %>

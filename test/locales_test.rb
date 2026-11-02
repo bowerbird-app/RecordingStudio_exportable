@@ -16,15 +16,13 @@ class LocalesTest < Minitest::Test
   }.freeze
 
   TOKEN_EXPIRED_KEYS = {
-    "nav_title" => "Export expired",
-    "title" => "Export Expired",
-    "subtitle" => "Refresh the original page"
+    "title" => "Export expired",
+    "subtitle" => "That link timed out. Start a fresh export."
   }.freeze
 
   TOKEN_NOT_FOUND_KEYS = {
-    "nav_title" => "Link not found",
     "title" => "That export link is missing",
-    "subtitle" => "Go back and start a fresh export"
+    "subtitle" => "Start a fresh export."
   }.freeze
 
   def test_engine_ships_only_english_locale_files

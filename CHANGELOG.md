@@ -14,15 +14,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 0.5.9 - 2026-11-02
 
 ### Changed
-- The dummy home page uses FlatPack inputs and a Reset button. The missing
-  export link page no longer repeats the expired-link title.
-- Docs pages drop the extra page wrapper and keep the sidebar shell.
+- The dummy home page uses FlatPack inputs, pagination, cards, text, links,
+  badges, and short timestamps. A lost view grant while issuing the demo
+  token is no longer rescued.
+- Token failure pages share one sentence-case title, one line of copy, and
+  a Back to exports button. The sign-in flash is cleared. `nav_title` is
+  gone.
+- Docs code samples are named, and step headings use a colon.
+- Development and dummy FlatPack pin is `v0.1.332`.
 - README and dummy README describe this gem, not a template.
 
 ### Upgrade notes
-- Hosts that copied the English `tokens.not_found` strings get new defaults:
-  "Link not found" and "That export link is missing". Override the locale
-  keys to keep the old wording.
+- Override `recording_studio.exportable.tokens.not_found` and `tokens.expired`
+  if a host still wants the old title case or nav labels. The rendered keys
+  are `title`, `subtitle`, and `tokens.back`.
+- Pin FlatPack `v0.1.332`. `FlatPack::Text` is part of that release.
 
 ## 0.5.8 - 2026-11-02
 

@@ -3,7 +3,7 @@
 require "test_helper"
 
 class HostLocaleOverrideTest < ActionDispatch::IntegrationTest
-  HOST_NOT_FOUND_NAV = "HOST export expired nav"
+  HOST_NOT_FOUND_SUBTITLE = "HOST start a fresh export"
   OVERRIDE_LOCALE = Rails.root.join("test/locales/exportable_host_override.en.yml").to_s
 
   setup do
@@ -24,12 +24,12 @@ class HostLocaleOverrideTest < ActionDispatch::IntegrationTest
   test "test-only locale override wins on the token not found page when loaded last" do
     assert_path_exists OVERRIDE_LOCALE, "expected test-only host override fixture"
     refute_includes File.read(OVERRIDE_LOCALE), "I18n.load_path"
-    assert_equal "Link not found", I18n.t("recording_studio.exportable.tokens.not_found.nav_title")
+    assert_equal "Start a fresh export.", I18n.t("recording_studio.exportable.tokens.not_found.subtitle")
 
     I18n.load_path << OVERRIDE_LOCALE
     I18n.reload!
 
-    assert_equal HOST_NOT_FOUND_NAV, I18n.t("recording_studio.exportable.tokens.not_found.nav_title")
+    assert_equal HOST_NOT_FOUND_SUBTITLE, I18n.t("recording_studio.exportable.tokens.not_found.subtitle")
 
     sign_in @user
     post recording_studio_exportable.exports_path, params: {
@@ -38,10 +38,11 @@ class HostLocaleOverrideTest < ActionDispatch::IntegrationTest
     }
 
     assert_response :not_found
-    assert_includes response.body, HOST_NOT_FOUND_NAV
+    assert_includes response.body, HOST_NOT_FOUND_SUBTITLE
     assert_includes response.body, "That export link is missing"
-    assert_includes response.body, "Go back and start a fresh export"
+    assert_includes response.body, "Back to exports"
     refute_includes response.body, "Export Expired"
+    refute_includes response.body, "Signed in successfully"
     refute_includes response.body, "<title>Export expired</title>"
   ensure
     I18n.load_path.replace(@original_load_path)
@@ -72,8 +73,9 @@ class HostLocaleOverrideTest < ActionDispatch::IntegrationTest
 
     assert_response :gone
     assert_includes response.body, "Export expired"
-    assert_includes response.body, "Export Expired"
-    assert_includes response.body, "Refresh the original page"
-    refute_includes response.body, HOST_NOT_FOUND_NAV
+    assert_includes response.body, "That link timed out. Start a fresh export."
+    assert_includes response.body, "Back to exports"
+    refute_includes response.body, "Export Expired"
+    refute_includes response.body, HOST_NOT_FOUND_SUBTITLE
   end
 end

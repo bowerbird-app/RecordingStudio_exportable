@@ -6,4 +6,4 @@ en:
     exportable:
       tokens:
         not_found:
-          nav_title: "HOST export expired nav"
+          subtitle: "HOST start a fresh export"

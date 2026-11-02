@@ -25,6 +25,20 @@ class TrustedTokenAuthorizationTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "Export Articles (token-based)"
   end
 
+  test "a lost view grant while issuing the demo token is not hidden" do
+    sign_in @admin
+    original = RecordingStudioExportable.method(:issue_trusted_token)
+    RecordingStudioExportable.define_singleton_method(:issue_trusted_token) do |**|
+      raise RecordingStudioExportable::NotAuthorized, "export is not allowed for this actor"
+    end
+
+    assert_raises(RecordingStudioExportable::NotAuthorized) do
+      get root_path
+    end
+  ensure
+    RecordingStudioExportable.define_singleton_method(:issue_trusted_token, original) if original
+  end
+
   test "another user cannot redeem a trusted export token" do
     token = RecordingStudioExportable.issue_trusted_token(
       context_recording: @recording,

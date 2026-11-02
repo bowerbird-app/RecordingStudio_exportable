@@ -108,7 +108,9 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Gem Views"
     assert_select "table", minimum: 1
-    refute_includes response.body, "app/views/recording_studio_exportable/home/index.html.erb"
+    assert_includes response.body, "app/views/recording_studio_exportable/exports/"
+    assert_select "td", text: "token_not_found.html.erb"
+    refute_includes response.body, "app/views/recording_studio_exportable/exports/token_not_found.html.erb"
   end
 
   test "methods page renders successfully" do
