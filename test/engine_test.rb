@@ -74,6 +74,23 @@ class EngineTest < Minitest::Test
     assert_equal 33, RecordingStudioExportable.configuration.max_rows
   end
 
+  def test_load_config_raises_when_yaml_uses_a_removed_key
+    app = Struct.new(:config) do
+      def config_for(_name)
+        { "default_row_limit" => 12 }
+      end
+    end.new(Object.new)
+
+    error = assert_raises(ArgumentError) do
+      RecordingStudio.stub(:register_capability, true) do
+        find_initializer("recording_studio_exportable.load_config").block.call(app)
+      end
+    end
+
+    assert_match(/max_rows/, error.message)
+    assert_equal 50_000, RecordingStudioExportable.configuration.max_rows
+  end
+
   def test_load_config_is_noop_without_config_sources
     app = Struct.new(:config).new(Object.new)
 

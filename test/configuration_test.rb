@@ -53,7 +53,18 @@ class ConfigurationTest < Minitest::Test
     refute_respond_to @configuration, :export_definition
 
     @configuration.max_rows = 10
-    @configuration.merge!("default_row_limit" => 12)
+
+    {
+      "default_row_limit" => "max_rows",
+      "export" => "register_export",
+      "export_definition" => "export_definition_for"
+    }.each do |removed_key, replacement|
+      error = assert_raises(ArgumentError) do
+        @configuration.merge!(removed_key => 12)
+      end
+
+      assert_match(/#{Regexp.escape(replacement)}/, error.message)
+    end
 
     assert_equal 10, @configuration.max_rows
   end

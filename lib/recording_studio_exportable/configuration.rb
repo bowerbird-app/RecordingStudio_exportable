@@ -7,6 +7,11 @@ require "active_support/core_ext/object/blank"
 module RecordingStudioExportable
   class Configuration
     DEFAULT_MAX_ROWS = 50_000
+    REMOVED_KEYS = {
+      "default_row_limit" => "max_rows",
+      "export" => "register_export",
+      "export_definition" => "export_definition_for"
+    }.freeze
 
     attr_accessor :current_actor, :current_impersonator, :default_format, :default_required_role,
                   :max_rows, :include_bom, :allow_request_filename_override,
@@ -115,6 +120,11 @@ module RecordingStudioExportable
 
       hash.each do |k, v|
         key = k.to_s
+        replacement = REMOVED_KEYS[key]
+        if replacement
+          raise ArgumentError, "RecordingStudioExportable no longer accepts #{key}. Use #{replacement}."
+        end
+
         setter = "#{key}="
         public_send(setter, v) if respond_to?(setter)
       end

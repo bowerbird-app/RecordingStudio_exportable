@@ -14,6 +14,8 @@ module RecordingStudioExportable
             nil
           end
           RecordingStudioExportable.configuration.merge!(yaml) if yaml.respond_to?(:each)
+        rescue ArgumentError
+          raise
         rescue StandardError => _e
           # ignore load errors; host app can provide initializer overrides
         end
@@ -30,6 +32,8 @@ module RecordingStudioExportable
             hash = {}
             xcfg.each_pair { |k, v| hash[k] = v } if xcfg.respond_to?(:each_pair)
             RecordingStudioExportable.configuration.merge!(hash) if hash&.any?
+          rescue ArgumentError
+            raise
           rescue StandardError => _e
             # ignore
           end

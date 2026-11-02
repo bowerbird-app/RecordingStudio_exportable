@@ -26,7 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Upgrade notes
 - Call `register_export` and `export_definition_for`. Set `max_rows` instead
   of `default_row_limit`, including in `config/recording_studio_exportable.yml`
-  and `config.x.recording_studio_exportable`.
+  and `config.x.recording_studio_exportable`. `merge!` raises `ArgumentError`
+  when those removed keys are still present, including at boot.
 - Enable a recordable with `include RecordingStudio::Capabilities::Exportable.to(...)`.
 - Rescue `UnknownExportKey`, `NotAuthorized`, and `ExportTooLarge`.
 - Delete host calls to `RecordingStudioExportable::Hooks`,
