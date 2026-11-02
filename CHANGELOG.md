@@ -17,7 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking.** `issue_trusted_token` requires
   `RecordingStudioAccessible.authorized?` with role `:view`.
 - **Breaking.** `export_from_token` requires `actor:`. The actor must be the
-  token's actor and still be allowed to view the context recording.
+  token's actor and still be allowed to view the context recording. That
+  check happens before the token is consumed, so a rejected redeem leaves
+  the token in place. A custom token store must implement `read` as well as
+  `write` and atomic `consume`.
 - The dummy trusted export source is `RecordingStudioExportable`.
 - The dummy root switcher uses Root Switchable's access check.
 

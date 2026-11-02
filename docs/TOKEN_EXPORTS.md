@@ -134,7 +134,7 @@ Returns a `TrustedExportToken` instance with:
 
 ### `RecordingStudioExportable.export_from_token`
 
-Consumes a token and streams the export.
+Checks that `actor` is the token's actor and can still view the context recording, then atomically consumes the token and streams the export. A rejected redeem does not consume the token.
 
 ```ruby
 RecordingStudioExportable.export_from_token(
@@ -184,7 +184,7 @@ stateDiagram-v2
 | **Expired** | Raises `TokenExpired` → HTTP 410 Gone in the engine controller. |
 | **Missing / consumed** | Raises `TokenNotFound` → HTTP 404 Not Found in the engine controller. |
 | **Unauthorised source** | `issue_trusted_token` raises `TrustedExportToken::Error` immediately. |
-| **Unauthorised actor** | Issue and redeem call `RecordingStudioAccessible.authorized?` with role `:view`. A mismatch between the requester and `token.actor` raises `NotAuthorized` (HTTP 403). |
+| **Unauthorised actor** | Issue and redeem call `RecordingStudioAccessible.authorized?` with role `:view` before the token is consumed. A mismatch between the requester and `token.actor`, or a lost `:view` grant, raises `NotAuthorized` (HTTP 403) and leaves the token in place. |
 
 ---
 

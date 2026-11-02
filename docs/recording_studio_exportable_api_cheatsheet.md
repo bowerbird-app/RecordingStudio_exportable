@@ -383,8 +383,8 @@ The flow is:
 1. **Issue** a token server-side with the rows, columns, and context already resolved.
 2. **Pass only the token ID** to the external consumer.
 3. The consumer **POSTs the token ID** to the engine endpoint.
-4. The engine **atomically consumes** the token (read-and-delete) and streams
-   the export.
+4. The engine checks the actor, then **atomically consumes** the token
+   (read-and-delete) and streams the export. A rejected redeem leaves the token.
 
 ```mermaid
 sequenceDiagram

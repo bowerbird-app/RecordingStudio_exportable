@@ -233,6 +233,21 @@ class TrustedExportTokenTest < Minitest::Test
     end
 
     assert_equal "export is not allowed for this actor", error.message
+    assert_same token, RecordingStudioExportable::TrustedExportToken.find!(token.id)
+  end
+
+  def test_export_from_token_rejects_the_owner_who_lost_view_without_consuming_the_token
+    actor = Object.new
+    token = issue_token(actor: actor)
+
+    RecordingStudioAccessible.stub(:authorized?, false) do
+      error = assert_raises(RecordingStudioExportable::NotAuthorized) do
+        RecordingStudioExportable.export_from_token(token_id: token.id, actor: actor)
+      end
+      assert_equal "export is not allowed for this actor", error.message
+    end
+
+    assert_same token, RecordingStudioExportable::TrustedExportToken.find!(token.id)
   end
 
   private

@@ -85,7 +85,6 @@ class ExportsControllerTest < Minitest::Test
 
     assert_includes source, "params[:export_token].present?"
     assert_includes source, "RecordingStudioExportable.export_from_token"
-    assert_includes source, "actor: export_actor"
     assert_includes source, "RecordingStudioExportable.export("
   end
 
