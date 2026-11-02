@@ -121,9 +121,7 @@ module RecordingStudioExportable
       hash.each do |k, v|
         key = k.to_s
         replacement = REMOVED_KEYS[key]
-        if replacement
-          raise ArgumentError, "RecordingStudioExportable no longer accepts #{key}. Use #{replacement}."
-        end
+        raise ArgumentError, "RecordingStudioExportable no longer accepts #{key}. Use #{replacement}." if replacement
 
         setter = "#{key}="
         public_send(setter, v) if respond_to?(setter)
