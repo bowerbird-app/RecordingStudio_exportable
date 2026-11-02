@@ -46,7 +46,7 @@ def dummy_bundle_base_env
     "DB_PORT" => ENV.fetch("DB_PORT", "5432"),
     "DB_USER" => ENV.fetch("DB_USER", "postgres"),
     "DB_PASSWORD" => ENV.fetch("DB_PASSWORD", "postgres"),
-    "DB_NAME" => ENV.fetch("DB_NAME", "gem_template_test")
+    "DB_NAME" => ENV.fetch("DB_NAME", "recording_studio_exportable_test")
   }
   env["BUNDLE_PATH"] = ENV.fetch("BUNDLE_PATH", nil) if ENV["BUNDLE_PATH"].to_s != ""
   env
