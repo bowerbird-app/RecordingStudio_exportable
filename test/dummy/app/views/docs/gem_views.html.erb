@@ -6,7 +6,7 @@
 
 <% view_rows = Array(@engine_views).map { |view_path| { path: File.basename(view_path), source: "Gem engine" } } %>
 
-<%= render FlatPack::Table::Component.new(data: view_rows) do |table| %>
+<%= render FlatPack::Table::Component.new(data: view_rows, min_width: :none) do |table| %>
   <% table.column(title: "View") { |view| view[:path] } %>
   <% table.column(title: "Source") { |view| view[:source] } %>
 <% end %>
