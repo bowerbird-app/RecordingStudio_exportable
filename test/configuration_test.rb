@@ -7,6 +7,11 @@ class ConfigurationTest < Minitest::Test
     @configuration = RecordingStudioExportable::Configuration.new
   end
 
+  def test_export_rate_limit_defaults_to_thirty_per_minute
+    assert_equal 30, @configuration.export_rate_limit
+    assert_equal 60, @configuration.export_rate_period
+  end
+
   def test_register_export_normalizes_key_and_applies_defaults
     definition = @configuration.register_export("Demo/Export-Key", columns: [:name]) { [] }
 

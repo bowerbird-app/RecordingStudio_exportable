@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
+## [0.5.11] - 2026-11-02
+
+### Added
+- Exports return 429 after `export_rate_limit` hits in `export_rate_period`
+  seconds (defaults: 30 hits, 60 seconds) for the same actor and export key,
+  when `RecordingStudioCache::RateLimiter` is loaded. The limit is skipped
+  when Cache is not installed.
+- The dummy app registers a Metrics `exports.total` count on `ExportLog`.
+  The gem does not depend on Metrics and does not register that metric.
+
+### Upgrade notes
+- Set `config.export_rate_limit` and `config.export_rate_period` when 30
+  exports a minute is the wrong ceiling. Install Recording Studio Cache for
+  the limit to run.
+- Copy the dummy metrics initializer if the host wants an exports count.
 ## 0.5.10 - 2026-11-02
 
 ### Changed
@@ -317,6 +332,7 @@ end
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
+[0.5.11]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.0...v0.5.11
 [0.5.0]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.4.0
 [0.3.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.3.0

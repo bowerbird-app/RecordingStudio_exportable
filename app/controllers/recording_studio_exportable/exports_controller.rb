@@ -8,6 +8,8 @@ module RecordingStudioExportable
     rescue_from RecordingStudioExportable::NotAuthorized, ActiveRecord::RecordNotFound, with: :render_forbidden
 
     def create
+      return if export_rate_limited?
+
       result = if params[:export_token].present?
                  RecordingStudioExportable.export_from_token(
                    token_id: params[:export_token],
@@ -37,6 +39,33 @@ module RecordingStudioExportable
     end
 
     private
+
+    def export_rate_limited?
+      return false unless defined?(RecordingStudioCache::RateLimiter)
+
+      result = RecordingStudioCache::RateLimiter.throttle(
+        key: export_rate_key,
+        limit: RecordingStudioExportable.configuration.export_rate_limit,
+        period: RecordingStudioExportable.configuration.export_rate_period,
+        backend: :rails_cache
+      )
+      return false unless result.blocked?
+
+      response.set_header("Retry-After", result.retry_after.to_s) if result.retry_after
+      render plain: "Too many exports. Try again soon.", status: :too_many_requests
+      true
+    end
+
+    def export_rate_key
+      actor = export_actor
+      actor_key = actor.respond_to?(:id) && actor.id.present? ? actor.id : "anonymous"
+      export_key = if params[:export_token].present?
+                     "token"
+                   else
+                     permitted_export_params[:export_key].presence || "unknown"
+                   end
+      "exportable:#{actor_key}:#{export_key}"
+    end
 
     def context_recording
       @context_recording ||= RecordingStudio::Recording.find(permitted_export_params.fetch(:context_recording_id))
