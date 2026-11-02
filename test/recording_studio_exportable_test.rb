@@ -134,7 +134,7 @@ class RecordingStudioExportableTest < Minitest::Test
 
     assert_includes view_source, 'title: "Exports"'
     assert_includes view_source, 'subtitle: "Download a CSV from the pages you can open."'
-    refute_includes view_source, "FlatPack::Card::Component"
+    assert_includes view_source, "FlatPack::Card::Component"
     assert_includes view_source, "recording_studio_export_access_button"
     assert_includes view_source, "FlatPack::Table::Component"
     refute_includes view_source, 'title: "Demo"'
