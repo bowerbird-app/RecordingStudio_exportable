@@ -70,11 +70,11 @@ end)
 
 module ExportableConfigurationIsolation
   CONFIGURATION_ACCESSORS = RecordingStudioExportable::Configuration
-    .instance_methods(false)
-    .select { |name| name.end_with?("=") }
-    .map { |name| name.to_s.delete_suffix("=").to_sym }
-    .select { |name| RecordingStudioExportable::Configuration.method_defined?(name) }
-    .freeze
+                            .instance_methods(false)
+                            .select { |name| name.end_with?("=") }
+                            .map { |name| name.to_s.delete_suffix("=").to_sym }
+                            .select { |name| RecordingStudioExportable::Configuration.method_defined?(name) }
+                            .freeze
 
   def save_exportable_configuration!
     configuration = RecordingStudioExportable.configuration
