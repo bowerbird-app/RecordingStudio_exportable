@@ -22,6 +22,12 @@ module RecordingStudioExportable
       RecordingStudio.register_capability(:exportable, source: "RecordingStudioExportable")
     end
 
+    initializer "recording_studio_exportable.warn_export_rate_store" do
+      next unless defined?(RecordingStudioCache)
+
+      RecordingStudioExportable.warn_unless_shared_rate_limit_store
+    end
+
     def self.host_yaml(app)
       return unless app.respond_to?(:config_for)
       return app.config_for(:recording_studio_exportable) unless app.respond_to?(:paths)

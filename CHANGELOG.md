@@ -7,10 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.11] - 2026-11-02
+
+This release also includes 0.5.1 through 0.5.10 below (first tagged release since v0.5.0).
+
+### Added
+- Exports return 429 after `export_rate_limit` hits in `export_rate_period`
+  seconds (defaults: 5 hits, 60 seconds) for one actor. The bucket is
+  `exportable:<actor class>:<actor id>`, or the remote IP when no actor is
+  signed in. The caller’s export key is not part of the bucket. The limit
+  runs when `RecordingStudioCache::RateLimiter` is loaded and is skipped
+  when Cache is not installed.
+- Boot warns only when RecordingStudioCache is loaded and the cache store
+  is missing, a null store, or a per-process memory store.
+  `RecordingStudioExportable.warn_unless_shared_rate_limit_store` is that
+  check.
+- The dummy app registers a Metrics `exports.total` count on `ExportLog`.
+  The gem does not depend on Metrics and does not register that metric.
+
 ### Changed
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
+### Upgrade notes
+- Set `config.export_rate_limit` and `config.export_rate_period` when 5
+  exports a minute per actor is the wrong ceiling. Install Recording Studio
+  Cache with a shared store for the limit to hold across processes.
+- Copy the dummy metrics initializer if the host wants an exports count.
 ## 0.5.10 - 2026-11-02
 
 ### Changed
@@ -304,7 +327,7 @@ end
 ### Changed
 - Bumped the dummy app FlatPack dependency from `0.1.2` to `0.1.33` and pinned it by tag in `test/dummy/Gemfile`
 
-## [0.1.0] - 2025-12-04
+## 0.1.0 - 2025-12-04
 
 ### Added
 - Initial release
@@ -317,11 +340,12 @@ end
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[0.5.0]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.4.0
-[0.3.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.3.0
-[0.2.1]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.1.2...v0.2.0
-[0.1.2]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.1.1...v0.1.2
-[0.1.1]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.1.1
-[0.1.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.1.0
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.11...HEAD
+[0.5.11]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.0...v0.5.11
+[0.5.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/releases/tag/v0.4.0
+[0.3.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/releases/tag/v0.3.0
+[0.2.1]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/0.2.0...v0.2.1
+[0.2.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/0.1.2...0.2.0
+[0.1.2]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.1.1...0.1.2
+[0.1.1]: https://github.com/bowerbird-app/RecordingStudio_exportable/releases/tag/v0.1.1
