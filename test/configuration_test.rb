@@ -171,14 +171,10 @@ class ConfigurationTest < Minitest::Test
 
   private
 
-  def with_current_actor(actor)
-    unless Object.const_defined?(:Current)
-      Object.const_set(:Current, Module.new)
-    end
-    unless Current.respond_to?(:actor)
-      Current.define_singleton_method(:actor) { nil }
-    end
+  def with_current_actor(actor, &block)
+    Object.const_set(:Current, Module.new) unless Object.const_defined?(:Current)
+    Current.define_singleton_method(:actor) { nil } unless Current.respond_to?(:actor)
 
-    Current.stub(:actor, actor) { yield }
+    Current.stub(:actor, actor, &block)
   end
 end
