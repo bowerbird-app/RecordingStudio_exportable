@@ -323,7 +323,7 @@ end
 ### Changed
 - Bumped the dummy app FlatPack dependency from `0.1.2` to `0.1.33` and pinned it by tag in `test/dummy/Gemfile`
 
-## [0.1.0] - 2025-12-04
+## 0.1.0 - 2025-12-04
 
 ### Added
 - Initial release
@@ -340,8 +340,7 @@ end
 [0.5.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/releases/tag/v0.4.0
 [0.3.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/releases/tag/v0.3.0
-[0.2.1]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.1.2...v0.2.0
-[0.1.2]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.1.1...v0.1.2
+[0.2.1]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/0.2.0...v0.2.1
+[0.2.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/0.1.2...0.2.0
+[0.1.2]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.1.1...0.1.2
 [0.1.1]: https://github.com/bowerbird-app/RecordingStudio_exportable/releases/tag/v0.1.1
-[0.1.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/releases/tag/v0.1.0
