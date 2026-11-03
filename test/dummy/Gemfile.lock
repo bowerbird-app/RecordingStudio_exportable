@@ -75,7 +75,7 @@ PATH
   remote: ../..
   specs:
     recording_studio_exportable (0.5.10)
-      csv
+      csv (< 4)
       flat_pack (>= 0.1.315, < 0.2)
       rails (~> 8.1.0)
       recording_studio (>= 6.1.0, < 7)
