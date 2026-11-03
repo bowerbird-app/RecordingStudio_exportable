@@ -4,13 +4,13 @@
     variant: :h1
   ) %>
 
-  <% if @current_actor_email %>
-    <%= render FlatPack::Content::Component.new do %>
-      <p>Signed in as <%= @current_actor_email %>.</p>
-    <% end %>
-  <% end %>
-
   <div class="space-y-8">
+    <% if @current_actor_email %>
+      <%= render FlatPack::Content::Component.new do %>
+        <p>Signed in as <%= @current_actor_email %>.</p>
+      <% end %>
+    <% end %>
+
     <section id="demo-api-requests" class="space-y-3">
       <%= render FlatPack::SectionTitle::Component.new(
         title: "Demo API requests",

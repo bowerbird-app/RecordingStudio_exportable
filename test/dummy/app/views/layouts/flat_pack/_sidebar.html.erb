@@ -65,7 +65,8 @@
     <%= render FlatPack::Sidebar::Footer::Component.new(class: "text-sm text-[var(--surface-muted-content-color)]") do %>
       <%= render FlatPack::Badge::Component.new(
         text: "v#{RecordingStudioExportable::VERSION}",
-        size: :xs
+        size: :xs,
+        class: "ml-[var(--sidebar-item-padding-x)]"
       ) %>
       <%= render FlatPack::Sidebar::Item::Component.new(
         text: "Sign out",

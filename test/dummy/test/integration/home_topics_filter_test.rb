@@ -99,6 +99,7 @@ class HomeTopicsFilterTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Exports"
     assert_includes response.body, "Download a CSV from the pages you can open."
+    assert_select ".space-y-8 > .fp-content", text: /Signed in as/
     refute_includes response.body, ">Demo<"
     assert_select "section#topics tr", text: /Shared Topic/ do |rows|
       assert_equal 1, rows.sum { |row| row.css("time").size }
