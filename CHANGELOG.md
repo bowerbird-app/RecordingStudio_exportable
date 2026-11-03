@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
+## 0.5.10 - 2026-11-02
+
+### Changed
+- Gemspec bounds are FlatPack `>= 0.1.315`, `< 0.2`, Accessible `~> 0.24`,
+  and `csv` `< 4`. The dummy pins Root Switchable `v0.11.3`.
+- Development and dummy FlatPack pin is `v0.1.332`.
+- Patch tags that shipped without a changelog section (v0.2.2 through v0.2.8,
+  v0.3.1, and v0.4.1 through v0.4.3) stay unlogged. There are no notes to
+  reconstruct for those tags.
+
+### Upgrade notes
+- Hosts need FlatPack `>= 0.1.315` and `< 0.2`, Accessible `~> 0.24`, and
+  `csv` `< 4`. `view_component` stays `4.20.0`.
+- Pin FlatPack `v0.1.332` for development. `FlatPack::Text` ships in that release.
 ## 0.5.9 - 2026-11-02
 
 ### Changed
