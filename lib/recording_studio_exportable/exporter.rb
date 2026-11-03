@@ -394,11 +394,10 @@ module RecordingStudioExportable
     end
 
     def context_recording_record
+      return unless defined?(RecordingStudio::Recording)
       return unless @context_recording.is_a?(RecordingStudio::Recording)
 
       @context_recording
-    rescue NameError
-      nil
     end
 
     def create_export_log(definition:, filters:)

@@ -370,6 +370,8 @@ class ExporterTest < Minitest::Test
 
     assert_equal :running, created_attrs.fetch(:status)
     assert_equal :csv, created_attrs.fetch(:format)
+    refute defined?(RecordingStudio::Recording)
+    refute created_attrs.key?(:context_recording)
     assert_equal ["name"], fake_log.updates.last.fetch(:selected_columns)
     assert_equal :completed, fake_log.updates.last.fetch(:status)
     assert_equal "demo.people", metadata.fetch(:export_key)
