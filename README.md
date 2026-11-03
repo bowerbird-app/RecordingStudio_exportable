@@ -49,7 +49,7 @@ The login form is prefilled with these credentials for fast access.
 - `/` — dummy app home page
 - `/users/sign_in` — Devise sign-in page
 - `/recording_studio` — redirect to `/` while the mounted RecordingStudio engine remains data/API-focused
-- `/recording_studio_exportable/exports` — engine POST endpoint used by the demo CSV export button. One actor can run 5 exports a minute; the next try returns 429 when Cache is installed. The caller’s export key does not get its own bucket.
+- `/recording_studio_exportable/exports` — engine POST endpoint used by the demo CSV export button. One actor can run 5 exports a minute; the next try returns 429 when Cache is installed. The caller’s export key does not get its own bucket. Boot calls `RecordingStudioExportable.warn_unless_shared_rate_limit_store` when Cache is loaded and the store is missing, null, or per-process.
 - `/docs/install` — install guide rendered inside the dummy app
 - `/docs/config`, `/docs/recordable_types`, `/docs/recordings_tree`, `/docs/gem_views`, `/docs/methods` — starter sidebar pages to customize for your gem
 

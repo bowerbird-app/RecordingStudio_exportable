@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   when Cache is not installed.
 - Boot warns only when RecordingStudioCache is loaded and the cache store
   is missing, a null store, or a per-process memory store.
+  `RecordingStudioExportable.warn_unless_shared_rate_limit_store` is that
+  check.
 - The dummy app registers a Metrics `exports.total` count on `ExportLog`.
   The gem does not depend on Metrics and does not register that metric.
 

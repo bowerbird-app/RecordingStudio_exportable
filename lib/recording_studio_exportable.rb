@@ -34,6 +34,21 @@ module RecordingStudioExportable
       yield(configuration) if block_given?
     end
 
+    # Logs when the export rate limit cannot be shared across processes.
+    # The engine initializer runs this once RecordingStudioCache is loaded.
+    # A missing cache, a null store, or a memory store warns. A shared store
+    # stays quiet.
+    def warn_unless_shared_rate_limit_store
+      message = export_rate_store_warning
+      return if message.nil?
+
+      if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger.respond_to?(:warn)
+        Rails.logger.warn(message)
+      else
+        warn message
+      end
+    end
+
     def auto_register_exports!(config = configuration)
       export_file_paths.each do |file_path|
         load_export_file(file_path)
@@ -156,17 +171,6 @@ module RecordingStudioExportable
     def relative_export_path?(relative_path)
       parts = relative_path.each_filename.to_a
       parts.any? && parts.exclude?("..")
-    end
-
-    def warn_unless_shared_rate_limit_store
-      message = export_rate_store_warning
-      return if message.nil?
-
-      if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger.respond_to?(:warn)
-        Rails.logger.warn(message)
-      else
-        warn message
-      end
     end
 
     def export_rate_store_warning

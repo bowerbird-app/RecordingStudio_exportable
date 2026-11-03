@@ -170,7 +170,7 @@ class EngineTest < Minitest::Test
     end.new(messages)
     RecordingStudioExportable.stub(:export_rate_cache_store, store) do
       Rails.stub(:logger, logger) do
-        RecordingStudioExportable.send(:warn_unless_shared_rate_limit_store)
+        RecordingStudioExportable.warn_unless_shared_rate_limit_store
       end
     end
     messages.join
