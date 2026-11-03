@@ -3,7 +3,14 @@
 require "test_helper"
 
 class CapabilityTest < Minitest::Test
+  def run
+    RecordingStudio.stub(:configuration, RecordingStudio::Configuration.new) { super }
+  ensure
+    remove_defined_recordables
+  end
+
   def setup
+    @defined_recordables = []
     save_exportable_configuration!
     RecordingStudioExportable.configuration.export("demo.people", columns: [:name]) { [] }
     RecordingStudioExportable.configuration.export(
@@ -16,17 +23,11 @@ class CapabilityTest < Minitest::Test
         articles: [{ key: :title, label: "Title", value: :title }]
       }
     ) { [] }
-
-    @original_capabilities =
-      RecordingStudio.configuration.instance_variable_get(:@capabilities)&.transform_values(&:dup) || {}
-    @original_capability_options =
-      RecordingStudio.configuration.instance_variable_get(:@capability_options)&.dup || {}
   end
 
   def teardown
     restore_exportable_configuration!
-    RecordingStudio.configuration.instance_variable_set(:@capabilities, @original_capabilities)
-    RecordingStudio.configuration.instance_variable_set(:@capability_options, @original_capability_options)
+    remove_defined_recordables
   end
 
   def test_to_is_a_thin_wrapper_around_include_for
@@ -258,8 +259,21 @@ class CapabilityTest < Minitest::Test
   private
 
   def define_recordable(const_name)
-    return Object.const_get(const_name) if Object.const_defined?(const_name, false)
+    if Object.const_defined?(const_name, false)
+      @defined_recordables << const_name
+      return Object.const_get(const_name)
+    end
 
-    Object.const_set(const_name, Class.new)
+    klass = Class.new
+    Object.const_set(const_name, klass)
+    @defined_recordables << const_name
+    klass
+  end
+
+  def remove_defined_recordables
+    Array(@defined_recordables).uniq.each do |const_name|
+      Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
+    end
+    @defined_recordables = []
   end
 end

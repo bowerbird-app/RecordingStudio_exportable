@@ -69,20 +69,12 @@ ActiveRecord::Base.singleton_class.prepend(Module.new do
 end)
 
 module ExportableConfigurationIsolation
-  CONFIGURATION_ACCESSORS = %i[
-    current_actor
-    current_impersonator
-    default_format
-    default_required_role
-    max_rows
-    include_bom
-    allow_request_filename_override
-    filter_log_sanitizer
-    context_export_keys_resolver
-    trusted_export_sources
-    trusted_export_token_store
-    layout
-  ].freeze
+  CONFIGURATION_ACCESSORS = RecordingStudioExportable::Configuration
+    .instance_methods(false)
+    .select { |name| name.end_with?("=") }
+    .map { |name| name.to_s.delete_suffix("=").to_sym }
+    .select { |name| RecordingStudioExportable::Configuration.method_defined?(name) }
+    .freeze
 
   def save_exportable_configuration!
     configuration = RecordingStudioExportable.configuration
