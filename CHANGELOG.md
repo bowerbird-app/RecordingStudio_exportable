@@ -175,8 +175,8 @@ end
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.5.1...HEAD
-[0.5.1]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.5.0...v0.5.1
+[Unreleased]: https://github.com/bowerbird-app/recording_studio_exportable/compare/202dbea31458fab0cc8c6890e8b754abbdf50857...HEAD
+[0.5.1]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.5.0...202dbea31458fab0cc8c6890e8b754abbdf50857
 [0.5.0]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.4.0
 [0.3.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.3.0
