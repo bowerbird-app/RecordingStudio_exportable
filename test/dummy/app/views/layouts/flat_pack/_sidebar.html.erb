@@ -63,11 +63,14 @@
 
   <% sidebar.footer do %>
     <%= render FlatPack::Sidebar::Footer::Component.new(class: "text-sm text-[var(--surface-muted-content-color)]") do %>
+      <%= render FlatPack::Badge::Component.new(
+        text: "v#{RecordingStudioExportable::VERSION}",
+        size: :xs
+      ) %>
       <%= render FlatPack::Sidebar::Item::Component.new(
         text: "Sign out",
         href: main_app.destroy_user_session_path,
         icon: :lock,
-        badge: "v#{RecordingStudioExportable::VERSION}",
         data: { turbo_method: :delete }
       ) %>
     <% end %>

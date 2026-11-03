@@ -146,6 +146,9 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".fp-sidebar-label", text: /Exportable/
     assert_select ".fp-sidebar-label span", count: 0
     assert_select "span", text: "v#{RecordingStudioExportable::VERSION}"
+    assert_select "a", text: "Sign out" do |links|
+      assert_select links.first, "span", text: "v#{RecordingStudioExportable::VERSION}", count: 0
+    end
     assert_select "a", text: "Recording Studio", count: 0
     assert_select %(a[href="/recording_studio"]), count: 0
     refute_includes response.body, "Addon Template"
