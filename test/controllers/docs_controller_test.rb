@@ -146,9 +146,9 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".fp-sidebar-label", text: /Exportable/
     assert_select ".fp-sidebar-label span", count: 0
     assert_select "span", text: "v#{RecordingStudioExportable::VERSION}"
-    assert_select "a", text: "Sign out" do |links|
-      assert_select links.first, "span", text: "v#{RecordingStudioExportable::VERSION}", count: 0
-    end
+    sign_out = css_select("a").find { |link| link.at_css(".fp-sidebar-label")&.text&.squish == "Sign out" }
+    assert sign_out, "expected a Sign out item"
+    assert_select sign_out, "span", text: "v#{RecordingStudioExportable::VERSION}", count: 0
     assert_select "a", text: "Recording Studio", count: 0
     assert_select %(a[href="/recording_studio"]), count: 0
     refute_includes response.body, "Addon Template"
