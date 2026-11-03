@@ -94,7 +94,7 @@ class HomeTopicsFilterTest < ActionDispatch::IntegrationTest
       updated_at: Time.zone.local(2026, 6, 18, 11, 0, 0)
     )
 
-    get root_path
+    get root_path(topic: "Shared Topic")
 
     assert_response :success
     assert_select "h1", text: "Exports"
