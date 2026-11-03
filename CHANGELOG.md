@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
-## [0.5.1] - 2026-11-02
+## 0.5.1 - 2026-11-02
 
 ### Removed
 - Template leftovers: `UPDATE_SUMMARY.md`, `MIGRATION_NOTES.md`, the
@@ -175,8 +175,6 @@ end
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/recording_studio_exportable/compare/202dbea31458fab0cc8c6890e8b754abbdf50857...HEAD
-[0.5.1]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.5.0...202dbea31458fab0cc8c6890e8b754abbdf50857
 [0.5.0]: https://github.com/bowerbird-app/recording_studio_exportable/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.4.0
 [0.3.0]: https://github.com/bowerbird-app/recording_studio_exportable/releases/tag/v0.3.0
