@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 module HomeHelper
-  # FlatPack::Pagination asks for a pagy-shaped object and pagy_url_for.
-  # The home tables page with their own query params, so this is not a Pagy model.
+  # FlatPack already depends on pagy. Pagination still wants a pagy-shaped
+  # object plus pagy_url_for. These two tables keep separate page params, so
+  # a single Pagy instance would not fit. PageNav is that object.
   PageNav = Struct.new(:page, :pages, :page_param, :extra, keyword_init: true) do
     def prev
       page > 1 ? page - 1 : nil

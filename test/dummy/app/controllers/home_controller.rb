@@ -75,7 +75,7 @@ class HomeController < ApplicationController
       {
         topic_name: topic_name,
         article_titles: topics.filter_map { |topic| topic.article&.title_with_author }.uniq.sort.join(", "),
-        topic_created_at: topics.filter_map(&:created_at).uniq
+        topic_created_at: topics.filter_map(&:created_at).min
       }
     end
     @topic_article_rows = grouped_topic_rows.sort_by { |row| row[:topic_name].to_s.downcase }
@@ -97,7 +97,7 @@ class HomeController < ApplicationController
         @trusted_token = issue_demo_token(@demo_recording)
       rescue RecordingStudioExportable::NotAuthorized
         raise
-      rescue StandardError
+      rescue RecordingStudioExportable::TrustedExportToken::Error
         @trusted_token = nil
       end
     end

@@ -280,7 +280,7 @@ See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full do
 | RecordingStudio Root Switchable | v0.11.0 (pinned in `test/dummy/Gemfile`) |
 | RecordingStudio Metrics | v0.7.0 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
 | RecordingStudio Cache | v0.6.0 (pinned in `test/dummy/Gemfile`) |
-| FlatPack        | v0.1.332 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
+| FlatPack        | v0.1.329 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
 | Devise          | latest  |
 
 ## Cloud Agent boot

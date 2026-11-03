@@ -108,6 +108,7 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Gem Views"
     assert_select "table", minimum: 1
+    assert_select "code.break-all", text: "app/views/recording_studio_exportable/exports/"
     assert_includes response.body, "app/views/recording_studio_exportable/exports/"
     assert_select "td", text: "token_not_found.html.erb"
     refute_includes response.body, "app/views/recording_studio_exportable/exports/token_not_found.html.erb"
@@ -142,6 +143,13 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_select %(a[href="#{docs_gem_views_path}"]), text: /Gem Views/
     assert_select %(a[href="#{docs_methods_path}"]), text: /Methods/
     assert_select %(a[href="#{docs_components_path}"]), text: /Components/
+    assert_select ".fp-sidebar-label", text: /Exportable/
+    assert_select ".fp-sidebar-label span", text: "v#{RecordingStudioExportable::VERSION}"
+    assert_select "a", text: "Recording Studio", count: 0
+    assert_select %(a[href="/recording_studio"]), count: 0
+    refute_includes response.body, "Addon Template"
+    assert_select "header.fp-top-nav[data-fp-top-nav-padding=none]"
+    refute_includes response.body, "--top-nav-padding-inline"
   end
 
   private

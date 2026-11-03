@@ -1,4 +1,5 @@
-<%= render FlatPack::TopNav::Component.new(style: "--top-nav-padding-inline: var(--layout-content-inset)") do |nav| %>
+<div class="fp-page-layout-top-nav-column">
+<%= render FlatPack::TopNav::Component.new(padding: :none) do |nav| %>
   <% nav.left do %>
     <%= render FlatPack::Button::Component.new(
       icon: "menu",
@@ -32,3 +33,4 @@
     <% end %>
   <% end %>
 <% end %>
+</div>

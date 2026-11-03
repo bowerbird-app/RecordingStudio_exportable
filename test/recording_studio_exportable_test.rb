@@ -221,20 +221,6 @@ class RecordingStudioExportableTest < Minitest::Test
     refute_includes recordings_tree_view, "This tree is generated from RecordingStudio::Recording records"
   end
 
-  def test_dummy_sidebar_includes_recordings_tree_navigation
-    sidebar_path = File.expand_path("dummy/app/views/layouts/flat_pack/_sidebar.html.erb", __dir__)
-    sidebar_source = File.read(sidebar_path)
-
-    assert_includes sidebar_source, 'text: "Recordable types"'
-    assert_includes sidebar_source, "docs_recordable_types_path"
-    assert_includes sidebar_source, 'text: "Recordings tree"'
-    assert_includes sidebar_source, "docs_recordings_tree_path"
-    refute_includes sidebar_source, 'text: "Recording Studio"'
-    refute_includes sidebar_source, 'href: "/recording_studio"'
-    refute_includes sidebar_source, "Addon Template"
-    assert_includes sidebar_source, 'title: "Exportable"'
-  end
-
   def test_dummy_sidebar_uses_supported_icons_for_install_and_methods
     sidebar_path = File.expand_path("dummy/app/views/layouts/flat_pack/_sidebar.html.erb", __dir__)
     sidebar_source = File.read(sidebar_path)

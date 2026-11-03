@@ -1,9 +1,10 @@
 <%= render FlatPack::Sidebar::Component.new(side: sidebar_side) do |sidebar| %>
   <% sidebar.header do %>
-    <%= render FlatPack::Sidebar::Header::Component.new(
+    <%= render ExportableSidebarHeader.new(
       brand_abbr: "RS",
       title: "Exportable",
-      subtitle: "Recording Studio"
+      subtitle: "Recording Studio",
+      version: RecordingStudioExportable::VERSION
     ) %>
   <% end %>
 
