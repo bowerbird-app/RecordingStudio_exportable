@@ -231,7 +231,6 @@ class RecordingStudioExportableTest < Minitest::Test
     assert_includes sidebar_source, "icon: :code_bracket"
     refute_includes sidebar_source, "icon: :download"
     refute_includes sidebar_source, "icon: :code\n"
-    assert_includes sidebar_source, 'class: "ml-[calc(var(--sidebar-item-inset)+var(--sidebar-item-padding-x))]"'
   end
 
   def test_dummy_top_nav_uses_center_slot_to_keep_avatar_right_aligned

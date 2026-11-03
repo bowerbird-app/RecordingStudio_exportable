@@ -108,7 +108,7 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Gem Views"
     assert_select "table", minimum: 1
-    assert_select "code[style=?]", "overflow-wrap:anywhere", text: "app/views/recording_studio_exportable/exports/"
+    assert_select "code.gem-view-path", text: "app/views/recording_studio_exportable/exports/"
     assert_includes response.body, "app/<wbr>views/<wbr>recording_studio_exportable/<wbr>exports/"
     assert_select "td", text: "token_not_found.html.erb"
     refute_includes response.body, "app/views/recording_studio_exportable/exports/token_not_found.html.erb"
