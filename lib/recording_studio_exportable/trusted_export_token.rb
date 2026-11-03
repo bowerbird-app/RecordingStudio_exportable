@@ -39,6 +39,9 @@ module RecordingStudioExportable
 
       allowed = RecordingStudioExportable.configuration.trusted_export_sources
       raise Error, "source #{source.inspect} is not allowed" unless Array(allowed).map(&:to_s).include?(source.to_s)
+      unless RecordingStudioAccessible.authorized?(actor: actor, recording: context_recording, role: :view)
+        raise NotAuthorized, "export is not allowed for this actor"
+      end
 
       ttl_seconds = [ttl.to_i, DEFAULT_TTL.to_i].min
       id = SecureRandom.urlsafe_base64(32)
@@ -64,13 +67,21 @@ module RecordingStudioExportable
       token
     end
 
+    def self.find!(id)
+      fetched_token(token_store.read(id))
+    end
+
     def self.find_and_consume!(id)
-      token = token_store.consume(id)
+      fetched_token(token_store.consume(id))
+    end
+
+    def self.fetched_token(token)
       raise TokenNotFound, "export token not found or expired" unless token
       raise TokenExpired, "export token has expired" if token.expires_at < Time.current
 
       token
     end
+    private_class_method :fetched_token
 
     def self.store
       token_store
@@ -78,8 +89,8 @@ module RecordingStudioExportable
 
     def self.token_store
       store = RecordingStudioExportable.configuration.resolve_trusted_export_token_store
-      unless store.respond_to?(:write) && store.respond_to?(:consume)
-        raise Error, "trusted_export_token_store must implement write and atomic consume"
+      unless store.respond_to?(:write) && store.respond_to?(:read) && store.respond_to?(:consume)
+        raise Error, "trusted_export_token_store must implement write, read, and atomic consume"
       end
 
       store

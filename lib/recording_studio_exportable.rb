@@ -71,11 +71,20 @@ module RecordingStudioExportable
       )
     end
 
-    def export_from_token(token_id:, format: :csv, filename: nil, filters: {}, controller: nil)
+    def export_from_token(token_id:, actor:, format: :csv, filename: nil, filters: {}, controller: nil)
+      raise NotAuthorized, "actor is required" if actor.nil?
+
+      token = TrustedExportToken.find!(token_id)
+      unless actor == token.actor &&
+             RecordingStudioAccessible.authorized?(actor: actor, recording: token.context_recording, role: :view)
+        raise NotAuthorized, "export is not allowed for this actor"
+      end
+
       token = TrustedExportToken.find_and_consume!(token_id)
+
       Exporter.call(
         context_recording: token.context_recording,
-        actor: token.actor,
+        actor: actor,
         export_key: token.effective_export_key,
         trusted_export: true,
         rows: token.row_resolver,

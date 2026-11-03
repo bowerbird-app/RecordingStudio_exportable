@@ -11,6 +11,7 @@ module RecordingStudioExportable
       result = if params[:export_token].present?
                  RecordingStudioExportable.export_from_token(
                    token_id: params[:export_token],
+                   actor: export_actor,
                    format: permitted_export_params[:format] || RecordingStudioExportable.configuration.default_format,
                    filename: permitted_export_params[:filename],
                    filters: permitted_export_params[:filters] || {},

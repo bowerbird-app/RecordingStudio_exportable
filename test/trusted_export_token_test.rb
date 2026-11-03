@@ -208,21 +208,65 @@ class TrustedExportTokenTest < Minitest::Test
     assert_equal 1, calls
   end
 
+  def test_issue_raises_when_the_actor_is_not_authorized
+    RecordingStudioAccessible.stub(:authorized?, false) do
+      error = assert_raises(RecordingStudioExportable::NotAuthorized) do
+        RecordingStudioExportable.issue_trusted_token(
+          context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new(1)),
+          actor: Object.new,
+          source: "RecordingStudioAdmin",
+          screen_identifier: "admin.users",
+          columns: [column(:name)],
+          row_resolver: -> { [] }
+        )
+      end
+      assert_equal "export is not allowed for this actor", error.message
+    end
+  end
+
+  def test_export_from_token_rejects_a_different_actor
+    actor = Object.new
+    token = issue_token(actor: actor)
+
+    error = assert_raises(RecordingStudioExportable::NotAuthorized) do
+      RecordingStudioExportable.export_from_token(token_id: token.id, actor: Object.new)
+    end
+
+    assert_equal "export is not allowed for this actor", error.message
+    assert_same token, RecordingStudioExportable::TrustedExportToken.find!(token.id)
+  end
+
+  def test_export_from_token_rejects_the_owner_who_lost_view_without_consuming_the_token
+    actor = Object.new
+    token = issue_token(actor: actor)
+
+    RecordingStudioAccessible.stub(:authorized?, false) do
+      error = assert_raises(RecordingStudioExportable::NotAuthorized) do
+        RecordingStudioExportable.export_from_token(token_id: token.id, actor: actor)
+      end
+      assert_equal "export is not allowed for this actor", error.message
+    end
+
+    assert_same token, RecordingStudioExportable::TrustedExportToken.find!(token.id)
+  end
+
   private
 
   def issue_token(source: "RecordingStudioAdmin", screen_identifier: "admin.users",
                   context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new(1)),
                   actor: Object.new, columns: [column(:name)], row_resolver: -> { [] },
                   ttl: RecordingStudioExportable::TrustedExportToken::DEFAULT_TTL)
-    RecordingStudioExportable.issue_trusted_token(
-      context_recording: context_recording,
-      actor: actor,
-      source: source,
-      screen_identifier: screen_identifier,
-      columns: columns,
-      row_resolver: row_resolver,
-      ttl: ttl
-    )
+    RecordingStudioAccessible.stub(:authorized?, true) do
+      RecordingStudioExportable.issue_trusted_token(
+        context_recording: context_recording,
+        actor: actor,
+        source: source,
+        screen_identifier: screen_identifier,
+        columns: columns,
+        row_resolver: row_resolver,
+        ttl: ttl
+      )
+    end
   end
 
   def column(key)

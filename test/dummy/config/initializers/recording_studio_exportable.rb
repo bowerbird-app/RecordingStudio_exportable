@@ -2,7 +2,7 @@
 
 RecordingStudioExportable.configure do |config|
   config.current_actor = ->(controller: nil) { controller&.send(:current_user) || Current.actor }
-  config.trusted_export_sources = %w[RecordingStudioAdmin]
+  config.trusted_export_sources = %w[RecordingStudioExportable]
 
   RecordingStudioExportable.auto_register_exports!(config)
 

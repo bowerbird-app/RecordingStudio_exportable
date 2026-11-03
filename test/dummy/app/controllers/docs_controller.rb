@@ -48,7 +48,7 @@ class DocsController < ApplicationController
     @demo_token = RecordingStudioExportable.issue_trusted_token(
       context_recording: @demo_recording,
       actor: Current.actor,
-      source: "RecordingStudioAdmin",
+      source: "RecordingStudioExportable",
       screen_identifier: "Docs Trusted Export Demo",
       columns: [
         { key: :title, label: "Title", value: :title },

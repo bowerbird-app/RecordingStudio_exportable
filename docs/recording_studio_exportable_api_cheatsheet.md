@@ -383,8 +383,8 @@ The flow is:
 1. **Issue** a token server-side with the rows, columns, and context already resolved.
 2. **Pass only the token ID** to the external consumer.
 3. The consumer **POSTs the token ID** to the engine endpoint.
-4. The engine **atomically consumes** the token (read-and-delete) and streams
-   the export.
+4. The engine checks the actor, then **atomically consumes** the token
+   (read-and-delete) and streams the export. A rejected redeem leaves the token.
 
 ```mermaid
 sequenceDiagram
@@ -422,7 +422,7 @@ Add allowed sources to your initializer:
 ```ruby
 # config/initializers/recording_studio_exportable.rb
 RecordingStudioExportable.configure do |config|
-  config.trusted_export_sources = %w[RecordingStudioAdmin MySidecarApp]
+  config.trusted_export_sources = %w[RecordingStudioExportable MySidecarApp]
 end
 ```
 
@@ -452,7 +452,7 @@ etc.):
 token = RecordingStudioExportable.issue_trusted_token(
   context_recording: recording,
   actor: Current.actor,
-  source: "RecordingStudioAdmin",
+  source: "RecordingStudioExportable",
   screen_identifier: "Admin Users Export",
   columns: [
     { key: :title,   label: "Title",      value: :title },
@@ -490,14 +490,15 @@ curl -X POST https://example.com/recording_studio_exportable/exports \
   -d "export_token=TOKEN_ID&format=csv"
 ```
 
-No `context_recording_id`, `actor`, or `export_key` is needed. The token carries
-all of that internally.
+The request does not send `context_recording_id` or `export_key`. The controller
+passes the signed-in actor, and that actor must be the one the token was issued for.
 
 In Ruby:
 
 ```ruby
 RecordingStudioExportable.export_from_token(
   token_id: params[:export_token],
+  actor: current_actor,
   format: :csv,
   filename: "optional-override.csv",
   filters: { status: "active" },
@@ -514,6 +515,7 @@ RecordingStudioExportable.export_from_token(
 | **Expired** | Raises `TrustedExportToken::TokenExpired` → HTTP 410 Gone. |
 | **Missing / already consumed** | Raises `TrustedExportToken::TokenNotFound` → HTTP 404 Not Found. |
 | **Unauthorised source** | `issue_trusted_token` raises `TrustedExportToken::Error` if the source is not in `trusted_export_sources`. |
+| **Unauthorised actor** | Issue and redeem require `RecordingStudioAccessible.authorized?` with role `:view`. Redeem also requires `actor:` to be the actor the token was issued for, and raises `NotAuthorized` otherwise. |
 
 ### Controller behaviour
 

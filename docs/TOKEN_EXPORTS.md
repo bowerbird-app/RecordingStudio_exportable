@@ -30,7 +30,7 @@ Benefits:
 ```ruby
 # config/initializers/recording_studio_exportable.rb
 RecordingStudioExportable.configure do |config|
-  config.trusted_export_sources = %w[RecordingStudioAdmin]
+  config.trusted_export_sources = %w[RecordingStudioExportable]
 end
 ```
 
@@ -40,7 +40,7 @@ end
 token = RecordingStudioExportable.issue_trusted_token(
   context_recording: recording,
   actor: Current.actor,
-  source: "RecordingStudioAdmin",
+  source: "RecordingStudioExportable",
   screen_identifier: "Admin Users Export",
   columns: [
     { key: :title,      label: "Title",  value: :title },
@@ -72,7 +72,7 @@ That is it. The external system needs **only** the token ID.
 An array of string identifiers. Only sources in this list can issue tokens.
 
 ```ruby
-config.trusted_export_sources = %w[RecordingStudioAdmin MySidecarApp]
+config.trusted_export_sources = %w[RecordingStudioExportable MySidecarApp]
 ```
 
 If a source not in this list attempts to issue a token, `TrustedExportToken::Error`
@@ -134,11 +134,12 @@ Returns a `TrustedExportToken` instance with:
 
 ### `RecordingStudioExportable.export_from_token`
 
-Consumes a token and streams the export.
+Checks that `actor` is the token's actor and can still view the context recording, then atomically consumes the token and streams the export. A rejected redeem does not consume the token.
 
 ```ruby
 RecordingStudioExportable.export_from_token(
   token_id:,   # String — the token.id from issue_trusted_token
+  actor:,      # Object — must be the same actor the token was issued for
   format: :csv,             # Symbol — output format (optional, default :csv)
   filename: nil,            # String — override filename (optional)
   filters: {},              # Hash — filter values (optional)
@@ -183,6 +184,7 @@ stateDiagram-v2
 | **Expired** | Raises `TokenExpired` → HTTP 410 Gone in the engine controller. |
 | **Missing / consumed** | Raises `TokenNotFound` → HTTP 404 Not Found in the engine controller. |
 | **Unauthorised source** | `issue_trusted_token` raises `TrustedExportToken::Error` immediately. |
+| **Unauthorised actor** | Issue and redeem call `RecordingStudioAccessible.authorized?` with role `:view` before the token is consumed. A mismatch between the requester and `token.actor`, or a lost `:view` grant, raises `NotAuthorized` (HTTP 403) and leaves the token in place. |
 
 ---
 
@@ -198,6 +200,7 @@ def create
   result = if params[:export_token].present?
               RecordingStudioExportable.export_from_token(
                 token_id: params[:export_token],
+                actor: export_actor,
                 format: permitted_export_params[:format] || RecordingStudioExportable.configuration.default_format,
                 filename: permitted_export_params[:filename],
                 filters: permitted_export_params[:filters] || {},
