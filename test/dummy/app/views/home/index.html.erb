@@ -77,8 +77,8 @@
         <%= render FlatPack::Table::Component.new(data: @article_rows, class: "text-sm") do |table| %>
           <% table.column(title: "Article") { |row| row[:title] } %>
           <% table.column(title: "Author") { |row| row[:author_name] } %>
-          <% table.column(title: "Topics") { |row| row[:topic_count] } %>
-          <% table.column(title: "Word count") { |row| row[:word_count] } %>
+          <% table.column(title: "Topics") { |row| row[:topic_count].to_s } %>
+          <% table.column(title: "Word count") { |row| row[:word_count].to_s } %>
         <% end %>
       <% else %>
         <%= render FlatPack::Content::Component.new do %>
@@ -248,7 +248,7 @@
             <% table.column(title: "Articles") { |row| row[:article_titles] } %>
           <% end %>
           <% if @topics_selected_columns.include?("topic_created_at") %>
-            <% table.column(title: "Created at") { |row|
+            <% table.column(title: "Created at", wrap: :nowrap) { |row|
               next if row[:topic_created_at].blank?
 
               render(FlatPack::Timestamp::Component.new(timestamp: row[:topic_created_at], shorten_timestamp: true))

@@ -4,7 +4,7 @@
   ) %>
 
 <%= render FlatPack::Content::Component.new do %>
-  <p>File names under <code class="break-all">app/views/recording_studio_exportable/exports/</code>.</p>
+  <p>File names under <code style="overflow-wrap:anywhere">app/<wbr>views/<wbr>recording_studio_exportable/<wbr>exports/</code>.</p>
 <% end %>
 
 <% view_rows = Array(@engine_views).map { |view_path| { path: File.basename(view_path), source: "Gem engine" } } %>

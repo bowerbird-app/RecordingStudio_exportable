@@ -1,10 +1,10 @@
 <%= render FlatPack::Sidebar::Component.new(side: sidebar_side) do |sidebar| %>
   <% sidebar.header do %>
-    <%= render ExportableSidebarHeader.new(
+    <%= render FlatPack::Sidebar::Header::Component.new(
       brand_abbr: "RS",
       title: "Exportable",
       subtitle: "Recording Studio",
-      version: RecordingStudioExportable::VERSION
+      show_version: false
     ) %>
   <% end %>
 
@@ -63,6 +63,10 @@
 
   <% sidebar.footer do %>
     <%= render FlatPack::Sidebar::Footer::Component.new(class: "text-sm text-[var(--surface-muted-content-color)]") do %>
+      <%= render FlatPack::Badge::Component.new(
+        text: "v#{RecordingStudioExportable::VERSION}",
+        size: :xs
+      ) %>
       <%= render FlatPack::Sidebar::Item::Component.new(
         text: "Sign out",
         href: main_app.destroy_user_session_path,

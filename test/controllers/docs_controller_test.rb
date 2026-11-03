@@ -108,8 +108,8 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Gem Views"
     assert_select "table", minimum: 1
-    assert_select "code.break-all", text: "app/views/recording_studio_exportable/exports/"
-    assert_includes response.body, "app/views/recording_studio_exportable/exports/"
+    assert_select "code[style=?]", "overflow-wrap:anywhere", text: "app/views/recording_studio_exportable/exports/"
+    assert_includes response.body, "app/<wbr>views/<wbr>recording_studio_exportable/<wbr>exports/"
     assert_select "td", text: "token_not_found.html.erb"
     refute_includes response.body, "app/views/recording_studio_exportable/exports/token_not_found.html.erb"
   end
@@ -144,7 +144,8 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_select %(a[href="#{docs_methods_path}"]), text: /Methods/
     assert_select %(a[href="#{docs_components_path}"]), text: /Components/
     assert_select ".fp-sidebar-label", text: /Exportable/
-    assert_select ".fp-sidebar-label span", text: "v#{RecordingStudioExportable::VERSION}"
+    assert_select ".fp-sidebar-label span", count: 0
+    assert_select "span", text: "v#{RecordingStudioExportable::VERSION}"
     assert_select "a", text: "Recording Studio", count: 0
     assert_select %(a[href="/recording_studio"]), count: 0
     refute_includes response.body, "Addon Template"

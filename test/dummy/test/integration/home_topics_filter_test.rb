@@ -104,5 +104,10 @@ class HomeTopicsFilterTest < ActionDispatch::IntegrationTest
       assert_equal 1, rows.sum { |row| row.css("time").size }
     end
     assert_select "section#topics td", text: "First Created At Article - Created At Author, Second Created At Article - Created At Author"
+    assert_select "section#topics td.whitespace-nowrap", minimum: 1
+    assert_select "tr", text: /First Created At Article/ do |rows|
+      cells = rows.first.css("td").map { |cell| cell.text.squish }
+      assert_equal ["First Created At Article", "Created At Author", "1", "1"], cells
+    end
   end
 end
