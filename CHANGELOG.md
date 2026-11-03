@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
+## 0.5.6 - 2026-11-02
+
+### Changed
+- **Breaking.** A finished export records history with
+  `@context_recording.log_event!` and idempotency key `export:#{export_log.id}`.
+  The `Event.create!` fallbacks are gone.
+- **Breaking.** If the export log cannot be created, the export fails.
+  `ExportLog.create!` raises on a database error. The exported event is
+  written before the log is marked completed, so a history failure marks
+  the log failed.
+
+### Upgrade notes
+- Read the exported event from the context recording. Do not insert
+  `RecordingStudio::Event` rows for exports.
+- An export now needs a successful `ExportLog` insert. A database error
+  during that insert fails the export and writes no exported event.
+- Rescue a failed `log_event!` if a host must keep the CSV after history
+  fails. The export log stays failed in that case.
+
 ## 0.5.5 - 2026-11-02
 
 ### Changed

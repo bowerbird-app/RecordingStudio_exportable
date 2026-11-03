@@ -31,5 +31,29 @@ class AdminExportTest < ActionDispatch::IntegrationTest
     assert_equal @recording.id, log.context_recording_id
     assert log.selected_columns.present?
     assert_operator log.row_count, :>, 0
+
+    events = RecordingStudio::Event.where(recording_id: @recording.id, action: "exported")
+    assert_equal 1, events.count
+    key = "export:#{log.id}"
+    assert_equal key, events.pick(:idempotency_key)
+
+    @recording.log_event!(
+      action: "exported",
+      actor: @admin,
+      idempotency_key: key,
+      metadata: { replayed: true }
+    )
+
+    assert_equal 1, RecordingStudio::Event.where(recording_id: @recording.id, idempotency_key: key).count
+
+    post "/recording_studio_exportable/exports", params: {
+      context_recording_id: @recording.id,
+      export_key: "recording_studio_document_items_export",
+      format: "csv"
+    }
+
+    assert_response :success
+    assert_equal 1, RecordingStudio::Event.where(recording_id: @recording.id, idempotency_key: key).count
+    assert_equal 2, RecordingStudio::Event.where(recording_id: @recording.id, action: "exported").count
   end
 end
