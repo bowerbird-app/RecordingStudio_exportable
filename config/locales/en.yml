@@ -8,11 +8,10 @@ en:
         request_invalid: "Export request is invalid"
         format_blank: "can't be blank"
       tokens:
+        back: "Back to exports"
         expired:
-          nav_title: "Export expired"
-          title: "Export Expired"
-          subtitle: "Refresh the original page"
+          title: "Export expired"
+          subtitle: "That link timed out. Start a fresh export."
         not_found:
-          nav_title: "Export expired"
-          title: "Export Expired"
-          subtitle: "Refresh the original page"
+          title: "That export link is missing"
+          subtitle: "Start a fresh export."

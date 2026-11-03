@@ -64,8 +64,8 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Workspace"
     assert_includes response.body, "Folder"
     assert_includes response.body, "Page"
-    assert_includes response_text, "Root recordable"
-    assert_includes response_text, "Child recordable"
+    assert_includes response_text, "Top-level type"
+    assert_includes response_text, "Nested type"
     assert_includes response_text, "Allowed parents: Workspace, Folder"
     assert_includes response_text, summary_data[:workspace]
     assert_includes response_text, summary_data[:folder]
@@ -108,7 +108,10 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Gem Views"
     assert_select "table", minimum: 1
-    refute_includes response.body, "app/views/recording_studio_exportable/home/index.html.erb"
+    assert_select "code.gem-view-path", text: "app/views/recording_studio_exportable/exports/"
+    assert_includes response.body, "app/<wbr>views/<wbr>recording_studio_exportable/<wbr>exports/"
+    assert_select "td", text: "token_not_found.html.erb"
+    refute_includes response.body, "app/views/recording_studio_exportable/exports/token_not_found.html.erb"
   end
 
   test "methods page renders successfully" do
@@ -140,6 +143,17 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_select %(a[href="#{docs_gem_views_path}"]), text: /Gem Views/
     assert_select %(a[href="#{docs_methods_path}"]), text: /Methods/
     assert_select %(a[href="#{docs_components_path}"]), text: /Components/
+    assert_select ".fp-sidebar-label", text: /Exportable/
+    assert_select ".fp-sidebar-label span", count: 0
+    assert_select "span", text: "v#{RecordingStudioExportable::VERSION}"
+    sign_out = css_select("a").find { |link| link.at_css(".fp-sidebar-label")&.text&.squish == "Sign out" }
+    assert sign_out, "expected a Sign out item"
+    assert_select sign_out, "span", text: "v#{RecordingStudioExportable::VERSION}", count: 0
+    assert_select "a", text: "Recording Studio", count: 0
+    assert_select %(a[href="/recording_studio"]), count: 0
+    refute_includes response.body, "Addon Template"
+    assert_select "header.fp-top-nav[data-fp-top-nav-padding=none]"
+    refute_includes response.body, "--top-nav-padding-inline"
   end
 
   private

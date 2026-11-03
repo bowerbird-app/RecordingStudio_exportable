@@ -1,4 +1,3 @@
-<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
     title: "Install",
     subtitle: "Real host-app installation steps for RecordingStudioExportable.",
@@ -11,6 +10,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Gemfile",
     language: :ruby,
     code: <<~CODE
       # Gemfile
@@ -27,6 +27,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Terminal",
     language: :bash,
     code: <<~CODE
       bundle install
@@ -39,6 +40,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Terminal",
     language: :bash,
     code: <<~CODE
       bin/rails generate recording_studio_exportable:install
@@ -51,6 +53,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Terminal",
     language: :bash,
     code: <<~CODE
       bin/rails generate recording_studio_exportable:migrations
@@ -64,9 +67,9 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Terminal",
     language: :bash,
     code: <<~CODE
       bin/rails tailwindcss:build
     CODE
   ) %>
-</div>

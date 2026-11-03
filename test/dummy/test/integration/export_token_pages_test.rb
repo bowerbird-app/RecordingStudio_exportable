@@ -21,9 +21,16 @@ class ExportTokenPagesTest < ActionDispatch::IntegrationTest
     }
 
     assert_response :not_found
-    assert_includes response.body, "Export expired"
-    assert_includes response.body, "Export Expired"
-    assert_includes response.body, "Refresh the original page"
+    assert_includes response.body, "That export link is missing"
+    assert_includes response.body, "Start a fresh export."
+    assert_includes response.body, "Back to exports"
+    refute_includes response.body, "Export Expired"
+    refute_includes response.body, "Link not found"
+    refute_includes response.body, "This export token does not exist"
+    refute_includes response.body, "Return to the page where you generated the export"
+    refute_includes response.body, "max-w-6xl"
+    refute_includes response.body, "page_nav_right"
+    refute_includes response.body, "Signed in successfully"
     refute_includes response.body, "HOST export expired nav"
   end
 
@@ -51,7 +58,13 @@ class ExportTokenPagesTest < ActionDispatch::IntegrationTest
 
     assert_response :gone
     assert_includes response.body, "Export expired"
-    assert_includes response.body, "Export Expired"
-    assert_includes response.body, "Refresh the original page"
+    assert_includes response.body, "That link timed out. Start a fresh export."
+    assert_includes response.body, "Back to exports"
+    refute_includes response.body, "Export Expired"
+    refute_includes response.body, "Trusted export tokens are single-use"
+    refute_includes response.body, "The export link you clicked is no longer valid."
+    refute_includes response.body, "max-w-6xl"
+    refute_includes response.body, "page_nav_right"
+    refute_includes response.body, "Signed in successfully"
   end
 end

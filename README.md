@@ -15,7 +15,7 @@ Installing this gem registers `:exportable`. It does not turn exports on for eve
 - **FlatPack** UI component library for all views
 - **Dummy app** (`test/dummy/`) with a FlatPack-based sign-in screen, a simple home page, mounted RecordingStudio routes, and FlatPack's built-in rounded theme enabled by default
 
-The dummy app ships with a starter sidebar documentation shell for authenticated pages. The menu entries in `test/dummy/app/views/layouts/flat_pack/_sidebar.html.erb` and the linked docs pages are intended to be rewritten to suit the addon you are building; the template provides the structure and styling, not final product copy. By default, that starter shell uses FlatPack's built-in rounded theme via the root layout attribute rather than custom Tailwind theme recreation.
+The dummy app keeps a sidebar for the docs pages. Menu entries live in `test/dummy/app/views/layouts/flat_pack/_sidebar.html.erb`. The shell uses FlatPack's rounded theme on the root layout.
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ The dummy app ships with a starter sidebar documentation shell for authenticated
    ```
 4. Open port 3000 — you'll land on the dummy app home page and can sign in at `/users/sign_in`
 
-The dummy app is intended as a host-app validation surface for authentication, FlatPack rendering, Tailwind source scanning, and RecordingStudio route wiring. It pins RecordingStudio Accessible to `v0.11.1`, runs Accessible 0.8–0.11 migrations, and seeds access grants through `RecordingStudioAccessible.grant_access` (Access records are readonly).
+The dummy app is a host-app check for authentication, FlatPack rendering, Tailwind source scanning, and RecordingStudio route wiring. It pins RecordingStudio Accessible to `v0.24.0` and seeds access grants through `RecordingStudioAccessible.grant_access`.
 
 Dummy credentials (`test/dummy/config/credentials.yml.enc`) are encrypted with the shared RecordingStudio_* development master key. Set `RAILS_MASTER_KEY` or put that key in `test/dummy/config/master.key` (gitignored). Keep the encrypted file; do not generate a per-repo dummy key.
 
@@ -59,7 +59,7 @@ The home page in `test/dummy/app/views/home/index.html.erb` is also a deliberate
 
 ### Root Recording Pattern
 
-This template follows RecordingStudio's root recording pattern:
+The dummy follows RecordingStudio's root recording pattern:
 
 - **Workspace** is the top-level recordable
 - **Folder** and **Page** demonstrate nested recordables under the workspace root

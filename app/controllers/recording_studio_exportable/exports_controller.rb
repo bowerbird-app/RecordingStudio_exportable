@@ -65,10 +65,12 @@ module RecordingStudioExportable
     end
 
     def render_token_expired(_exception)
+      flash.clear
       render :token_expired, status: :gone, formats: :html
     end
 
     def render_token_not_found(_exception)
+      flash.clear
       render :token_not_found, status: :not_found, formats: :html
     end
   end

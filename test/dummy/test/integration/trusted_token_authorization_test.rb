@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 class TrustedTokenAuthorizationTest < ActionDispatch::IntegrationTest
   setup do
@@ -23,6 +24,41 @@ class TrustedTokenAuthorizationTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     refute_includes response.body, "Export Articles (token-based)"
+  end
+
+  test "a lost view grant while issuing the demo token is not hidden" do
+    sign_in @admin
+
+    assert_raises(RecordingStudioExportable::NotAuthorized) do
+      RecordingStudioExportable.stub(:issue_trusted_token, ->(**) {
+        raise RecordingStudioExportable::NotAuthorized, "export is not allowed for this actor"
+      }) do
+        get root_path
+      end
+    end
+  end
+
+  test "a trusted token error hides the demo button" do
+    sign_in @admin
+
+    RecordingStudioExportable.stub(:issue_trusted_token, ->(**) {
+      raise RecordingStudioExportable::TrustedExportToken::Error, "source is not allowed"
+    }) do
+      get root_path
+    end
+
+    assert_response :success
+    refute_includes response.body, "Export Articles (token-based)"
+  end
+
+  test "an unexpected token error is not hidden" do
+    sign_in @admin
+
+    assert_raises(RuntimeError) do
+      RecordingStudioExportable.stub(:issue_trusted_token, ->(**) { raise "cache down" }) do
+        get root_path
+      end
+    end
   end
 
   test "another user cannot redeem a trusted export token" do

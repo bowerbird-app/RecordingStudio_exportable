@@ -165,10 +165,11 @@ end
   [ "/api/exports", "POST", 202, 96 ],
   [ "/api/articles", "GET", 200, 38 ]
 ].each do |path, http_method, status, duration_ms|
-  demo_dashboard.demo_api_requests.find_or_create_by!(path: path, http_method: http_method) do |request|
-    request.status = status
-    request.duration_ms = duration_ms
+  request = demo_dashboard.demo_api_requests.find_or_create_by!(path: path, http_method: http_method) do |created|
+    created.status = status
+    created.duration_ms = duration_ms
   end
+  DemoApiRequest.where(id: request.id).update_all(status: status, duration_ms: duration_ms, updated_at: Time.current)
 end
 
 previous_actor = Current.actor

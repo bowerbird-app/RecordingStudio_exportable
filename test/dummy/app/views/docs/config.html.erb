@@ -1,4 +1,3 @@
-<div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
     title: "Config",
     subtitle: "How to configure RecordingStudioExportable across initializer, recordable model, and services/exports.",
@@ -11,6 +10,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "config/initializers/recording_studio_exportable.rb",
     language: :markdown,
     code: <<~'CODE'
       1) config/initializers/recording_studio_exportable.rb
@@ -36,6 +36,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "config/initializers/recording_studio_exportable.rb",
     language: :ruby,
     code: <<~CODE
       RecordingStudioExportable.configure do |config|
@@ -59,6 +60,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Ruby",
     language: :ruby,
     code: <<~'CODE'
       # Actor and identity
@@ -90,6 +92,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Ruby",
     language: :ruby,
     code: <<~'CODE'
       class DemoDashboard < ApplicationRecord
@@ -126,6 +129,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Ruby",
     language: :ruby,
     code: <<~'CODE'
       include RecordingStudio::Capabilities::Exportable.to(
@@ -143,6 +147,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Ruby",
     language: :ruby,
     code: <<~'CODE'
       class RecordingStudioDemoDashboardRequestsExport
@@ -184,6 +189,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Ruby",
     language: :ruby,
     code: <<~'CODE'
       config.register_export(
@@ -234,6 +240,7 @@
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
+    title: "Ruby",
     language: :ruby,
     code: <<~'CODE'
       do |context_recording:, recording:, actor:, attributes:, filters:, params:, format:, context:, controller:|
@@ -278,4 +285,3 @@
       end
     CODE
   ) %>
-</div>

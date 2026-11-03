@@ -68,4 +68,47 @@ class HomeTopicsFilterTest < ActionDispatch::IntegrationTest
     assert_select "section#topics input[name=topic]"
     assert_select "section#topics input[name=article]"
   end
+
+  test "a topic row shows one created-at timestamp" do
+    user = User.find_or_create_by!(email: "topics-created-at@example.com") do |record|
+      record.password = "Password123!"
+      record.password_confirmation = "Password123!"
+    end
+    sign_in user
+
+    dashboard = DemoDashboard.create!(name: "Topics Created At Dashboard")
+    RecordingStudio.root_recording_for(dashboard)
+    author = Author.create!(name: "Created At Author", bio: "")
+    first_article = Article.create!(title: "First Created At Article", body: "Body", author: author)
+    second_article = Article.create!(title: "Second Created At Article", body: "Body", author: author)
+    Topic.create!(
+      article: first_article,
+      name: "Shared Topic",
+      created_at: Time.zone.local(2026, 6, 18, 9, 0, 0),
+      updated_at: Time.zone.local(2026, 6, 18, 9, 0, 0)
+    )
+    Topic.create!(
+      article: second_article,
+      name: "Shared Topic",
+      created_at: Time.zone.local(2026, 6, 18, 11, 0, 0),
+      updated_at: Time.zone.local(2026, 6, 18, 11, 0, 0)
+    )
+
+    get root_path(topic: "Shared Topic")
+
+    assert_response :success
+    assert_select "h1", text: "Exports"
+    assert_includes response.body, "Download a CSV from the pages you can open."
+    assert_includes response.body, "Signed in as #{user.email}."
+    refute_includes response.body, ">Demo<"
+    assert_select "section#topics tr", text: /Shared Topic/ do |rows|
+      assert_equal 1, rows.sum { |row| row.css("time").size }
+    end
+    assert_select "section#topics td", text: "First Created At Article - Created At Author, Second Created At Article - Created At Author"
+    assert_select "section#topics td.whitespace-nowrap", minimum: 1
+    assert_select "tr", text: /First Created At Article/ do |rows|
+      cells = rows.first.css("td").map { |cell| cell.text.squish }
+      assert_equal ["First Created At Article", "Created At Author", "1", "1"], cells
+    end
+  end
 end

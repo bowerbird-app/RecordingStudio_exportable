@@ -74,7 +74,7 @@ GIT
 PATH
   remote: ../..
   specs:
-    recording_studio_exportable (0.5.8)
+    recording_studio_exportable (0.5.9)
       csv
       flat_pack (>= 0.1.95)
       rails (~> 8.1.0)
@@ -257,6 +257,7 @@ GEM
     minitest (6.0.6)
       drb (~> 2.0)
       prism (~> 1.5)
+    minitest-mock (5.27.0)
     msgpack (1.8.6)
     net-imap (0.6.8)
       date
@@ -508,6 +509,7 @@ DEPENDENCIES
   importmap-rails
   jbuilder
   kamal
+  minitest-mock
   msgpack (>= 1.8.2)
   net-ssh (>= 7.3.5)
   pg (~> 1.1)
@@ -599,6 +601,7 @@ CHECKSUMS
   mini_magick (5.3.1) sha256=29395dfd76badcabb6403ee5aff6f681e867074f8f28ce08d78661e9e4a351c4
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   minitest (6.0.6) sha256=153ea36d1d987a62942382b61075745042a2b3123b1cd48f4c3675af9cc7d6f1
+  minitest-mock (5.27.0) sha256=7040ed7185417a966920987eaa6eaf1be4ea1fc5b25bb03ff4703f98564a55b0
   msgpack (1.8.6) sha256=a148c24e7d9026a88baf78918f6b1c297569bb6cc0f87953f444f3069950d4e5
   net-imap (0.6.8) sha256=eb30bb62227b64a3af6b518b04b2375113d69f68f15de59b0193b07d98acf6d9
   net-pop (0.1.2) sha256=848b4e982013c15b2f0382792268763b748cce91c9e91e36b0f27ed26420dff3
@@ -650,7 +653,7 @@ CHECKSUMS
   recording_studio (6.3.0)
   recording_studio_accessible (0.24.0)
   recording_studio_cache (0.6.0)
-  recording_studio_exportable (0.5.8)
+  recording_studio_exportable (0.5.9)
   recording_studio_metrics (0.7.0)
   recording_studio_root_switchable (0.11.0)
   recording_studio_trashable (0.12.0)

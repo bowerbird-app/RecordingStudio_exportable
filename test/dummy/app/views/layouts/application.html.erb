@@ -21,6 +21,7 @@
     <%# Load app styles, FlatPack token styles, and utility classes %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "flat_pack/variables", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "flat_pack/application", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "flat_pack/rich_text", "data-turbo-track": "reload" %>
     <% if Rails.root.join("app/assets/builds/tailwind.css").exist? || Rails.root.join("app/assets/tailwind/application.css").exist? %>
       <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>

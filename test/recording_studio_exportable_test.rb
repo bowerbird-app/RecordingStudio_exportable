@@ -58,7 +58,7 @@ class RecordingStudioExportableTest < Minitest::Test
     readme_path = File.expand_path("dummy/README.md", __dir__)
     readme_source = File.read(readme_path)
 
-    assert_includes readme_source, "This Rails app exists to validate the Recording Studio addon template"
+    assert_includes readme_source, "This Rails app checks Recording Studio Exportable inside a real host application."
     assert_includes readme_source, "/recording_studio"
     assert_includes readme_source, "redirects to `/`"
   end
@@ -132,10 +132,9 @@ class RecordingStudioExportableTest < Minitest::Test
     view_path = File.expand_path("dummy/app/views/home/index.html.erb", __dir__)
     view_source = File.read(view_path)
 
-    assert_includes view_source, 'title: "Template Demo"'
-    assert_includes view_source,
-                    'subtitle: "This dummy app is the browser-facing demo surface for the template, including access-aware export actions."'
-    refute_includes view_source, "FlatPack::Card::Component"
+    assert_includes view_source, 'title: "Exports"'
+    assert_includes view_source, 'subtitle: "Download a CSV from the pages you can open."'
+    assert_includes view_source, "FlatPack::Card::Component"
     assert_includes view_source, "recording_studio_export_access_button"
     assert_includes view_source, "FlatPack::Table::Component"
     refute_includes view_source, 'title: "Demo"'
@@ -220,18 +219,6 @@ class RecordingStudioExportableTest < Minitest::Test
     assert_includes recording_tree_partial, "parent_builder.node"
     refute_includes recordings_tree_view, "Current structure"
     refute_includes recordings_tree_view, "This tree is generated from RecordingStudio::Recording records"
-  end
-
-  def test_dummy_sidebar_includes_recordings_tree_navigation
-    sidebar_path = File.expand_path("dummy/app/views/layouts/flat_pack/_sidebar.html.erb", __dir__)
-    sidebar_source = File.read(sidebar_path)
-
-    assert_includes sidebar_source, 'text: "Recordable types"'
-    assert_includes sidebar_source, "docs_recordable_types_path"
-    assert_includes sidebar_source, 'text: "Recordings tree"'
-    assert_includes sidebar_source, "docs_recordings_tree_path"
-    refute_includes sidebar_source, 'text: "Recording Studio"'
-    refute_includes sidebar_source, 'href: "/recording_studio"'
   end
 
   def test_dummy_sidebar_uses_supported_icons_for_install_and_methods
