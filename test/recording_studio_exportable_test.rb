@@ -116,6 +116,14 @@ class RecordingStudioExportableTest < Minitest::Test
     assert_includes view_source, "recording_studio_export_access_button"
     assert_includes view_source, "FlatPack::Table::Component"
     refute_includes view_source, 'title: "Demo"'
+    assert_includes view_source, "FlatPack::TextInput::Component.new"
+    assert_includes view_source, 'name: "topic"'
+    assert_includes view_source, 'name: "article"'
+    assert_includes view_source, 'text: "Reset"'
+    assert_includes view_source, "href: root_path(anchor: \"topics\")"
+    refute_includes view_source, 'link_to "Reset"'
+    refute_includes view_source, 'name="topic"'
+    refute_includes view_source, 'name="article"'
   end
 
   def test_dummy_topics_export_uses_columns_helper_payload
