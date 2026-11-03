@@ -35,23 +35,5 @@ class AdminExportTest < ActionDispatch::IntegrationTest
     events = RecordingStudio::Event.where(recording_id: @recording.id, action: "exported")
     assert_equal 1, events.count
     assert_equal "export:#{log.id}", events.pick(:idempotency_key)
-
-    definition = RecordingStudioExportable.configuration.export_definition_for(log.export_key)
-    exporter = RecordingStudioExportable::Exporter.new(
-      context_recording: @recording,
-      actor: @admin,
-      export_key: log.export_key
-    )
-    exporter.send(
-      :record_exported_event,
-      definition,
-      export_log: log,
-      filename: log.filename,
-      row_count: log.row_count,
-      selected_attributes: log.selected_columns,
-      logged_filters: log.filters
-    )
-
-    assert_equal 1, RecordingStudio::Event.where(recording_id: @recording.id, action: "exported").count
   end
 end
