@@ -66,13 +66,12 @@
       <%= render FlatPack::Badge::Component.new(
         text: "v#{RecordingStudioExportable::VERSION}",
         size: :xs,
-        class: "ml-[var(--sidebar-item-padding-x)]"
+        class: "ml-[calc(var(--sidebar-item-inset)+var(--sidebar-item-padding-x))]"
       ) %>
       <%= render FlatPack::Sidebar::Item::Component.new(
         text: "Sign out",
         href: main_app.destroy_user_session_path,
         icon: :lock,
-        class: "mx-0",
         data: { turbo_method: :delete }
       ) %>
     <% end %>
