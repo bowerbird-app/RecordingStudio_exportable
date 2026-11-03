@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
+## 0.5.2 - 2026-11-02
+
+### Changed
+- CI, the dummy test rake default, and the dummy database names use
+  `recording_studio_exportable_test` (development
+  `recording_studio_exportable_development`, production primary
+  `recording_studio_exportable_production`).
+- Removed the unused `test/dummy/.github` workflow and Dependabot config.
+  They never ran from the gem repository.
 ## 0.5.1 - 2026-11-02
 
 ### Removed
