@@ -2,10 +2,23 @@
 
 require "test_helper"
 
+module CapabilityTestRecordables
+end
+
+# `enabled` infers the host with Object.const_get on the short class label,
+# so this example stays a top-level constant for the process. The suite does
+# not remove it.
+class CapabilityTestDeprecatedEnabledRecordable
+  EXPORTABLE_TEST_HOST = true
+end
+
 class CapabilityTest < Minitest::Test
+  def run
+    RecordingStudio.stub(:configuration, RecordingStudio::Configuration.new) { super }
+  end
+
   def setup
-    @original_configuration = RecordingStudioExportable.instance_variable_get(:@configuration)
-    RecordingStudioExportable.instance_variable_set(:@configuration, RecordingStudioExportable::Configuration.new)
+    save_exportable_configuration!
     RecordingStudioExportable.configuration.export("demo.people", columns: [:name]) { [] }
     RecordingStudioExportable.configuration.export(
       "demo.articles",
@@ -17,21 +30,10 @@ class CapabilityTest < Minitest::Test
         articles: [{ key: :title, label: "Title", value: :title }]
       }
     ) { [] }
-
-    @original_capabilities =
-      RecordingStudio.configuration.instance_variable_get(:@capabilities)&.transform_values(&:dup) || {}
-    @original_capability_options =
-      RecordingStudio.configuration.instance_variable_get(:@capability_options)&.dup || {}
-    @defined_recordables = []
   end
 
   def teardown
-    Array(@defined_recordables).each do |const_name|
-      Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
-    end
-    RecordingStudioExportable.instance_variable_set(:@configuration, @original_configuration)
-    RecordingStudio.configuration.instance_variable_set(:@capabilities, @original_capabilities)
-    RecordingStudio.configuration.instance_variable_set(:@capability_options, @original_capability_options)
+    restore_exportable_configuration!
   end
 
   def test_to_is_a_thin_wrapper_around_include_for
@@ -118,10 +120,10 @@ class CapabilityTest < Minitest::Test
   end
 
   def test_enabled_still_enables_through_to_and_is_deprecated
-    host = define_recordable(:DeprecatedEnabledRecordable)
+    host = CapabilityTestDeprecatedEnabledRecordable
     stderr = capture_io do
       Object.class_eval <<~RUBY, __FILE__, __LINE__ + 1
-        class DeprecatedEnabledRecordable
+        class CapabilityTestDeprecatedEnabledRecordable
           RecordingStudio::Capabilities::Exportable.enabled(
             export_keys: ["demo/people"],
             required_role: :view
@@ -157,7 +159,7 @@ class CapabilityTest < Minitest::Test
     host = define_recordable(:NamedEnabledRecordable)
     stderr = capture_io do
       RecordingStudio::Capabilities::Exportable.enabled(
-        "NamedEnabledRecordable",
+        "CapabilityTestRecordables::NamedEnabledRecordable",
         export_keys: ["demo/people"]
       )
     end.last
@@ -263,8 +265,12 @@ class CapabilityTest < Minitest::Test
   private
 
   def define_recordable(const_name)
-    Object.send(:remove_const, const_name) if Object.const_defined?(const_name, false)
-    @defined_recordables << const_name
-    Object.const_set(const_name, Class.new)
+    if CapabilityTestRecordables.const_defined?(const_name, false)
+      return CapabilityTestRecordables.const_get(const_name)
+    end
+
+    klass = Class.new
+    CapabilityTestRecordables.const_set(const_name, klass)
+    klass
   end
 end

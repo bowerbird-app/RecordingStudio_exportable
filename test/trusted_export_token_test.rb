@@ -10,14 +10,15 @@ class TrustedExportTokenTest < Minitest::Test
   FakeRecordable = Struct.new(:id)
 
   def setup
-    @original_configuration = RecordingStudioExportable.instance_variable_get(:@configuration)
-    RecordingStudioExportable.instance_variable_set(:@configuration, RecordingStudioExportable::Configuration.new)
+    save_exportable_configuration!
     RecordingStudioExportable.configuration.trusted_export_sources = ["RecordingStudioAdmin"]
+    RecordingStudioExportable.configuration.trusted_export_token_store =
+      RecordingStudioExportable::TrustedExportTokenStore.new
   end
 
   def teardown
     travel_back
-    RecordingStudioExportable.instance_variable_set(:@configuration, @original_configuration)
+    restore_exportable_configuration!
   end
 
   def test_issue_and_consume_tracks_audit_metadata
@@ -126,6 +127,7 @@ class TrustedExportTokenTest < Minitest::Test
 
   def test_default_store_is_process_local_even_when_rails_cache_is_available
     cache = ActiveSupport::Cache::MemoryStore.new
+    RecordingStudioExportable.configuration.trusted_export_token_store = nil
 
     Rails.stub(:cache, cache) do
       store = RecordingStudioExportable.configuration.resolve_trusted_export_token_store
@@ -136,6 +138,8 @@ class TrustedExportTokenTest < Minitest::Test
   end
 
   def test_default_store_is_reused
+    RecordingStudioExportable.configuration.trusted_export_token_store = nil
+
     Rails.stub(:cache, ActiveSupport::Cache::NullStore.new) do
       assert_same RecordingStudioExportable.configuration.resolve_trusted_export_token_store,
                   RecordingStudioExportable.configuration.resolve_trusted_export_token_store

@@ -85,24 +85,47 @@ class RecordingStudioExportableTest < Minitest::Test
   end
 
   def test_export_class_resolution_uses_export_roots
+    require "fileutils"
+    require "tmpdir"
+
     app_export_root = Pathname.new(File.expand_path("dummy/app/services/exports", __dir__))
-    legacy_export_root = Pathname.new(File.expand_path("dummy/services/exports", __dir__))
-    outside_export_path = File.expand_path("dummy/tmp/recording_studio_article_export.rb", __dir__)
-    original_export_roots = RecordingStudioExportable.method(:export_roots)
-    singleton_class = class << RecordingStudioExportable; self; end
+    source = app_export_root.join("recording_studio_article_export.rb")
+    save_exportable_configuration!
 
-    load app_export_root.join("recording_studio_article_export.rb").to_s
-    singleton_class.send(:define_method, :export_roots) { [app_export_root, legacy_export_root] }
+    Dir.mktmpdir do |dir|
+      app_root = Pathname.new(dir).join("app/services/exports")
+      legacy_root = Pathname.new(dir).join("services/exports")
+      outside = Pathname.new(dir).join("outside/outside_export.rb")
+      FileUtils.mkdir_p(app_root)
+      FileUtils.mkdir_p(legacy_root)
+      FileUtils.mkdir_p(outside.dirname)
+      FileUtils.cp(source, app_root.join("recording_studio_article_export.rb"))
+      FileUtils.cp(source, legacy_root.join("recording_studio_article_export.rb"))
+      File.write(outside, <<~RUBY)
+        unless defined?(ExportableOutsidePathProbe)
+          class ExportableOutsidePathProbe
+            def self.register(config)
+              config.register_export("outside.export", columns: [:name]) { [] }
+            end
+          end
+        end
+      RUBY
 
-    assert_equal RecordingStudioArticleExport,
-                 RecordingStudioExportable.send(:export_class_for,
-                                                app_export_root.join("recording_studio_article_export.rb"))
-    assert_equal RecordingStudioArticleExport,
-                 RecordingStudioExportable.send(:export_class_for,
-                                                legacy_export_root.join("recording_studio_article_export.rb"))
-    assert_nil RecordingStudioExportable.send(:export_class_for, outside_export_path)
+      [app_root, legacy_root].each do |root|
+        RecordingStudioExportable.configuration.export_definitions.delete("recording_studio_article_export")
+        paths = [root.join("recording_studio_article_export.rb").to_s, outside.to_s]
+        RecordingStudioExportable.stub(:export_roots, [app_root, legacy_root]) do
+          RecordingStudioExportable.stub(:export_file_paths, paths) do
+            RecordingStudioExportable.auto_register_exports!
+          end
+        end
+
+        assert RecordingStudioExportable.configuration.export_definition("recording_studio_article_export")
+        assert_nil RecordingStudioExportable.configuration.export_definition("outside.export")
+      end
+    end
   ensure
-    singleton_class&.send(:define_method, :export_roots) { original_export_roots.call }
+    restore_exportable_configuration!
   end
 
   def test_dummy_home_page_uses_demo_title_only

@@ -16,6 +16,7 @@ gem "sprockets-rails"
 
 group :development, :test do
   gem "debug"
+  gem "minitest-mock"
   gem "simplecov", require: false
   gem "sqlite3", ">= 2.9.6"
 end

@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
+## 0.5.3 - 2026-11-02
+
+### Changed
+- Development and test dependencies include `minitest-mock`. Root tests use
+  that `Object#stub` instead of a local compatibility patch.
+- Root tests save and restore exportable configuration through `configure`
+  instead of replacing the configuration object.
 ## 0.5.2 - 2026-11-02
 
 ### Changed

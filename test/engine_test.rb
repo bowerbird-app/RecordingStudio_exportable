@@ -4,13 +4,12 @@ require "test_helper"
 
 class EngineTest < Minitest::Test
   def setup
-    @original_configuration = RecordingStudioExportable.instance_variable_get(:@configuration)
-    RecordingStudioExportable.instance_variable_set(:@configuration, RecordingStudioExportable::Configuration.new)
+    save_exportable_configuration!
   end
 
   def teardown
     RecordingStudioExportable.configuration.hooks.clear!
-    RecordingStudioExportable.instance_variable_set(:@configuration, @original_configuration)
+    restore_exportable_configuration!
   end
 
   def test_load_config_merges_config_sources_and_registers_exportable_capability
@@ -145,14 +144,12 @@ class EngineTest < Minitest::Test
       end
     end
     applied = []
-    active_record_base = Class.new
-    active_record_base.define_singleton_method(:descendants) { [abstract_model, concrete_model] }
 
     RecordingStudioExportable::Engine.stub(:config, config_stub) do
       find_initializer("recording_studio_exportable.apply_model_extensions").block.call
     end
 
-    with_temporary_nested_constant(:ActiveRecord, :Base, active_record_base) do
+    ActiveRecord::Base.stub(:descendants, [abstract_model, concrete_model]) do
       RecordingStudioExportable::Engine.stub(:apply_model_extensions, ->(model) { applied << model }) do
         to_prepare_blocks.first.call
       end
@@ -171,14 +168,12 @@ class EngineTest < Minitest::Test
     first_controller = Class.new
     second_controller = Class.new
     applied = []
-    action_controller_base = Class.new
-    action_controller_base.define_singleton_method(:descendants) { [first_controller, second_controller] }
 
     RecordingStudioExportable::Engine.stub(:config, config_stub) do
       find_initializer("recording_studio_exportable.apply_controller_extensions").block.call
     end
 
-    with_temporary_nested_constant(:ActionController, :Base, action_controller_base) do
+    ActionController::Base.stub(:descendants, [first_controller, second_controller]) do
       RecordingStudioExportable::Engine.stub(:apply_controller_extensions, ->(controller) { applied << controller }) do
         to_prepare_blocks.first.call
       end
@@ -269,20 +264,6 @@ class EngineTest < Minitest::Test
   end
 
   private
-
-  def with_temporary_nested_constant(parent_name, child_name, value)
-    parent_defined = Object.const_defined?(parent_name, false)
-    parent = parent_defined ? Object.const_get(parent_name) : Object.const_set(parent_name, Module.new)
-    child_defined = parent.const_defined?(child_name, false)
-    previous_child = parent.const_get(child_name) if child_defined
-
-    parent.const_set(child_name, value)
-    yield
-  ensure
-    parent.send(:remove_const, child_name) if parent.const_defined?(child_name, false)
-    parent.const_set(child_name, previous_child) if child_defined
-    Object.send(:remove_const, parent_name) unless parent_defined
-  end
 
   def find_initializer(name)
     RecordingStudioExportable::Engine.initializers.find { |initializer| initializer.name == name }

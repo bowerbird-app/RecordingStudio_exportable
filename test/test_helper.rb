@@ -4,6 +4,7 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require_relative "simplecov_helper"
 require "minitest/autorun"
+require "minitest/mock"
 require "rails"
 require "active_record"
 require "action_controller"
@@ -67,33 +68,45 @@ ActiveRecord::Base.singleton_class.prepend(Module.new do
   end
 end)
 
-# ---------------------------------------------------------------------------
-# Minitest 6 removed Object#stub — restore compatibility for tests that call
-# stub on modules, classes, and other objects directly.
-# This mimics Minitest 5 behavior: if the replacement value is callable (Proc,
-# Method, etc.), it is called with the original method's arguments; otherwise
-# the value is returned directly.
-# ---------------------------------------------------------------------------
-unless Object.new.respond_to?(:stub)
-  class Object
-    def stub(method, value)
-      had_method = respond_to?(method)
-      original = method(method) if had_method
+module ExportableConfigurationIsolation
+  CONFIGURATION_ACCESSORS = RecordingStudioExportable::Configuration
+                            .instance_methods(false)
+                            .select { |name| name.end_with?("=") }
+                            .map { |name| name.to_s.delete_suffix("=").to_sym }
+                            .select { |name| RecordingStudioExportable::Configuration.method_defined?(name) }
+                            .freeze
 
-      if value.respond_to?(:call)
-        singleton_class.define_method(method) { |*args, &block| value.call(*args, &block) }
-        singleton_class.send(:ruby2_keywords, method) if singleton_class.respond_to?(:ruby2_keywords, true)
-      else
-        singleton_class.define_method(method) { |*| value }
+  def save_exportable_configuration!
+    configuration = RecordingStudioExportable.configuration
+    @saved_exportable_accessors = CONFIGURATION_ACCESSORS.to_h { |name| [name, configuration.public_send(name)] }
+    @saved_exportable_definitions = configuration.export_definitions.dup
+
+    defaults = RecordingStudioExportable::Configuration.new
+    RecordingStudioExportable.configure do |config|
+      CONFIGURATION_ACCESSORS.each do |name|
+        config.public_send("#{name}=", defaults.public_send(name))
       end
+      config.export_definitions.clear
+      config.hooks.clear!
+    end
+  end
 
-      yield
-    ensure
-      singleton_class.remove_method(method)
-      original.owner.define_method(method, original) if had_method && original && original.owner == singleton_class
+  def restore_exportable_configuration!
+    return unless defined?(@saved_exportable_accessors) && @saved_exportable_accessors
+
+    RecordingStudioExportable.configure do |config|
+      CONFIGURATION_ACCESSORS.each do |name|
+        config.public_send("#{name}=", @saved_exportable_accessors[name])
+      end
+      config.export_definitions.clear
+      @saved_exportable_definitions.each do |key, definition|
+        config.export_definitions[key] = definition
+      end
     end
   end
 end
+
+Minitest::Test.include(ExportableConfigurationIsolation)
 
 # Define a minimal RecordingStudio::Recording stub model so belongs_to
 # associations in ExportLog resolve without loading the full gem's engine.

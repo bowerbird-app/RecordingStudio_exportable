@@ -7,8 +7,7 @@ class ExporterTest < Minitest::Test
   FakeRecordable = Struct.new(:name)
 
   def setup
-    @original_configuration = RecordingStudioExportable.instance_variable_get(:@configuration)
-    RecordingStudioExportable.instance_variable_set(:@configuration, RecordingStudioExportable::Configuration.new)
+    save_exportable_configuration!
     RecordingStudioExportable.configuration.context_export_keys_resolver = ->(_context) { ["demo.people"] }
     RecordingStudioExportable.configuration.register_export(
       "demo.people",
@@ -30,7 +29,7 @@ class ExporterTest < Minitest::Test
   end
 
   def teardown
-    RecordingStudioExportable.instance_variable_set(:@configuration, @original_configuration)
+    restore_exportable_configuration!
   end
 
   def test_export_generates_safe_csv_preserves_false_values_and_forwards_context
