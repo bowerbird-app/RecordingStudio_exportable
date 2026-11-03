@@ -158,8 +158,6 @@ module RecordingStudioExportable
       parts.any? && parts.exclude?("..")
     end
 
-    public
-
     def warn_unless_shared_rate_limit_store
       message = export_rate_store_warning
       return if message.nil?
@@ -172,10 +170,6 @@ module RecordingStudioExportable
     end
 
     def export_rate_store_warning
-      unless defined?(RecordingStudioCache)
-        return "RecordingStudioExportable export rate limit is off because RecordingStudioCache is not loaded."
-      end
-
       store = export_rate_cache_store
       if store.nil?
         "RecordingStudioExportable export rate limit is off because the cache store is missing."

@@ -133,7 +133,7 @@ class EngineTest < Minitest::Test
     end
   end
 
-  def test_boot_warns_when_recording_studio_cache_is_absent
+  def test_boot_does_not_warn_when_recording_studio_cache_is_absent
     assert_nil defined?(RecordingStudioCache)
     messages = []
     logger = Struct.new(:messages) do
@@ -143,10 +143,10 @@ class EngineTest < Minitest::Test
     end.new(messages)
 
     Rails.stub(:logger, logger) do
-      RecordingStudioExportable.warn_unless_shared_rate_limit_store
+      find_initializer("recording_studio_exportable.warn_export_rate_store").block.call
     end
 
-    assert_match(/RecordingStudioCache is not loaded/, messages.join)
+    assert_empty messages
   end
 
   def test_boot_warns_when_the_rate_limit_store_is_null_or_per_process
@@ -168,17 +168,12 @@ class EngineTest < Minitest::Test
         messages << message
       end
     end.new(messages)
-    cache = Module.new do
-      define_singleton_method(:configuration) { Struct.new(:cache_store).new(store) }
-    end
-
-    Object.const_set(:RecordingStudioCache, cache)
-    Rails.stub(:logger, logger) do
-      RecordingStudioExportable.warn_unless_shared_rate_limit_store
+    RecordingStudioExportable.stub(:export_rate_cache_store, store) do
+      Rails.stub(:logger, logger) do
+        RecordingStudioExportable.send(:warn_unless_shared_rate_limit_store)
+      end
     end
     messages.join
-  ensure
-    Object.send(:remove_const, :RecordingStudioCache) if defined?(RecordingStudioCache)
   end
 
   def find_initializer(name)

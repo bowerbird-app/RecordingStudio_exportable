@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   signed in. The caller’s export key is not part of the bucket. The limit
   runs when `RecordingStudioCache::RateLimiter` is loaded and is skipped
   when Cache is not installed.
-- Boot warns when RecordingStudioCache is missing, or when the cache store
+- Boot warns only when RecordingStudioCache is loaded and the cache store
   is missing, a null store, or a per-process memory store.
 - The dummy app registers a Metrics `exports.total` count on `ExportLog`.
   The gem does not depend on Metrics and does not register that metric.

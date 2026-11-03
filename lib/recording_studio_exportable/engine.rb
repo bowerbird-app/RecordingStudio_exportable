@@ -23,7 +23,9 @@ module RecordingStudioExportable
     end
 
     initializer "recording_studio_exportable.warn_export_rate_store" do
-      RecordingStudioExportable.warn_unless_shared_rate_limit_store
+      next unless defined?(RecordingStudioCache)
+
+      RecordingStudioExportable.send(:warn_unless_shared_rate_limit_store)
     end
 
     def self.host_yaml(app)
