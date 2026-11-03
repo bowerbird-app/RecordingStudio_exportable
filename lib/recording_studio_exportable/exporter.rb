@@ -432,8 +432,6 @@ module RecordingStudioExportable
         completed_at: Time.current
       }
       export_log.update!(**filter_known_log_attributes(attrs, record: export_log))
-    rescue ActiveRecord::ActiveRecordError
-      nil
     end
 
     def mark_failed(export_log, exception)
@@ -446,8 +444,6 @@ module RecordingStudioExportable
         failed_at: Time.current
       }
       export_log.update!(**filter_known_log_attributes(attrs, record: export_log))
-    rescue ActiveRecord::ActiveRecordError
-      nil
     end
 
     def filter_known_log_attributes(attrs, record: nil)

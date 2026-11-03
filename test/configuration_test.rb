@@ -157,18 +157,12 @@ class ConfigurationTest < Minitest::Test
 
   def test_default_actor_resolver_reads_current_actor_and_ignores_the_controller
     actor = Object.new
-    current = Class.new do
-      class << self
-        attr_accessor :actor
-      end
-    end
-    current.actor = actor
     controller = Object.new
     controller.define_singleton_method(:current_user) do
       raise "controller.current_user is not the default actor"
     end
 
-    with_current(current) do
+    with_current_actor(actor) do
       resolved = RecordingStudioExportable::Configuration.new.resolve_actor(controller)
 
       assert_same actor, resolved
@@ -177,14 +171,14 @@ class ConfigurationTest < Minitest::Test
 
   private
 
-  def with_current(current)
-    had_current = Object.const_defined?(:Current)
-    previous = Object.const_get(:Current) if had_current
-    Object.send(:remove_const, :Current) if had_current
-    Object.const_set(:Current, current)
-    yield
-  ensure
-    Object.send(:remove_const, :Current) if Object.const_defined?(:Current)
-    Object.const_set(:Current, previous) if had_current
+  def with_current_actor(actor)
+    unless Object.const_defined?(:Current)
+      Object.const_set(:Current, Module.new)
+    end
+    unless Current.respond_to?(:actor)
+      Current.define_singleton_method(:actor) { nil }
+    end
+
+    Current.stub(:actor, actor) { yield }
   end
 end

@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix invalid exportable YAML instead of relying on a silent skip.
 - Hosts that relied on the default `controller.current_user` fallback must
   set `config.current_actor`. Call `current_user` in that lambda when it is
-  public. Do not use `send`. The dummy initializer still does that.
+  public. Do not use `send`.
 
 ## 0.5.7 - 2026-11-02
 
