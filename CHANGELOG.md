@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   falls back to `controller.current_user`. Set `config.current_actor` when
   the host resolves the actor another way. `resolve_actor` is the one lookup.
 - Capability export keys are read in one place.
+- A database error while marking the export log failed is logged. The
+  original export error is still raised. Any other error from that status
+  write is raised too.
 
 ### Upgrade notes
 - Fix invalid exportable YAML instead of relying on a silent skip.

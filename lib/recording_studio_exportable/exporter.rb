@@ -167,10 +167,19 @@ module RecordingStudioExportable
     rescue StandardError => e
       begin
         mark_failed(export_log, e)
-      rescue StandardError
-        nil
+      rescue ActiveRecord::ActiveRecordError => mark_error
+        log_export_status_failure(mark_error)
       end
       raise e
+    end
+
+    def log_export_status_failure(error)
+      message = "Export log could not be marked failed: #{error.class}: #{error.message}"
+      if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger.respond_to?(:error)
+        Rails.logger.error(message)
+      else
+        warn message
+      end
     end
 
     def resolved_definition
