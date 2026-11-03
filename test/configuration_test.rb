@@ -167,14 +167,23 @@ class ConfigurationTest < Minitest::Test
 
       assert_same actor, resolved
     end
+
+    refute Object.const_defined?(:Current, false)
   end
 
   private
 
   def with_current_actor(actor, &)
-    Object.const_set(:Current, Module.new) unless Object.const_defined?(:Current)
-    Current.define_singleton_method(:actor) { nil } unless Current.respond_to?(:actor)
+    created = false
+    unless Object.const_defined?(:Current, false)
+      mod = Module.new
+      mod.define_singleton_method(:actor) { nil }
+      Object.const_set(:Current, mod)
+      created = true
+    end
 
     Current.stub(:actor, actor, &)
+  ensure
+    Object.send(:remove_const, :Current) if created
   end
 end

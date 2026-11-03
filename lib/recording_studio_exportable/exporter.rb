@@ -165,8 +165,12 @@ module RecordingStudioExportable
     def with_export_failure(export_log)
       yield
     rescue StandardError => e
-      mark_failed(export_log, e)
-      raise
+      begin
+        mark_failed(export_log, e)
+      rescue StandardError
+        nil
+      end
+      raise e
     end
 
     def resolved_definition
