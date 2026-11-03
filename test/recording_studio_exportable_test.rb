@@ -120,8 +120,8 @@ class RecordingStudioExportableTest < Minitest::Test
           end
         end
 
-        assert RecordingStudioExportable.configuration.export_definition("recording_studio_article_export")
-        assert_nil RecordingStudioExportable.configuration.export_definition("outside.export")
+        assert RecordingStudioExportable.configuration.export_definition_for("recording_studio_article_export")
+        assert_nil RecordingStudioExportable.configuration.export_definition_for("outside.export")
       end
     end
   ensure

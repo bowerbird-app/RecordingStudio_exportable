@@ -71,8 +71,3 @@ Naming/VariableNumber:
   Exclude:
     - 'test/**/*'
 
-# Don't require super in service initialize methods
-Lint/MissingSuper:
-  Exclude:
-    - 'lib/recording_studio_exportable/services/**/*'
-    - 'test/services/**/*'

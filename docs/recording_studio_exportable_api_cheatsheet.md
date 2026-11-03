@@ -211,8 +211,6 @@ class Workspace < ApplicationRecord
 end
 ```
 
-`RecordingStudio::Capabilities::Exportable.enabled` still calls through to the same path and prints a deprecation warning. Do not use it in new hosts.
-
 ## 3. The two-lock model
 
 An export must pass two gates:

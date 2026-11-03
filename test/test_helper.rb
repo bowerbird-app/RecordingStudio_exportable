@@ -87,7 +87,6 @@ module ExportableConfigurationIsolation
         config.public_send("#{name}=", defaults.public_send(name))
       end
       config.export_definitions.clear
-      config.hooks.clear!
     end
   end
 

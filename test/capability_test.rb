@@ -5,13 +5,6 @@ require "test_helper"
 module CapabilityTestRecordables
 end
 
-# `enabled` infers the host with Object.const_get on the short class label,
-# so this example stays a top-level constant for the process. The suite does
-# not remove it.
-class CapabilityTestDeprecatedEnabledRecordable
-  EXPORTABLE_TEST_HOST = true
-end
-
 class CapabilityTest < Minitest::Test
   def run
     RecordingStudio.stub(:configuration, RecordingStudio::Configuration.new) { super }
@@ -19,8 +12,8 @@ class CapabilityTest < Minitest::Test
 
   def setup
     save_exportable_configuration!
-    RecordingStudioExportable.configuration.export("demo.people", columns: [:name]) { [] }
-    RecordingStudioExportable.configuration.export(
+    RecordingStudioExportable.configuration.register_export("demo.people", columns: [:name]) { [] }
+    RecordingStudioExportable.configuration.register_export(
       "demo.articles",
       label: "Articles export",
       description: "Exports article records",
@@ -119,67 +112,6 @@ class CapabilityTest < Minitest::Test
     refute_includes RecordingStudio.capabilities_for(host), :exportable
   end
 
-  def test_enabled_still_enables_through_to_and_is_deprecated
-    host = CapabilityTestDeprecatedEnabledRecordable
-    stderr = capture_io do
-      Object.class_eval <<~RUBY, __FILE__, __LINE__ + 1
-        class CapabilityTestDeprecatedEnabledRecordable
-          RecordingStudio::Capabilities::Exportable.enabled(
-            export_keys: ["demo/people"],
-            required_role: :view
-          )
-        end
-      RUBY
-    end.last
-
-    assert_match(/DEPRECATION/, stderr)
-    assert_match(/Exportable.enabled is deprecated/, stderr)
-    assert_match(/Exportable\.to/, stderr)
-    assert RecordingStudio.capability_enabled?(:exportable, for: host)
-    assert_equal(
-      { export_keys: ["demo.people"], required_role: :view },
-      RecordingStudio.capability_options(:exportable, for: host)
-    )
-  end
-
-  def test_enabled_accepts_an_explicit_recordable
-    host = define_recordable(:ExplicitEnabledRecordable)
-    stderr = capture_io do
-      RecordingStudio::Capabilities::Exportable.enabled(
-        host,
-        export_keys: ["demo/people"]
-      )
-    end.last
-
-    assert_match(/DEPRECATION/, stderr)
-    assert RecordingStudio.capability_enabled?(:exportable, for: host)
-  end
-
-  def test_enabled_accepts_a_recordable_type_name
-    host = define_recordable(:NamedEnabledRecordable)
-    stderr = capture_io do
-      RecordingStudio::Capabilities::Exportable.enabled(
-        "CapabilityTestRecordables::NamedEnabledRecordable",
-        export_keys: ["demo/people"]
-      )
-    end.last
-
-    assert_match(/DEPRECATION/, stderr)
-    assert RecordingStudio.capability_enabled?(:exportable, for: host)
-  end
-
-  def test_enabled_requires_a_resolvable_recordable
-    stderr = capture_io do
-      error = assert_raises(ArgumentError) do
-        RecordingStudio::Capabilities::Exportable.enabled(export_keys: ["demo/people"])
-      end
-
-      assert_match(/recordable is required/, error.message)
-    end.last
-
-    assert_match(/DEPRECATION/, stderr)
-  end
-
   def test_to_rejects_blank_required_role
     error = assert_raises(ArgumentError) do
       RecordingStudio::Capabilities::Exportable.to(required_role: "")
@@ -194,11 +126,6 @@ class CapabilityTest < Minitest::Test
     end
 
     assert_match(/formats cannot be blank/, error.message)
-  end
-
-  def test_legacy_constant_path_aliases_capabilities_exportable
-    assert_same RecordingStudio::Capabilities::Exportable,
-                RecordingStudio::Exportable::Capabilities::Exportable
   end
 
   def test_to_installs_instance_export_key_helpers
@@ -259,7 +186,6 @@ class CapabilityTest < Minitest::Test
     assert_includes readme, "include RecordingStudio::Capabilities::Exportable.to"
     refute_match(/Capabilities::Exportable\.enabled\(/, readme)
     assert_includes dummy_dashboard, "include RecordingStudio::Capabilities::Exportable.to"
-    refute_includes dummy_dashboard, ".enabled("
   end
 
   private

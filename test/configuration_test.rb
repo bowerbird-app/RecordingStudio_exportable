@@ -8,7 +8,7 @@ class ConfigurationTest < Minitest::Test
   end
 
   def test_register_export_normalizes_key_and_applies_defaults
-    definition = @configuration.export("Demo/Export-Key", columns: [:name]) { [] }
+    definition = @configuration.register_export("Demo/Export-Key", columns: [:name]) { [] }
 
     assert_equal "demo.export_key", definition.key
     assert_equal 50_000, definition.max_rows
@@ -25,25 +25,48 @@ class ConfigurationTest < Minitest::Test
 
   def test_idempotent_registration_returns_existing_equivalent_definition
     block = proc { [] }
-    first = @configuration.export("demo.people", columns: [:name], &block)
-    second = @configuration.export("demo.people", columns: [:name], &block)
+    first = @configuration.register_export("demo.people", columns: [:name], &block)
+    second = @configuration.register_export("demo.people", columns: [:name], &block)
 
     assert_same first, second
   end
 
   def test_duplicate_registration_requires_replace
-    @configuration.export("demo.people", columns: [:name]) { [] }
+    @configuration.register_export("demo.people", columns: [:name]) { [] }
 
-    definition = @configuration.export("demo.people", columns: [:email]) { [] }
+    definition = @configuration.register_export("demo.people", columns: [:email]) { [] }
     assert_equal ["Email"], definition.headers
   end
 
   def test_replace_export_updates_definition
-    @configuration.export("demo.people", columns: [:name]) { [] }
+    @configuration.register_export("demo.people", columns: [:name]) { [] }
     definition = @configuration.replace_export("demo.people", columns: [:email]) { [] }
 
     assert_equal ["Email"], definition.headers
-    assert_same definition, @configuration.export_definition("demo.people")
+    assert_same definition, @configuration.export_definition_for("demo.people")
+  end
+
+  def test_removed_configuration_aliases_are_gone
+    refute_respond_to @configuration, :default_row_limit
+    refute_respond_to @configuration, :default_row_limit=
+    refute_respond_to @configuration, :export
+    refute_respond_to @configuration, :export_definition
+
+    @configuration.max_rows = 10
+
+    {
+      "default_row_limit" => "max_rows",
+      "export" => "register_export",
+      "export_definition" => "export_definition_for"
+    }.each do |removed_key, replacement|
+      error = assert_raises(ArgumentError) do
+        @configuration.merge!(removed_key => 12)
+      end
+
+      assert_match(/#{Regexp.escape(replacement)}/, error.message)
+    end
+
+    assert_equal 10, @configuration.max_rows
   end
 
   def test_merge_updates_known_defaults_and_ignores_unknown_keys
@@ -61,7 +84,7 @@ class ConfigurationTest < Minitest::Test
   end
 
   def test_fetch_unknown_definition_raises_clear_error
-    assert_raises(RecordingStudioExportable::UnknownExportDefinition) do
+    assert_raises(RecordingStudioExportable::UnknownExportKey) do
       @configuration.fetch_export_definition!("missing")
     end
   end
@@ -71,8 +94,8 @@ class ConfigurationTest < Minitest::Test
     actor = Object.new
 
     @configuration.context_export_keys_resolver = ->(_recording) { ["demo.visible", "demo.hidden"] }
-    @configuration.export("demo.visible", columns: [:name], screen_keys: [:dashboard]) { [] }
-    @configuration.export("demo.hidden", columns: [:name], screen_keys: [:other]) { [] }
+    @configuration.register_export("demo.visible", columns: [:name], screen_keys: [:dashboard]) { [] }
+    @configuration.register_export("demo.hidden", columns: [:name], screen_keys: [:other]) { [] }
 
     RecordingStudio.stub(:capability_options, { export_keys: ["demo.visible", "demo.hidden"] }) do
       RecordingStudioAccessible.stub(:authorized?, true) do
@@ -91,7 +114,7 @@ class ConfigurationTest < Minitest::Test
     roles = []
 
     @configuration.context_export_keys_resolver = ->(_recording) { ["demo.admin"] }
-    @configuration.export("demo.admin", columns: [:name]) { [] }
+    @configuration.register_export("demo.admin", columns: [:name]) { [] }
 
     RecordingStudio.stub(:capability_options, { export_keys: ["demo.admin"], required_role: :admin }) do
       RecordingStudioAccessible.stub(:authorized?, lambda { |**kwargs|

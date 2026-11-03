@@ -11,6 +11,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
+## 0.5.4 - 2026-11-02
+
+### Removed
+- **Breaking.** Template services `ExampleService` and `BaseService`, the
+  `Hooks` API (`extend_model`, `extend_controller`, and the engine
+  class_eval loops), `RecordingStudio::Capabilities::Exportable.enabled`,
+  the `RecordingStudio::Exportable::Capabilities::Exportable` alias, and
+  the error aliases `UnknownExportDefinition`, `AuthorizationError`, and
+  `RowLimitExceeded`.
+- **Breaking.** Configuration aliases `default_row_limit`, `export`, and
+  `export_definition`.
+
+### Upgrade notes
+- Call `register_export` and `export_definition_for`. Set `max_rows` instead
+  of `default_row_limit`, including in `config/recording_studio_exportable.yml`
+  and `config.x.recording_studio_exportable`. `merge!` raises `ArgumentError`
+  when those removed keys are still present, including at boot.
+- Enable a recordable with `include RecordingStudio::Capabilities::Exportable.to(...)`.
+- Rescue `UnknownExportKey`, `NotAuthorized`, and `ExportTooLarge`.
+- Delete host calls to `RecordingStudioExportable::Hooks`,
+  `configuration.hooks`, and `RecordingStudioExportable::Services`.
 ## 0.5.3 - 2026-11-02
 
 ### Changed

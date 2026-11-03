@@ -3,17 +3,21 @@
 require "monitor"
 require "active_support/parameter_filter"
 require "active_support/core_ext/object/blank"
-require_relative "hooks"
 
 module RecordingStudioExportable
   class Configuration
     DEFAULT_MAX_ROWS = 50_000
+    REMOVED_KEYS = {
+      "default_row_limit" => "max_rows",
+      "export" => "register_export",
+      "export_definition" => "export_definition_for"
+    }.freeze
 
     attr_accessor :current_actor, :current_impersonator, :default_format, :default_required_role,
                   :max_rows, :include_bom, :allow_request_filename_override,
                   :filter_log_sanitizer, :context_export_keys_resolver,
                   :trusted_export_sources, :trusted_export_token_store, :layout
-    attr_reader :export_definitions, :hooks
+    attr_reader :export_definitions
 
     def initialize
       @current_actor = lambda do |controller: nil|
@@ -34,16 +38,7 @@ module RecordingStudioExportable
       @trusted_export_token_store = nil
       @layout = nil
       @export_definitions = {}
-      @hooks = Hooks.new
       @mutex = Monitor.new
-    end
-
-    def default_row_limit
-      max_rows
-    end
-
-    def default_row_limit=(value)
-      self.max_rows = value
     end
 
     def register_export(key, replace: false, **options, &)
@@ -73,7 +68,6 @@ module RecordingStudioExportable
 
       definition
     end
-    alias export register_export
 
     def replace_export(key, **, &)
       register_export(key, replace: true, **, &)
@@ -82,7 +76,6 @@ module RecordingStudioExportable
     def export_definition_for(key)
       @mutex.synchronize { @export_definitions[normalize_key(key)] }
     end
-    alias export_definition export_definition_for
 
     def fetch_export_definition!(key)
       export_definition_for(key) || raise(UnknownExportKey, "unknown export key #{normalize_key(key).inspect}")
@@ -127,6 +120,9 @@ module RecordingStudioExportable
 
       hash.each do |k, v|
         key = k.to_s
+        replacement = REMOVED_KEYS[key]
+        raise ArgumentError, "RecordingStudioExportable no longer accepts #{key}. Use #{replacement}." if replacement
+
         setter = "#{key}="
         public_send(setter, v) if respond_to?(setter)
       end
@@ -139,8 +135,7 @@ module RecordingStudioExportable
         max_rows: max_rows,
         include_bom: include_bom,
         allow_request_filename_override: allow_request_filename_override,
-        export_definitions: @export_definitions.keys.sort,
-        hooks_registered: hooks.instance_variable_get(:@registry).transform_values(&:size)
+        export_definitions: @export_definitions.keys.sort
       }
     end
 

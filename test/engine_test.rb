@@ -8,7 +8,6 @@ class EngineTest < Minitest::Test
   end
 
   def teardown
-    RecordingStudioExportable.configuration.hooks.clear!
     restore_exportable_configuration!
   end
 
@@ -17,7 +16,7 @@ class EngineTest < Minitest::Test
     app_config = Struct.new(:x).new(xcfg)
     app = Struct.new(:config) do
       def config_for(_name)
-        { default_row_limit: 12 }
+        { max_rows: 12 }
       end
     end.new(app_config)
 
@@ -25,14 +24,14 @@ class EngineTest < Minitest::Test
       find_initializer("recording_studio_exportable.load_config").block.call(app)
     end
 
-    assert_equal 12, RecordingStudioExportable.configuration.default_row_limit
+    assert_equal 12, RecordingStudioExportable.configuration.max_rows
     assert_equal "edit", RecordingStudioExportable.configuration.default_required_role
   end
 
   def test_load_config_handles_errors_and_each_pair_fallback
     pair_config = Class.new do
       def each_pair
-        yield(:default_row_limit, 15)
+        yield(:max_rows, 15)
       end
     end.new
 
@@ -49,7 +48,7 @@ class EngineTest < Minitest::Test
       find_initializer("recording_studio_exportable.load_config").block.call(app)
     end
 
-    assert_equal 15, RecordingStudioExportable.configuration.default_row_limit
+    assert_equal 15, RecordingStudioExportable.configuration.max_rows
   end
 
   def test_load_config_swallow_each_pair_errors
@@ -63,7 +62,7 @@ class EngineTest < Minitest::Test
     app_config = Struct.new(:x).new(xcfg)
     app = Struct.new(:config) do
       def config_for(_name)
-        { default_row_limit: 33 }
+        { max_rows: 33 }
       end
     end.new(app_config)
 
@@ -72,7 +71,24 @@ class EngineTest < Minitest::Test
       find_initializer("recording_studio_exportable.load_config").block.call(app)
     end
 
-    assert_equal 33, RecordingStudioExportable.configuration.default_row_limit
+    assert_equal 33, RecordingStudioExportable.configuration.max_rows
+  end
+
+  def test_load_config_raises_when_yaml_uses_a_removed_key
+    app = Struct.new(:config) do
+      def config_for(_name)
+        { "default_row_limit" => 12 }
+      end
+    end.new(Object.new)
+
+    error = assert_raises(ArgumentError) do
+      RecordingStudio.stub(:register_capability, true) do
+        find_initializer("recording_studio_exportable.load_config").block.call(app)
+      end
+    end
+
+    assert_match(/max_rows/, error.message)
+    assert_equal 50_000, RecordingStudioExportable.configuration.max_rows
   end
 
   def test_load_config_is_noop_without_config_sources
@@ -82,7 +98,7 @@ class EngineTest < Minitest::Test
       find_initializer("recording_studio_exportable.load_config").block.call(app)
     end
 
-    assert_equal 50_000, RecordingStudioExportable.configuration.default_row_limit
+    assert_equal 50_000, RecordingStudioExportable.configuration.max_rows
     assert_equal :view, RecordingStudioExportable.configuration.default_required_role
   end
 
@@ -93,7 +109,7 @@ class EngineTest < Minitest::Test
       end
     end.new
 
-    xcfg = Struct.new(:recording_studio_exportable).new({ default_row_limit: 22 })
+    xcfg = Struct.new(:recording_studio_exportable).new({ max_rows: 22 })
     app_config = Struct.new(:x).new(xcfg)
     app = Struct.new(:config) do
       attr_accessor :yaml
@@ -108,159 +124,7 @@ class EngineTest < Minitest::Test
       find_initializer("recording_studio_exportable.load_config").block.call(app)
     end
 
-    assert_equal 22, RecordingStudioExportable.configuration.default_row_limit
-  end
-
-  def test_apply_extension_initializers_register_active_support_on_load_callbacks
-    to_prepare_blocks = []
-    config_stub = Object.new
-    config_stub.define_singleton_method(:to_prepare) do |&block|
-      to_prepare_blocks << block
-    end
-
-    RecordingStudioExportable::Engine.stub(:config, config_stub) do
-      find_initializer("recording_studio_exportable.apply_model_extensions").block.call
-      find_initializer("recording_studio_exportable.apply_controller_extensions").block.call
-    end
-
-    assert_equal 2, to_prepare_blocks.size
-  end
-
-  def test_model_extension_initializer_skips_abstract_models
-    to_prepare_blocks = []
-    config_stub = Object.new
-    config_stub.define_singleton_method(:to_prepare) do |&block|
-      to_prepare_blocks << block
-    end
-
-    abstract_model = Class.new do
-      def self.abstract_class?
-        true
-      end
-    end
-    concrete_model = Class.new do
-      def self.abstract_class?
-        false
-      end
-    end
-    applied = []
-
-    RecordingStudioExportable::Engine.stub(:config, config_stub) do
-      find_initializer("recording_studio_exportable.apply_model_extensions").block.call
-    end
-
-    ActiveRecord::Base.stub(:descendants, [abstract_model, concrete_model]) do
-      RecordingStudioExportable::Engine.stub(:apply_model_extensions, ->(model) { applied << model }) do
-        to_prepare_blocks.first.call
-      end
-    end
-
-    assert_equal [concrete_model], applied
-  end
-
-  def test_controller_extension_initializer_applies_all_controllers
-    to_prepare_blocks = []
-    config_stub = Object.new
-    config_stub.define_singleton_method(:to_prepare) do |&block|
-      to_prepare_blocks << block
-    end
-
-    first_controller = Class.new
-    second_controller = Class.new
-    applied = []
-
-    RecordingStudioExportable::Engine.stub(:config, config_stub) do
-      find_initializer("recording_studio_exportable.apply_controller_extensions").block.call
-    end
-
-    ActionController::Base.stub(:descendants, [first_controller, second_controller]) do
-      RecordingStudioExportable::Engine.stub(:apply_controller_extensions, ->(controller) { applied << controller }) do
-        to_prepare_blocks.first.call
-      end
-    end
-
-    assert_equal [first_controller, second_controller], applied
-  end
-
-  def test_apply_model_extensions_adds_registered_methods_once
-    model_class = Class.new do
-      def self.name
-        "ExampleRecord"
-      end
-    end
-
-    RecordingStudioExportable.configuration.hooks.extend_model(:ExampleRecord) do
-      def template_extension_method
-        :applied
-      end
-    end
-
-    RecordingStudioExportable::Engine.apply_model_extensions(model_class)
-    RecordingStudioExportable::Engine.apply_model_extensions(model_class)
-
-    instance = model_class.new
-    assert_equal :applied, instance.template_extension_method
-  end
-
-  def test_apply_controller_extensions_matches_demodulized_name
-    controller_class = Class.new do
-      def self.name
-        "Admin::DashboardController"
-      end
-    end
-
-    RecordingStudioExportable.configuration.hooks.extend_controller(:DashboardController) do
-      def template_controller_extension
-        :applied
-      end
-    end
-
-    RecordingStudioExportable::Engine.apply_controller_extensions(controller_class)
-
-    instance = controller_class.new
-    assert_equal :applied, instance.template_controller_extension
-  end
-
-  def test_apply_extensions_flattens_compacts_and_tracks_identity
-    target = Class.new
-    extension = proc do
-      def generated_method
-        :generated
-      end
-    end
-
-    RecordingStudioExportable::Engine.send(:apply_extensions, target, [nil, [extension, extension]])
-
-    assert_equal :generated, target.new.generated_method
-    assert_equal true,
-                 target.instance_variable_get(:@recording_studio_exportable_applied_extensions).compare_by_identity?
-  end
-
-  def test_apply_extensions_returns_without_target
-    assert_nil RecordingStudioExportable::Engine.send(:apply_extensions, nil, [])
-  end
-
-  def test_extension_keys_for_includes_demodulized_name
-    namespaced = Class.new do
-      def self.name
-        "Admin::ReportsController"
-      end
-    end
-
-    expected_keys = [:"Admin::ReportsController"]
-    expected_keys << :ReportsController
-
-    assert_equal expected_keys, RecordingStudioExportable::Engine.send(:extension_keys_for, namespaced)
-  end
-
-  def test_extension_keys_for_removes_duplicate_names
-    plain = Class.new do
-      def self.name
-        "ReportsController"
-      end
-    end
-
-    assert_equal [:ReportsController], RecordingStudioExportable::Engine.send(:extension_keys_for, plain)
+    assert_equal 22, RecordingStudioExportable.configuration.max_rows
   end
 
   private
