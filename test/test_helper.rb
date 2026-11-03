@@ -29,8 +29,6 @@ ActiveRecord::Base.establish_connection(
 
 # SQLite doesn't support UUID columns natively, but our ExportLog model uses UUIDs
 # in PostgreSQL. For testing, we use integer IDs with string UUID columns.
-# Also, ActiveRecord 8 prevents columns named 'attributes' by default; disable that
-# check so the schema matches the actual migration.
 ActiveRecord::Base.connection.create_table :recording_studio_exportable_export_logs, id: false do |t|
   t.string :id, primary_key: true, null: false
   t.string :context_recording_id
@@ -48,7 +46,7 @@ ActiveRecord::Base.connection.create_table :recording_studio_exportable_export_l
   t.string :content_type, null: false
   t.integer :row_count, null: false, default: 0
   t.integer :byte_size, null: false, default: 0
-  t.text :attributes, default: "[]"
+  t.text :selected_columns, default: "[]"
   t.text :filters, default: "{}"
   t.text :metadata, default: "{}"
   t.datetime :started_at
@@ -59,14 +57,6 @@ ActiveRecord::Base.connection.create_table :recording_studio_exportable_export_l
   t.datetime :created_at, null: false
   t.datetime :updated_at, null: false
 end
-
-# Disable DangerousAttributeError — the 'attributes' column is intentional
-# in this engine's schema.
-ActiveRecord::Base.singleton_class.prepend(Module.new do
-  def dangerous_attribute_method?(*)
-    false
-  end
-end)
 
 module ExportableConfigurationIsolation
   CONFIGURATION_ACCESSORS = RecordingStudioExportable::Configuration
@@ -106,14 +96,6 @@ module ExportableConfigurationIsolation
 end
 
 Minitest::Test.include(ExportableConfigurationIsolation)
-
-# Define a minimal RecordingStudio::Recording stub model so belongs_to
-# associations in ExportLog resolve without loading the full gem's engine.
-module RecordingStudio
-  class Recording < ActiveRecord::Base
-    self.table_name = "recording_studio_recordings"
-  end
-end
 
 # Define RecordingStudio::Event stub
 module RecordingStudio

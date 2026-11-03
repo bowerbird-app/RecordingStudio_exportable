@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dummy Topics filters on `/` use FlatPack `TextInput` for topic and article,
   and a ghost `Button` for Reset, with the same query param names.
 
+## 0.5.5 - 2026-11-02
+
+### Changed
+- **Breaking.** Export logs store the chosen columns in `selected_columns`.
+  A new migration renames `recording_studio_exportable_export_logs.attributes`
+  to `selected_columns`. The request parameter is still `attributes`.
+
+### Upgrade notes
+- Copy `db/migrate/20261102120000_rename_export_log_attributes_to_selected_columns.rb`
+  into the host and run `bin/rails db:migrate`.
+- Read `selected_columns` instead of `attributes` on `ExportLog`.
 ## 0.5.4 - 2026-11-02
 
 ### Removed

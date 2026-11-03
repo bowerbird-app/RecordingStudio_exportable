@@ -393,20 +393,26 @@ module RecordingStudioExportable
         [".", "_", "-"].include?(char)
     end
 
+    def context_recording_record
+      return unless defined?(RecordingStudio::Recording)
+      return unless @context_recording.is_a?(RecordingStudio::Recording)
+
+      @context_recording
+    end
+
     def create_export_log(definition:, filters:)
       return unless defined?(RecordingStudioExportable::ExportLog)
 
       recordable = @context_recording.respond_to?(:recordable) ? @context_recording.recordable : nil
-      context_recording_value = @context_recording.is_a?(RecordingStudio::Recording) ? @context_recording : nil
+      context_recording_value = context_recording_record
 
       attrs = {
         export_key: definition.key,
-        context_recording: context_recording_value,
         context_recordable_type: recordable&.class&.name,
         context_recordable_id: (recordable.id if recordable.respond_to?(:id)),
         screen_key: screen_key,
         format: @format,
-        attributes: [],
+        selected_columns: [],
         metadata: {},
         actor: @actor,
         impersonator: @impersonator,
@@ -417,6 +423,7 @@ module RecordingStudioExportable
         filters: filters,
         started_at: Time.current
       }
+      attrs[:context_recording] = context_recording_value if context_recording_value
 
       # Filter out any keys with nil values that would be rejected by create!
       filtered_attrs = filter_known_log_attributes(attrs)
@@ -435,7 +442,7 @@ module RecordingStudioExportable
         filename: filename,
         row_count: row_count,
         byte_size: byte_size,
-        attributes: selected_attributes,
+        selected_columns: selected_attributes,
         metadata: metadata,
         completed_at: Time.current
       }
