@@ -9,6 +9,7 @@ end
 # so this example stays a top-level constant for the process. The suite does
 # not remove it.
 class CapabilityTestDeprecatedEnabledRecordable
+  EXPORTABLE_TEST_HOST = true
 end
 
 class CapabilityTest < Minitest::Test
