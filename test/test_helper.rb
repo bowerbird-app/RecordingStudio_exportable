@@ -19,10 +19,6 @@ require layout_helper if layout_helper.file?
 # engine initializes but before tests run.
 require_relative "../app/models/recording_studio_exportable/export_log"
 
-# The unit suite uses SQLite without a uuid default. Postgres generates ids.
-RecordingStudioExportable::ExportLog.before_create do
-  self.id ||= SecureRandom.uuid
-end
 require_relative "../app/controllers/recording_studio_exportable/application_controller"
 require_relative "../app/controllers/recording_studio_exportable/exports_controller"
 
@@ -36,7 +32,9 @@ ActiveRecord::Base.establish_connection(
 # SQLite doesn't support UUID columns natively, but our ExportLog model uses UUIDs
 # in PostgreSQL. For testing, we use integer IDs with string UUID columns.
 ActiveRecord::Base.connection.create_table :recording_studio_exportable_export_logs, id: false do |t|
-  t.string :id, primary_key: true, null: false
+  t.string :id, primary_key: true, null: false, default: lambda {
+    "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || substr('89ab', 1 + abs(random()) % 4, 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6)))"
+  }
   t.string :context_recording_id
   t.string :context_recordable_type
   t.string :context_recordable_id
