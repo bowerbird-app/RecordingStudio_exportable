@@ -154,4 +154,36 @@ class ConfigurationTest < Minitest::Test
 
     assert_kind_of RecordingStudioExportable::Configuration, RecordingStudioExportable.configuration
   end
+
+  def test_default_actor_resolver_reads_current_actor_and_ignores_the_controller
+    actor = Object.new
+    controller = Object.new
+    controller.define_singleton_method(:current_user) do
+      raise "controller.current_user is not the default actor"
+    end
+
+    with_current_actor(actor) do
+      resolved = RecordingStudioExportable::Configuration.new.resolve_actor(controller)
+
+      assert_same actor, resolved
+    end
+
+    refute Object.const_defined?(:Current, false)
+  end
+
+  private
+
+  def with_current_actor(actor, &)
+    created = false
+    unless Object.const_defined?(:Current, false)
+      mod = Module.new
+      mod.define_singleton_method(:actor) { nil }
+      Object.const_set(:Current, mod)
+      created = true
+    end
+
+    Current.stub(:actor, actor, &)
+  ensure
+    Object.send(:remove_const, :Current) if created
+  end
 end

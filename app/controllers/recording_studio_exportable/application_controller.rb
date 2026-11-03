@@ -10,11 +10,7 @@ module RecordingStudioExportable
     private
 
     def export_actor
-      resolver = RecordingStudioExportable.configuration.current_actor
-      actor = resolver.call(controller: self) if resolver.respond_to?(:call)
-      actor ||= current_user if respond_to?(:current_user, true)
-      actor ||= Current.actor if defined?(Current) && Current.respond_to?(:actor)
-      actor
+      RecordingStudioExportable.configuration.resolve_actor(self)
     end
 
     def export_impersonator

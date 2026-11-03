@@ -28,7 +28,7 @@ class EngineTest < Minitest::Test
     assert_equal "edit", RecordingStudioExportable.configuration.default_required_role
   end
 
-  def test_load_config_handles_errors_and_each_pair_fallback
+  def test_load_config_skips_a_missing_yaml_file
     pair_config = Class.new do
       def each_pair
         yield(:max_rows, 15)
@@ -37,12 +37,7 @@ class EngineTest < Minitest::Test
 
     xcfg = Struct.new(:recording_studio_exportable).new(pair_config)
     app_config = Struct.new(:x).new(xcfg)
-
-    app = Struct.new(:config) do
-      def config_for(_name)
-        raise "missing file"
-      end
-    end.new(app_config)
+    app = Struct.new(:config, :paths).new(app_config, { "config" => Struct.new(:existent).new([]) })
 
     RecordingStudio.stub(:register_capability, true) do
       find_initializer("recording_studio_exportable.load_config").block.call(app)
@@ -51,7 +46,7 @@ class EngineTest < Minitest::Test
     assert_equal 15, RecordingStudioExportable.configuration.max_rows
   end
 
-  def test_load_config_swallow_each_pair_errors
+  def test_load_config_raises_when_ordered_options_cannot_be_read
     bad_pair_config = Class.new do
       def each_pair
         raise "bad pair"
@@ -66,12 +61,23 @@ class EngineTest < Minitest::Test
       end
     end.new(app_config)
 
-    # Should not raise even if xcfg.each_pair fails.
-    RecordingStudio.stub(:register_capability, true) do
+    assert_raises(RuntimeError) do
+      RecordingStudio.stub(:register_capability, true) do
+        find_initializer("recording_studio_exportable.load_config").block.call(app)
+      end
+    end
+  end
+
+  def test_load_config_raises_on_corrupt_yaml
+    app = Struct.new(:config) do
+      def config_for(_name)
+        YAML.unsafe_load("a: [\n")
+      end
+    end.new(Object.new)
+
+    assert_raises(Psych::SyntaxError) do
       find_initializer("recording_studio_exportable.load_config").block.call(app)
     end
-
-    assert_equal 33, RecordingStudioExportable.configuration.max_rows
   end
 
   def test_load_config_raises_when_yaml_uses_a_removed_key
@@ -102,7 +108,7 @@ class EngineTest < Minitest::Test
     assert_equal :view, RecordingStudioExportable.configuration.default_required_role
   end
 
-  def test_load_config_ignores_non_enumerable_yaml_and_merge_errors
+  def test_load_config_raises_when_yaml_cannot_be_merged
     yaml = Class.new do
       def each
         raise "bad yaml"
@@ -120,11 +126,11 @@ class EngineTest < Minitest::Test
     end.new(app_config)
     app.yaml = yaml
 
-    RecordingStudio.stub(:register_capability, true) do
-      find_initializer("recording_studio_exportable.load_config").block.call(app)
+    assert_raises(RuntimeError) do
+      RecordingStudio.stub(:register_capability, true) do
+        find_initializer("recording_studio_exportable.load_config").block.call(app)
+      end
     end
-
-    assert_equal 22, RecordingStudioExportable.configuration.max_rows
   end
 
   private

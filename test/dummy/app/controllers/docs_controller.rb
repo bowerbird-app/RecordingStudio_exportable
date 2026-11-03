@@ -57,7 +57,7 @@ class DocsController < ApplicationController
       row_resolver: -> { Article.order(:title).to_a },
       ttl: 30.seconds
     )
-  rescue StandardError
+  rescue RecordingStudioExportable::Error
     # Token issuance failed — page still renders with setup hint.
     @demo_token = nil
   end

@@ -40,7 +40,7 @@
     code: <<~CODE
       RecordingStudioExportable.configure do |config|
         # Required in practice so export authorization has an actor.
-        config.current_actor = ->(controller: nil) { controller&.send(:current_user) || Current.actor }
+        config.current_actor = ->(controller: nil) { Current.actor || controller&.current_user }
 
         # Loads and registers services/exports/**/*_export.rb classes.
         RecordingStudioExportable.auto_register_exports!(config)

@@ -456,6 +456,56 @@ class ExporterTest < Minitest::Test
     assert_equal "RecordingStudioExportable::NotAuthorized", fake_log.updates.last.fetch(:error_class)
   end
 
+  def test_export_failure_reraises_the_original_error_when_marking_failed_raises
+    fake_log = Object.new
+    fake_log.define_singleton_method(:update!) do |**kwargs|
+      raise ActiveRecord::StatementInvalid, "status write failed" if kwargs[:status] == :failed
+    end
+    logged = []
+    logger = Object.new
+    logger.define_singleton_method(:error) { |message| logged << message }
+
+    Rails.stub(:logger, logger) do
+      RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
+        RecordingStudioAccessible.stub(:authorized?, false) do
+          RecordingStudioExportable::ExportLog.stub(:create!, ->(**_kwargs) { fake_log }) do
+            assert_raises(RecordingStudioExportable::NotAuthorized) do
+              RecordingStudioExportable.export(
+                context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+                actor: Object.new
+              )
+            end
+          end
+        end
+      end
+    end
+
+    assert_equal 1, logged.size
+    assert_includes logged.first, "ActiveRecord::StatementInvalid"
+    assert_includes logged.first, "status write failed"
+  end
+
+  def test_export_failure_does_not_swallow_a_non_database_status_error
+    fake_log = Object.new
+    fake_log.define_singleton_method(:update!) do |**kwargs|
+      raise "status write failed" if kwargs[:status] == :failed
+    end
+
+    RecordingStudio.stub(:capability_options, { export_keys: ["demo.people"] }) do
+      RecordingStudioAccessible.stub(:authorized?, false) do
+        RecordingStudioExportable::ExportLog.stub(:create!, ->(**_kwargs) { fake_log }) do
+          error = assert_raises(RuntimeError) do
+            RecordingStudioExportable.export(
+              context_recording: FakeContext.new("DemoDashboard", FakeRecordable.new("Dash")),
+              actor: Object.new
+            )
+          end
+          assert_equal "status write failed", error.message
+        end
+      end
+    end
+  end
+
   def test_trusted_export_produces_csv_from_supplied_rows_and_columns
     result = trusted_export(rows: [{ name: "Ada" }])
 

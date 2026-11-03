@@ -43,7 +43,7 @@ module RecordingStudioExportable
       logged_filters = sanitized_filters_for_log
       export_log = create_export_log(definition: definition, filters: logged_filters)
 
-      begin
+      with_export_failure(export_log) do
         @capability_options = validate_capability!(definition)
         validate_context_export_key!(definition)
         definition.validate_context!(@context_recording, screen_key: screen_key)
@@ -92,12 +92,6 @@ module RecordingStudioExportable
           row_count: rows.size,
           export_log: export_log
         )
-      rescue Error => e
-        mark_failed(export_log, e)
-        raise
-      rescue StandardError => e
-        mark_failed(export_log, e)
-        raise
       end
     end
 
@@ -111,7 +105,7 @@ module RecordingStudioExportable
       logged_filters = sanitized_filters_for_log
       export_log = create_export_log(definition: definition, filters: logged_filters)
 
-      begin
+      with_export_failure(export_log) do
         validate_trusted_format!
         max_rows = effective_max_rows(nil)
         rows = materialized_trusted_rows(resolved_trusted_rows, max_rows: max_rows)
@@ -159,12 +153,6 @@ module RecordingStudioExportable
           row_count: rows.size,
           export_log: export_log
         )
-      rescue Error => e
-        mark_failed(export_log, e)
-        raise
-      rescue StandardError => e
-        mark_failed(export_log, e)
-        raise
       end
     end
 
@@ -172,6 +160,26 @@ module RecordingStudioExportable
 
     def configuration
       RecordingStudioExportable.configuration
+    end
+
+    def with_export_failure(export_log)
+      yield
+    rescue StandardError => e
+      begin
+        mark_failed(export_log, e)
+      rescue ActiveRecord::ActiveRecordError => mark_error
+        log_export_status_failure(mark_error)
+      end
+      raise e
+    end
+
+    def log_export_status_failure(error)
+      message = "Export log could not be marked failed: #{error.class}: #{error.message}"
+      if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger.respond_to?(:error)
+        Rails.logger.error(message)
+      else
+        warn message
+      end
     end
 
     def resolved_definition
@@ -206,20 +214,11 @@ module RecordingStudioExportable
     end
 
     def capability_options
-      return {} unless RecordingStudio.respond_to?(:capability_options)
-      return {} unless @context_recording.respond_to?(:recordable_type)
-
-      RecordingStudio.capability_options(:exportable, for: @context_recording.recordable_type) || {}
-    rescue StandardError
-      {}
+      configuration.capability_options_for(@context_recording) || {}
     end
 
     def capability_export_keys(options)
-      if options.respond_to?(:values_at)
-        keys = options.values_at(:export_keys, "export_keys", :exports,
-                                 "exports").compact.first
-      end
-      Array(keys).map { |key| configuration.normalize_key(key) }.uniq
+      configuration.capability_export_keys(options)
     end
 
     def validate_format!(definition)
@@ -377,8 +376,6 @@ module RecordingStudioExportable
       return unless recordable.respond_to?(:export_filename)
 
       recordable.export_filename(format: @format)
-    rescue StandardError
-      nil
     end
 
     def sanitize_filename(value)
@@ -448,8 +445,6 @@ module RecordingStudioExportable
         completed_at: Time.current
       }
       export_log.update!(**filter_known_log_attributes(attrs, record: export_log))
-    rescue ActiveRecord::ActiveRecordError
-      nil
     end
 
     def mark_failed(export_log, exception)
@@ -462,21 +457,19 @@ module RecordingStudioExportable
         failed_at: Time.current
       }
       export_log.update!(**filter_known_log_attributes(attrs, record: export_log))
-    rescue ActiveRecord::ActiveRecordError
-      nil
     end
 
     def filter_known_log_attributes(attrs, record: nil)
-      if record
+      if record.respond_to?(:has_attribute?)
         attrs.select do |key, _|
           record.has_attribute?(key) || (key == :context_recording && record.respond_to?(:context_recording=))
         end
+      elsif record
+        attrs
       else
         column_names = RecordingStudioExportable::ExportLog.column_names
         attrs.select { |key, _| column_names.include?(key.to_s) || key == :context_recording }
       end
-    rescue StandardError
-      attrs
     end
 
     def record_exported_event(definition, export_log:, filename:, row_count:, selected_attributes:,
@@ -501,8 +494,7 @@ module RecordingStudioExportable
     end
 
     def resolve_configured_actor(controller)
-      resolver = configuration.current_actor
-      resolver.respond_to?(:call) ? resolver.call(controller: controller) : nil
+      configuration.resolve_actor(controller)
     end
 
     def resolve_configured_impersonator(controller)
@@ -521,7 +513,7 @@ module RecordingStudioExportable
     def sanitized_filters_for_log
       sanitizer = configuration.filter_log_sanitizer
       sanitizer.respond_to?(:call) ? sanitizer.call(@filters) : @filters
-    rescue StandardError
+    rescue Error
       {}
     end
 
