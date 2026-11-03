@@ -97,14 +97,6 @@ end
 
 Minitest::Test.include(ExportableConfigurationIsolation)
 
-# Define a minimal RecordingStudio::Recording stub model so belongs_to
-# associations in ExportLog resolve without loading the full gem's engine.
-module RecordingStudio
-  class Recording < ActiveRecord::Base
-    self.table_name = "recording_studio_recordings"
-  end
-end
-
 # Define RecordingStudio::Event stub
 module RecordingStudio
   class Event < ActiveRecord::Base
