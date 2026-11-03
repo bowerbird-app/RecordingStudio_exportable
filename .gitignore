@@ -57,6 +57,3 @@ pkg/
 # Coverage reports
 coverage/
 test/dummy/coverage/
-
-# Rename script state
-.rename_state.yml
