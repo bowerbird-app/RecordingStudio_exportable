@@ -39,7 +39,7 @@ Then open the app and sign in with:
 
 ## Why This App Exists
 
-Use this app to verify the generated addon experience before renaming the gem or copying patterns into another host app. If a layout, route, asset source, or Recording Studio initializer change breaks here, the template likely needs adjustment before reuse.
+Use this app to verify Exportable inside a host: auth, FlatPack rendering, Tailwind source scanning, and Recording Studio route wiring. If a layout, route, asset source, or initializer change breaks here, the gem likely needs a fix before a host copies the pattern.
 
 The authenticated layout in `app/views/layouts/flat_pack_sidebar.html.erb` and sidebar menu in `app/views/layouts/flat_pack/_sidebar.html.erb` are a styled skeleton, not the final information architecture for every addon. Replace the sidebar items and docs page content so they match the gem's actual concepts and workflows.
 

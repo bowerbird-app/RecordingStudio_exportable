@@ -29,7 +29,3 @@ checkout.
 The gemspec packages only `app`, `config`, `db`, and `lib`, plus the license,
 Rakefile, and README. Cursor boot files and generated pack files do not ship in
 the gem.
-
-Repo-specific test guidance also lives in
-[`.github/skills/minitest-workflow`](../.github/skills/minitest-workflow/SKILL.md).
-That path is a GitHub skill. It is not part of the Cursor pack.

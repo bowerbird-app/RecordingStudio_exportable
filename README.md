@@ -184,8 +184,11 @@ RecordingStudioExportable.export(
 ```
 
 Configuration supports `current_actor`, `current_impersonator`, `default_format`, `default_required_role`,
-`max_rows`, `include_bom`, `allow_request_filename_override`, `filter_log_sanitizer`, and
-`context_export_keys_resolver`.
+`max_rows`, `include_bom`, `allow_request_filename_override`, `filter_log_sanitizer`,
+`context_export_keys_resolver`, and `layout`. `layout` defaults to `nil`. A `nil` setting uses
+`RecordingStudio.configuration.layout`, then `recording_studio/default_layout`. Assignments go through
+`RecordingStudio::Layout.accept`. Engine controllers call
+`recording_studio_layout { RecordingStudioExportable.configuration.layout }`.
 
 ### Security notes
 
@@ -277,10 +280,10 @@ See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full do
 | RecordingStudio | v6.3.0 (pinned to `v6.3.0` in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 6.1.0, < 7`) |
 | RecordingStudio Accessible | v0.24.0 (pinned to `v0.24.0` in `Gemfile` and `test/dummy/Gemfile`; gemspec `~> 0.24`) |
 | RecordingStudio Trashable | v0.12.0 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
-| RecordingStudio Root Switchable | v0.11.3 (pinned in `test/dummy/Gemfile`) |
-| RecordingStudio Metrics | v0.7.0 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
+| RecordingStudio Root Switchable | v0.11.4 (pinned in `test/dummy/Gemfile`) |
+| RecordingStudio Metrics | v0.7.2 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
 | RecordingStudio Cache | v0.6.0 (pinned in `test/dummy/Gemfile`) |
-| FlatPack        | v0.1.332 (pinned in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 0.1.315`, `< 0.2`) |
+| FlatPack        | v0.1.341 (pinned in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 0.1.315`, `< 0.2`) |
 | Devise          | latest  |
 
 ## Cloud Agent boot

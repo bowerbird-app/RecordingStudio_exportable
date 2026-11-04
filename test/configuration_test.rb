@@ -82,10 +82,40 @@ class ConfigurationTest < Minitest::Test
     refute_respond_to @configuration, :unknown
   end
 
+  def test_layout_defaults_to_nil
+    assert_nil @configuration.layout
+  end
+
   def test_layout_can_be_configured
     @configuration.merge!("layout" => "flat_pack_sidebar")
 
     assert_equal "flat_pack_sidebar", @configuration.layout
+  end
+
+  def test_layout_normalizes_blank_values_to_nil
+    @configuration.layout = "   "
+
+    assert_nil @configuration.layout
+  end
+
+  def test_layout_accepts_false
+    @configuration.layout = false
+
+    assert_equal false, @configuration.layout
+  end
+
+  def test_layout_accepts_a_callable
+    callable = ->(controller:) { controller && "application" }
+
+    @configuration.layout = callable
+
+    assert_same callable, @configuration.layout
+  end
+
+  def test_layout_rejects_values_layout_accept_does_not_allow
+    error = assert_raises(ArgumentError) { @configuration.layout = 12 }
+
+    assert_match(/layout/i, error.message)
   end
 
   def test_fetch_unknown_definition_raises_clear_error

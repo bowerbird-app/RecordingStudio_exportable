@@ -39,6 +39,11 @@ class ExportsControllerTest < Minitest::Test
     assert_includes source, "include RecordingStudio::ControllerLayout"
     assert_includes source, "recording_studio_layout { RecordingStudioExportable.configuration.layout }"
     assert_includes source, "RecordingStudioExportable.configuration.layout"
+
+    configuration = File.read(File.expand_path("../lib/recording_studio_exportable/configuration.rb", __dir__))
+    assert_includes configuration, "RecordingStudio::Layout.accept"
+    refute_includes source, "UsesDefaultLayout"
+    refute_includes source, 'layout "recording_studio/default_layout"'
   end
 
   def test_controller_does_not_render_unexpected_internal_errors
