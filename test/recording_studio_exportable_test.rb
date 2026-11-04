@@ -246,4 +246,21 @@ class RecordingStudioExportableTest < Minitest::Test
 
     refute File.exist?(view_path)
   end
+
+  def test_template_leftovers_are_gone
+    root = File.expand_path("..", __dir__)
+
+    %w[
+      UPDATE_SUMMARY.md
+      MIGRATION_NOTES.md
+      .github/copilot-instructions.md
+      docs/gem_template
+    ].each do |relative_path|
+      refute File.exist?(File.join(root, relative_path)), "#{relative_path} should not be tracked"
+    end
+
+    refute File.directory?(File.join(root, ".github/agents"))
+    refute File.directory?(File.join(root, ".github/instructions"))
+    refute File.directory?(File.join(root, ".github/skills"))
+  end
 end

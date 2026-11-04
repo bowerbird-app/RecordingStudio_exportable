@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.12] - 2026-11-04
+
+### Changed
+- Development and dummy FlatPack pin is `v0.1.341`. Metrics pin is `v0.7.2`.
+  Dummy Root Switchable pin is `v0.11.4`. Recording Studio stays `v6.3.0`.
+  Accessible stays `v0.24.0`.
+- `config.layout` assignments go through `RecordingStudio::Layout.accept`.
+  The default stays `nil`, so engine pages use core's default layout.
+- Removed GitHub Copilot instructions, specialist agent files, and the leftover
+  GitHub skill pack.
+
+### Security
+- Rack is `>= 3.2.8` (lockfile `3.2.8`). Crass stays `1.0.8`. Nokogiri is
+  `1.19.7`. rails-html-sanitizer is `1.7.2`. Development Devise is `>= 5.0.4`
+  and bcrypt is `>= 3.1.22`.
+
+### Upgrade notes
+- Pin development FlatPack `v0.1.341` and Metrics `v0.7.2`. Dummy Root
+  Switchable `v0.11.4`.
+- Set `config.layout` only to `nil`, `false`, a layout name, or a
+  `->(controller:) { ... }` callable.
+
 ## [0.5.11] - 2026-11-02
 
 This release also includes 0.5.1 through 0.5.10 below (first tagged release since v0.5.0).
@@ -340,7 +362,8 @@ end
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.11...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.12...HEAD
+[0.5.12]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.11...v0.5.12
 [0.5.11]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.0...v0.5.11
 [0.5.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/releases/tag/v0.4.0

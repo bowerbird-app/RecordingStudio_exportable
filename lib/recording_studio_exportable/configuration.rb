@@ -16,9 +16,9 @@ module RecordingStudioExportable
     attr_accessor :current_actor, :current_impersonator, :default_format, :default_required_role,
                   :max_rows, :include_bom, :allow_request_filename_override,
                   :filter_log_sanitizer, :context_export_keys_resolver,
-                  :trusted_export_sources, :trusted_export_token_store, :layout,
+                  :trusted_export_sources, :trusted_export_token_store,
                   :export_rate_limit, :export_rate_period
-    attr_reader :export_definitions
+    attr_reader :export_definitions, :layout
 
     def initialize
       @current_actor = lambda { |**|
@@ -41,6 +41,11 @@ module RecordingStudioExportable
       @export_rate_period = 60
       @export_definitions = {}
       @mutex = Monitor.new
+    end
+
+    def layout=(value)
+      normalized = value.is_a?(String) ? value.strip.presence : value
+      @layout = RecordingStudio::Layout.accept(normalized)
     end
 
     def register_export(key, replace: false, **options, &)
@@ -162,6 +167,7 @@ module RecordingStudioExportable
         allow_request_filename_override: allow_request_filename_override,
         export_rate_limit: export_rate_limit,
         export_rate_period: export_rate_period,
+        layout: layout,
         export_definitions: @export_definitions.keys.sort
       }
     end
