@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.13] - 2026-11-05
+
+### Security
+- Rails is `8.1.4.1` in the root and dummy lockfiles. Rack stays `3.2.8`.
+  Nokogiri stays `1.19.7`. Loofah stays `2.25.3`. rails-html-sanitizer stays
+  `1.7.2`. Dummy net-ssh stays `7.3.8`.
+
 ## [0.5.12] - 2026-11-04
 
 ### Changed
@@ -362,7 +369,8 @@ end
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.12...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.13...HEAD
+[0.5.13]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.12...v0.5.13
 [0.5.12]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.11...v0.5.12
 [0.5.11]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.0...v0.5.11
 [0.5.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.4.0...v0.5.0
