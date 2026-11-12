@@ -28,6 +28,11 @@ module RecordingStudioExportable
       RecordingStudioExportable.warn_unless_shared_rate_limit_store
     end
 
+    initializer "recording_studio_exportable.register_recording_studio_api_actions",
+                before: "recording_studio_api.after_initialize" do
+      RecordingStudioExportable::Api.register_capability_action!
+    end
+
     def self.host_yaml(app)
       return unless app.respond_to?(:config_for)
       return app.config_for(:recording_studio_exportable) unless app.respond_to?(:paths)

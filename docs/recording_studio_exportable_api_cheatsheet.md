@@ -76,7 +76,10 @@ register_export(key, replace: false, **options, &block)
 - `columns:` - all allowed columns for the export
 - `default_columns:` - columns used when none are requested
 - `filename:` - static string or callable that returns a filename
-- `required_role:` - role checked through RecordingStudio Accessible
+- `required_role:` - role checked through RecordingStudio Accessible. The
+  Recording Studio API `:export` action uses this same role in
+  `access_grant.authorize!`. The registered action `required_role` is `:view`,
+  matching `default_required_role` and the UI default.
 - `max_rows:` - row limit for the export
 - `formats:` - allowed output formats
 - `resolver:` - explicit resolver callable
@@ -311,7 +314,10 @@ If you do not set either one, there is no extra screen/section restriction.
 
 ## 7. `required_role`
 
-`required_role` is the role passed into RecordingStudio Accessible.
+`required_role` is the role passed into RecordingStudio Accessible. The
+Recording Studio API `:export` action registers with `required_role: :view`
+(the UI default) and the handler calls `access_grant.authorize!` with this
+resolved role.
 
 The access check is effectively:
 
