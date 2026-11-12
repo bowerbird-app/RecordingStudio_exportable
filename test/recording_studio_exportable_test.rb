@@ -47,10 +47,25 @@ class RecordingStudioExportableTest < Minitest::Test
     initializer_source = File.read(initializer_path)
 
     assert_includes initializer_source, "config.require_recordable_declarations = true"
-    assert_includes initializer_source,
-                    "\"Workspace\", \"Folder\", \"Page\", \"DemoDashboard\", \"DemoApiRequest\""
-    assert_includes initializer_source, "\"RecordingStudioApi::ApiClient\""
-    assert_includes initializer_source, "\"RecordingStudioApi::AdminApi\""
+    %w[
+      Workspace
+      Folder
+      Page
+      DemoDashboard
+      DemoApiRequest
+      Article
+      Author
+      Topic
+      Document
+      Item
+      RecordingStudio::Access
+      RecordingStudioApi::ApiClient
+      RecordingStudioApi::ApiCredential
+      RecordingStudioApi::ApiAccessToken
+      RecordingStudioApi::AdminApi
+    ].each do |type_name|
+      assert_includes initializer_source, "\"#{type_name}\""
+    end
     refute_includes initializer_source, "config.include_children"
     refute_includes initializer_source, "config.features."
   end

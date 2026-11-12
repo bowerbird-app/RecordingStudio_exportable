@@ -13,8 +13,8 @@ module RecordingStudioExportable
 
       def call
         recording = find_recording!
-        definition = fetch_definition!
-        authorize_export!(recording, definition)
+        fetch_definition!
+        authorize_export!(recording)
         serialize(export!(recording))
       end
 
@@ -40,19 +40,8 @@ module RecordingStudioExportable
         raise invalid_input_error(e.message)
       end
 
-      def authorize_export!(recording, definition)
-        context.access_grant.authorize!(recording: recording, role: export_role(definition, recording))
-      end
-
-      def export_role(definition, recording)
-        options = RecordingStudioExportable.configuration.capability_options_for(recording) || {}
-        (
-          definition.required_role ||
-          options[:required_role] ||
-          options["required_role"] ||
-          RecordingStudioExportable.configuration.default_required_role ||
-          :view
-        ).to_sym
+      def authorize_export!(recording)
+        context.access_grant.authorize!(recording: recording, role: :view)
       end
 
       def export!(recording)

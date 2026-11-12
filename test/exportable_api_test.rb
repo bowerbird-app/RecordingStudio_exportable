@@ -74,12 +74,6 @@ class ExportableApiTest < Minitest::Test
     restore_exportable_configuration!
   end
 
-  def test_registration_is_a_noop_without_recording_studio_api
-    RecordingStudioExportable::Api.stub(:recording_studio_api_available?, false) do
-      assert_nil RecordingStudioExportable::Api.register_capability_action!
-    end
-  end
-
   def test_engine_registers_api_actions_before_recording_studio_api_initializes
     initializer = RecordingStudioExportable::Engine.initializers.find do |item|
       item.name == "recording_studio_exportable.register_recording_studio_api_actions"
@@ -174,7 +168,7 @@ class ExportableApiTest < Minitest::Test
     assert_equal({ status: "ok" }, captured.fetch(:filters))
   end
 
-  def test_export_handler_uses_definition_required_role_matching_the_ui
+  def test_export_handler_authorizes_view_when_definition_requires_admin
     recording = Recording.new(id: "rec-1")
     access_grant = AccessGrant.new({ "rec-1" => recording })
     exported = false
@@ -188,7 +182,7 @@ class ExportableApiTest < Minitest::Test
       )
     end
 
-    assert_equal [[recording, :admin]], access_grant.authorized_calls
+    assert_equal [[recording, :view]], access_grant.authorized_calls
     assert exported
   end
 

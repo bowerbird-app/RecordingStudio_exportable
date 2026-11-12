@@ -25,11 +25,3 @@ Rails.application.config.to_prepare do
     capability_actions: %i[export export_keys]
   )
 end
-
-Rails.application.config.to_prepare do
-  %w[Workspace DemoDashboard Article Author Topic Document Item].each do |type_name|
-    next unless type_name.safe_constantize
-
-    RecordingStudio.enable_capability(:accessible, on: type_name)
-  end
-end
