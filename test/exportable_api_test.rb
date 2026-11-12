@@ -188,7 +188,7 @@ class ExportableApiTest < Minitest::Test
       )
     end
 
-    assert_equal [[recording, :view]], access_grant.authorized_calls
+    assert_equal [[recording, :admin]], access_grant.authorized_calls
     assert exported
   end
 
