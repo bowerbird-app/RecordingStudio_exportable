@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RecordingStudioAccessible.configure do |config|
-  config.access_actor_types = [ "User" ]
+  config.access_actor_types = [ "User", "RecordingStudioApi::ApiClient" ].uniq
   config.access_management_current_actor_resolver = lambda do |controller: nil|
     Current.actor || (controller.current_user if controller.respond_to?(:current_user))
   end

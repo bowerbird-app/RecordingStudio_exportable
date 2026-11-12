@@ -32,21 +32,13 @@ module RecordingStudioExportable
         recording = context.access_grant.accessible_recordings.find_by(id: recording_id) if recording_id.present?
         return recording if recording
 
-        raise api_error("Recording was not found in this API scope")
+        raise RecordingStudioApi::NotFoundError, "Recording was not found in this API scope"
       end
 
       def screen_key
         return unless context.params.respond_to?(:[])
 
-        context.params[:screen_key].presence || context.params["screen_key"]
-      end
-
-      def api_error(message)
-        if defined?(RecordingStudioApi::NotFoundError)
-          RecordingStudioApi::NotFoundError.new(message)
-        else
-          StandardError.new(message)
-        end
+        context.params[:screen_key].presence
       end
     end
   end

@@ -14,10 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `:export_keys` (GET) on `:exportable` when `recording_studio_api` is
   loaded. Handlers live in this gem. They look the recording up through
   `access_grant.accessible_recordings`, call
-  `access_grant.authorize!` with the same role the UI export path uses
-  (`ExportDefinition#required_role`, then capability `required_role`,
-  then `default_required_role`, default `:view`), and wrap
-  `RecordingStudioExportable.export` / `Configuration#export_keys_for`.
+  `access_grant.authorize!` at `:view` (the registered action role), then
+  wrap `RecordingStudioExportable.export` / `Configuration#export_keys_for`.
+  Per-export roles still run inside `export` via
+  `Exporter#effective_required_role`. `NotAuthorized` maps to API 403.
   MCP does not need a dedicated tool. `capability_action` picks the
   actions up. Registration is a no-op when the API gem is absent.
 

@@ -13,8 +13,8 @@ module RecordingStudioExportable
 
       def call
         recording = find_recording!
-        definition = fetch_definition!
-        authorize_export!(recording, definition)
+        fetch_definition!
+        authorize_export!(recording)
         serialize(export!(recording))
       end
 
@@ -27,7 +27,7 @@ module RecordingStudioExportable
         recording = accessible_recordings.find_by(id: recording_id) if recording_id.present?
         return recording if recording
 
-        raise api_error(:NotFoundError, "Recording was not found in this API scope")
+        raise RecordingStudioApi::NotFoundError, "Recording was not found in this API scope"
       end
 
       def accessible_recordings
@@ -40,19 +40,8 @@ module RecordingStudioExportable
         raise invalid_input_error(e.message)
       end
 
-      def authorize_export!(recording, definition)
-        context.access_grant.authorize!(recording: recording, role: export_role(definition, recording))
-      end
-
-      def export_role(definition, recording)
-        options = RecordingStudioExportable.configuration.capability_options_for(recording) || {}
-        (
-          definition.required_role ||
-          options[:required_role] ||
-          options["required_role"] ||
-          RecordingStudioExportable.configuration.default_required_role ||
-          :view
-        ).to_sym
+      def authorize_export!(recording)
+        context.access_grant.authorize!(recording: recording, role: :view)
       end
 
       def export!(recording)
@@ -66,7 +55,7 @@ module RecordingStudioExportable
           filename: parameter_value(:filename)
         )
       rescue NotAuthorized => e
-        raise api_error(:AuthorizationError, e.message)
+        raise RecordingStudioApi::AuthorizationError, e.message
       rescue UnknownExportKey, ExportNotAllowedForContext, InvalidExportFormat,
              InvalidExportColumns, InvalidExportAttributes => e
         raise invalid_input_error(e.message)
@@ -87,23 +76,11 @@ module RecordingStudioExportable
       def parameter_value(key)
         return unless context.params.respond_to?(:[])
 
-        context.params[key].presence || context.params[key.to_s]
+        context.params[key].presence
       end
 
       def invalid_input_error(message)
-        if defined?(RecordingStudioApi::InvalidActionInputError)
-          RecordingStudioApi::InvalidActionInputError.new(message, details: [message])
-        else
-          StandardError.new(message)
-        end
-      end
-
-      def api_error(name, message)
-        if defined?(RecordingStudioApi) && RecordingStudioApi.const_defined?(name, false)
-          RecordingStudioApi.const_get(name, false).new(message)
-        else
-          StandardError.new(message)
-        end
+        RecordingStudioApi::InvalidActionInputError.new(message, details: [message])
       end
     end
   end

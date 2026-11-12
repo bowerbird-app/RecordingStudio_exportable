@@ -31,6 +31,7 @@ module RecordingStudioExportable
     initializer "recording_studio_exportable.register_recording_studio_api_actions",
                 before: "recording_studio_api.after_initialize" do
       RecordingStudioExportable::Api.register_capability_action!
+      config.to_prepare { RecordingStudioExportable::Api.register_capability_action! }
     end
 
     def self.host_yaml(app)
