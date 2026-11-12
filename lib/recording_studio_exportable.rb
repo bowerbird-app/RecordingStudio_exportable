@@ -12,6 +12,7 @@ require "recording_studio_exportable/configuration"
 require "recording_studio_exportable/exporter"
 require "recording_studio_exportable/trusted_export_token"
 require "recording_studio_exportable/capabilities/exportable"
+require "recording_studio_exportable/api"
 require "recording_studio_exportable/engine"
 require "pathname"
 

@@ -119,6 +119,16 @@ data, filename, content type, row count, and the created `RecordingStudioExporta
 Authorization is checked with `RecordingStudioAccessible.authorized?`; rows over the configured limit fail closed.
 Only in-memory CSV generation is supported.
 
+When `recording_studio_api` is loaded, this gem registers member actions
+`:export` (POST) and `:export_keys` (GET) with `required_role: :view`, matching
+the UI default. Each handler looks the recording up through
+`access_grant.accessible_recordings` and calls
+`context.access_grant.authorize!` at `:view`. `:export` then calls
+`RecordingStudioExportable.export`, which still enforces the definition role.
+`:export_keys` calls `Configuration#export_keys_for`. Enable the actions on a
+type through `capability_actions` or API 0.19 `auto_capability_actions`. Do
+not add MCP handlers for them.
+
 ### Instance-level allowed export keys
 
 Definitions are global, but each context instance controls which export keys it allows.

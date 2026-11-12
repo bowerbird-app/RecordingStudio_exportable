@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-12
+
+### Added
+- Registers Recording Studio API member actions `:export` (POST) and
+  `:export_keys` (GET) on `:exportable` when `recording_studio_api` is
+  loaded. Handlers live in this gem. They look the recording up through
+  `access_grant.accessible_recordings`, call
+  `access_grant.authorize!` at `:view` (as the actions register), then wrap
+  `RecordingStudioExportable.export` / `Configuration#export_keys_for`.
+  Export still enforces the definition role through Accessible.
+  `NotAuthorized` maps to API 403.
+  MCP does not need a dedicated tool. `capability_action` picks the
+  actions up. Registration is a no-op when the API gem is absent.
+
+### Upgrade notes
+- Hosts that already register the type API with `auto_capability_actions`
+  (API 0.19 default) get `:export` and `:export_keys` on exportable
+  types. Set `auto_capability_actions: false` and omit those names to
+  keep them off a type. Pin this gem at `0.6.0`. Do not tag from this
+  PR.
+
 ## [0.5.13] - 2026-11-05
 
 ### Security
@@ -369,7 +390,8 @@ end
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.13...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.13...v0.6.0
 [0.5.13]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.12...v0.5.13
 [0.5.12]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.11...v0.5.12
 [0.5.11]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.0...v0.5.11
