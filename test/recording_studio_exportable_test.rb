@@ -48,8 +48,9 @@ class RecordingStudioExportableTest < Minitest::Test
 
     assert_includes initializer_source, "config.require_recordable_declarations = true"
     assert_includes initializer_source,
-                    "config.recordable_types = [ \"Workspace\", \"Folder\", \"Page\", " \
-                    "\"DemoDashboard\", \"DemoApiRequest\", \"Article\", \"Author\", \"Topic\", \"Document\", \"Item\" ]"
+                    "\"Workspace\", \"Folder\", \"Page\", \"DemoDashboard\", \"DemoApiRequest\""
+    assert_includes initializer_source, "\"RecordingStudioApi::ApiClient\""
+    assert_includes initializer_source, "\"RecordingStudioApi::AdminApi\""
     refute_includes initializer_source, "config.include_children"
     refute_includes initializer_source, "config.features."
   end
