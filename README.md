@@ -287,7 +287,7 @@ See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full do
 | Rails           | 8.1+    |
 | PostgreSQL      | 16      |
 | TailwindCSS     | 4       |
-| RecordingStudio | v6.3.0 (pinned to `v6.3.0` in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 6.1.0, < 7`) |
+| RecordingStudio | v6.3.0 (pinned to `v6.3.0` in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 6.14.0, < 8.0`) |
 | RecordingStudio Accessible | v0.24.0 (pinned to `v0.24.0` in `Gemfile` and `test/dummy/Gemfile`; gemspec `~> 0.24`) |
 | RecordingStudio Trashable | v0.12.0 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
 | RecordingStudio Root Switchable | v0.11.4 (pinned in `test/dummy/Gemfile`) |
