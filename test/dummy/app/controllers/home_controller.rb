@@ -6,7 +6,7 @@ class HomeController < ApplicationController
 
   def index
     @demo_dashboard = DemoDashboard.includes(:demo_api_requests).order(:name).first
-    @demo_recording = RecordingStudio.root_recording_for(@demo_dashboard) if @demo_dashboard
+    @demo_recording = RecordingStudio.create_root_recording!(@demo_dashboard, actor: Current.actor) if @demo_dashboard
     @current_actor_email = Current.actor&.respond_to?(:email) ? Current.actor.email : nil
     @dashboard_view_allowed = @demo_recording.present? && Current.actor.present? &&
       RecordingStudioAccessible.authorized?(actor: Current.actor, recording: @demo_recording, role: :view)
@@ -29,7 +29,7 @@ class HomeController < ApplicationController
         topics: article.topics.order(:name).map(&:name),
         topic_count: article.topics.size,
         word_count: article.body.to_s.split.size,
-        context_recording: RecordingStudio.root_recording_for(article)
+        context_recording: RecordingStudio.create_root_recording!(article, actor: Current.actor)
       }
     end
 

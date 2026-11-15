@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-15
+
+### Changed
+- Require Recording Studio core 7. The gemspec floor is `recording_studio` `>= 7.0`, `< 8.0`.
+- Accessible is an open bound: `>= 0.44.0`, `< 1.0`.
+- Development and dummy lockfiles pin `recording_studio` `v7.0.0`. Dummy addons that rejected core 7 are pinned to Accessible `v0.44.0`, Trashable `v0.17.0`, Root Switchable `v0.15.1`, Admin `v2.16.0`, API `v0.23.4`, and Metrics `v0.9.0`.
+- The dummy app authorizes writes with `config.authorize_write` when an actor is present. It does not set `allow_unauthorized_writes`.
+- Seeds, tests, and dummy request paths that create roots call `RecordingStudio.create_root_recording!(recordable, actor:)`. `root_recording_for` stays find-only.
+- Dummy seeds look up existing children with `Recording.kept`. Trashable 0.17 registers that filter and no longer defines `recording_studio_trashable_kept_sql`.
+
+### Upgrade notes
+- Hosts need `recording_studio` `>= 7.0`, `< 8.0` and `recording_studio_accessible` `>= 0.44.0`, `< 1.0`.
+- Set `config.authorize_write`. Creating a root with `root_recording_for` no longer inserts a recording. Call `RecordingStudio.create_root_recording!(recordable, actor:)` and pass an actor.
+- Do not set `allow_unauthorized_writes` to keep the dummy's old fail-open writes.
+- Install Recording Studio 7's events `root_recording_id` migration, and Trashable 0.17's retention settings, `trash_root`, and `purge_at` migrations, then migrate. Look up kept rows with `Recording.kept`.
+
 ## [0.6.1] - 2026-11-15
 
 ### Changed

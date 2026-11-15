@@ -10,7 +10,8 @@ class DependencyPinsTest < Minitest::Test
     requirements = spec.runtime_dependencies.to_h { |dependency| [dependency.name, dependency.requirement] }
 
     assert_equal Gem::Requirement.new(">= 0.1.315", "< 0.2"), requirements.fetch("flat_pack")
-    assert_equal Gem::Requirement.new("~> 0.24"), requirements.fetch("recording_studio_accessible")
+    assert_equal Gem::Requirement.new(">= 7.0", "< 8.0"), requirements.fetch("recording_studio")
+    assert_equal Gem::Requirement.new(">= 0.44.0", "< 1.0"), requirements.fetch("recording_studio_accessible")
     assert_equal Gem::Requirement.new("< 4"), requirements.fetch("csv")
     refute requirements.key?("view_component")
   end

@@ -12,7 +12,7 @@ class HostLocaleOverrideTest < ActionDispatch::IntegrationTest
       record.password_confirmation = "Password"
     end
     workspace = Workspace.create!(name: "Host Locale Override Workspace #{SecureRandom.hex(4)}")
-    @recording = RecordingStudio.root_recording_for(workspace)
+    @recording = RecordingStudio.create_root_recording!(workspace, actor: @user)
     @original_load_path = I18n.load_path.dup
   end
 

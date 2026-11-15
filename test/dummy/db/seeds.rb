@@ -3,7 +3,7 @@
 # The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
 
 find_or_record_child = lambda do |recordable, root_recording, parent_recording|
-  RecordingStudio::Recording.where(RecordingStudio::Recording.recording_studio_trashable_kept_sql).find_by(
+  RecordingStudio::Recording.kept.find_by(
     root_recording: root_recording,
     parent_recording: parent_recording,
     recordable: recordable
@@ -177,12 +177,12 @@ Current.actor = user
 
 begin
   # Create the root recording
-  root_recording = RecordingStudio.root_recording_for(workspace)
-  accessible_root_recording = RecordingStudio.root_recording_for(accessible_workspace)
-  private_root_recording = RecordingStudio.root_recording_for(private_workspace)
-  demo_dashboard_recording = RecordingStudio.root_recording_for(demo_dashboard)
-  document_recording = RecordingStudio.root_recording_for(document)
-  article_recordings = articles.index_with { |article| RecordingStudio.root_recording_for(article) }
+  root_recording = RecordingStudio.create_root_recording!(workspace, actor: user)
+  accessible_root_recording = RecordingStudio.create_root_recording!(accessible_workspace, actor: user)
+  private_root_recording = RecordingStudio.create_root_recording!(private_workspace, actor: user)
+  demo_dashboard_recording = RecordingStudio.create_root_recording!(demo_dashboard, actor: user)
+  document_recording = RecordingStudio.create_root_recording!(document, actor: user)
+  article_recordings = articles.index_with { |article| RecordingStudio.create_root_recording!(article, actor: user) }
   ensure_access_role.call(recording: demo_dashboard_recording, actor: user, role: :admin, manager_actor: user)
   ensure_access_role.call(recording: demo_dashboard_recording, actor: viewer_user, role: :view, manager_actor: user)
   ensure_access_role.call(recording: document_recording, actor: user, role: :admin, manager_actor: user)
