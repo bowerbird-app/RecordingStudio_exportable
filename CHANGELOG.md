@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-15
+
+### Changed
+- Allow recording_studio < 8.0 (core 7 phase 1).
+
+### Upgrade notes
+- The gemspec accepts `recording_studio` `>= 6.1.0`, `< 8.0`. The lower bound is unchanged. Development and dummy Gemfiles stay on core 6.x.
+
 ## [0.6.0] - 2026-11-12
 
 ### Added
