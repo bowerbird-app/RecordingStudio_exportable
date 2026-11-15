@@ -11,7 +11,7 @@ class HomeTopicsFilterTest < ActionDispatch::IntegrationTest
     sign_in user
 
     dashboard = DemoDashboard.create!(name: "Topics Filter Dashboard")
-    RecordingStudio.root_recording_for(dashboard)
+    RecordingStudio.create_root_recording!(dashboard, actor: user)
 
     author = Author.create!(name: "Filter Author", bio: "")
     article = Article.create!(title: "Filter Article", body: "Body", author: author)
@@ -44,7 +44,7 @@ class HomeTopicsFilterTest < ActionDispatch::IntegrationTest
     sign_in user
 
     dashboard = DemoDashboard.create!(name: "Topics Text Filter Dashboard")
-    RecordingStudio.root_recording_for(dashboard)
+    RecordingStudio.create_root_recording!(dashboard, actor: user)
 
     author = Author.create!(name: "Text Filter Author", bio: "")
     matching_article = Article.create!(title: "Walkthrough Article", body: "Body", author: author)
@@ -77,7 +77,7 @@ class HomeTopicsFilterTest < ActionDispatch::IntegrationTest
     sign_in user
 
     dashboard = DemoDashboard.create!(name: "Topics Created At Dashboard")
-    RecordingStudio.root_recording_for(dashboard)
+    RecordingStudio.create_root_recording!(dashboard, actor: user)
     author = Author.create!(name: "Created At Author", bio: "")
     first_article = Article.create!(title: "First Created At Article", body: "Body", author: author)
     second_article = Article.create!(title: "Second Created At Article", body: "Body", author: author)

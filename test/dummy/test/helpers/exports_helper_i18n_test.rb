@@ -12,7 +12,7 @@ class ExportsHelperI18nTest < ActionView::TestCase
       record.password_confirmation = "Password"
     end
     workspace = Workspace.create!(name: "Helper I18n Workspace #{SecureRandom.hex(4)}")
-    @recording = RecordingStudio.root_recording_for(workspace)
+    @recording = RecordingStudio.create_root_recording!(workspace, actor: @user)
     @routes = RecordingStudioExportable::Engine.routes
   end
 

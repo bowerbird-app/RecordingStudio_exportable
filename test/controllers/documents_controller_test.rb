@@ -20,7 +20,7 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "show uses existing recording when root lookup is unavailable" do
-    RecordingStudio.stub(:root_recording_for, lambda { |_recordable|
+    RecordingStudio.stub(:create_root_recording!, lambda { |_recordable, **|
       raise RecordingStudio::RootNotAllowed, "parent_recording_id is required for Document"
     }) do
       get document_path(@document)

@@ -31,7 +31,7 @@ The dummy app keeps a sidebar for the docs pages. Menu entries live in `test/dum
    ```
 4. Open port 3000 — you'll land on the dummy app home page and can sign in at `/users/sign_in`
 
-The dummy app is a host-app check for authentication, FlatPack rendering, Tailwind source scanning, and RecordingStudio route wiring. It pins RecordingStudio Accessible to `v0.24.0` and seeds access grants through `RecordingStudioAccessible.grant_access`.
+The dummy app is a host-app check for authentication, FlatPack rendering, Tailwind source scanning, and RecordingStudio route wiring. It pins RecordingStudio Accessible to `v0.44.0` and seeds access grants through `RecordingStudioAccessible.grant_access`.
 
 Dummy credentials (`test/dummy/config/credentials.yml.enc`) are encrypted with the shared RecordingStudio_* development master key. Set `RAILS_MASTER_KEY` or put that key in `test/dummy/config/master.key` (gitignored). Keep the encrypted file; do not generate a per-repo dummy key.
 
@@ -238,7 +238,7 @@ To add new recordable types:
 4. Validate declarations and create recordings under the root:
    ```ruby
    RecordingStudio.validate_recordable_declarations!
-   root_recording = RecordingStudio.root_recording_for(workspace)
+   root_recording = RecordingStudio.create_root_recording!(workspace, actor: Current.actor)
    root_recording.record(YourNewType) do |record|
      record.title = "Example"
    end
@@ -287,11 +287,11 @@ See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full do
 | Rails           | 8.1+    |
 | PostgreSQL      | 16      |
 | TailwindCSS     | 4       |
-| RecordingStudio | v6.3.0 (pinned to `v6.3.0` in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 6.1.0, < 8.0`) |
-| RecordingStudio Accessible | v0.24.0 (pinned to `v0.24.0` in `Gemfile` and `test/dummy/Gemfile`; gemspec `~> 0.24`) |
-| RecordingStudio Trashable | v0.12.0 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
-| RecordingStudio Root Switchable | v0.11.4 (pinned in `test/dummy/Gemfile`) |
-| RecordingStudio Metrics | v0.7.2 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
+| RecordingStudio | v7.0.0 (pinned to `v7.0.0` in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 7.0, < 8.0`) |
+| RecordingStudio Accessible | v0.44.0 (pinned to `v0.44.0` in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 0.44.0, < 1.0`) |
+| RecordingStudio Trashable | v0.17.0 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
+| RecordingStudio Root Switchable | v0.15.1 (pinned in `test/dummy/Gemfile`) |
+| RecordingStudio Metrics | v0.9.0 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
 | RecordingStudio Cache | v0.6.0 (pinned in `test/dummy/Gemfile`) |
 | FlatPack        | v0.1.341 (pinned in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 0.1.315`, `< 0.2`) |
 | Devise          | latest  |

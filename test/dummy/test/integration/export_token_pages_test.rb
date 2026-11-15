@@ -9,7 +9,7 @@ class ExportTokenPagesTest < ActionDispatch::IntegrationTest
       record.password_confirmation = "Password"
     end
     workspace = Workspace.create!(name: "Token Pages Workspace #{SecureRandom.hex(4)}")
-    @recording = RecordingStudio.root_recording_for(workspace)
+    @recording = RecordingStudio.create_root_recording!(workspace, actor: @user)
   end
 
   test "token not found page renders literal English interface copy" do

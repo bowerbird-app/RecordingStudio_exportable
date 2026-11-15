@@ -15,7 +15,7 @@ class DocumentsController < ApplicationController
 
   def set_document_recording
     @document_recording = RecordingStudio::Recording.find_by(recordable: @document)
-    @document_recording ||= RecordingStudio.root_recording_for(@document)
+    @document_recording ||= RecordingStudio.create_root_recording!(@document, actor: Current.actor)
   end
 
   def authorize_document_admin!

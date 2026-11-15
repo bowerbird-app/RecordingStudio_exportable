@@ -13,7 +13,7 @@ class ExportPlainErrorsI18nTest < ActionDispatch::IntegrationTest
       record.password_confirmation = "Password"
     end
     workspace = Workspace.create!(name: "Plain Errors Workspace #{SecureRandom.hex(4)}")
-    @recording = RecordingStudio.root_recording_for(workspace)
+    @recording = RecordingStudio.create_root_recording!(workspace, actor: @user)
     @load_path_before = I18n.load_path.dup
   end
 
