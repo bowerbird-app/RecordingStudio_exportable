@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-18
+
+### Changed
+- Development and dummy git pins move to the latest plain semver tags: Recording Studio `v7.7.1`, FlatPack `v0.1.378`, Accessible `v0.54.1`, API `v1.16.0`, Moveable `v6.0.2`, Trashable `v1.2.1`, Metrics `v0.9.2`, Icons `v0.4.2`, Logs `v0.8.1`, Cache `v0.7.1`, Admin `v2.19.0`, and Root Switchable `v0.16.0`.
+- Gemspec floors stay `recording_studio` `>= 7.0`, `< 8.0`, `recording_studio_accessible` `>= 0.44.0`, `< 1.0`, and `flat_pack` `>= 0.1.315`, `< 0.2`. Those bounds already accept the new tags.
+
+### Upgrade notes
+- Hosts MUST run the Recording Studio 7.4, 7.5, and 7.7 migrations (`add_recording_studio_recordings_root_type_creation_index`, `enforce_recording_studio_recording_root_invariant`, and `replace_recording_studio_recordings_root_index`). This gem's dummy does not copy them.
+- Hosts that load Recording Studio API 1.12 or later need `config/recording_studio_api.yml`. API 1.16 writes `owner` on API clients, so hosts also need `20261117000024_add_owner_to_recording_studio_api_api_clients`.
+- Stay on `recording_studio` `>= 7.0`, `< 8.0` and `recording_studio_accessible` `>= 0.44.0`, `< 1.0`.
+
 ## [0.7.0] - 2026-11-15
 
 ### Changed
@@ -414,7 +425,10 @@ end
 - Comprehensive README and documentation
 - Basic test suite with Minitest
 
-[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.7.0...v0.7.1
+[0.7.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.6.1...v0.7.0
+[0.6.1]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.13...v0.6.0
 [0.5.13]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.12...v0.5.13
 [0.5.12]: https://github.com/bowerbird-app/RecordingStudio_exportable/compare/v0.5.11...v0.5.12
