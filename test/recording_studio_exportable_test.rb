@@ -4,7 +4,7 @@ require "test_helper"
 
 class RecordingStudioExportableTest < Minitest::Test
   def test_version_exists
-    refute_nil ::RecordingStudioExportable::VERSION
+    assert_equal "0.7.1", ::RecordingStudioExportable::VERSION
   end
 
   def test_engine_exists
@@ -52,8 +52,7 @@ class RecordingStudioExportableTest < Minitest::Test
                     "\"DemoDashboard\", \"DemoApiRequest\", \"Article\", \"Author\", \"Topic\", \"Document\", \"Item\" ]"
     assert_includes initializer_source,
                     "config.recordable_types += [\"RecordingStudio::Access\", \"RecordingStudioApi::ApiClient\", " \
-                    "\"RecordingStudioApi::ApiCredential\", \"RecordingStudioApi::ApiAccessToken\", " \
-                    "\"RecordingStudioApi::AdminApi\"]"
+                    "\"RecordingStudioApi::ApiCredential\", \"RecordingStudioApi::ApiAccessToken\"]"
     refute_includes initializer_source, "config.include_children"
     refute_includes initializer_source, "config.features."
   end

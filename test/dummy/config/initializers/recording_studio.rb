@@ -3,7 +3,9 @@
 RecordingStudio.configure do |config|
   # Registered delegated_type recordables (strings or classes)
   config.recordable_types = [ "Workspace", "Folder", "Page", "DemoDashboard", "DemoApiRequest", "Article", "Author", "Topic", "Document", "Item" ]
-  config.recordable_types += ["RecordingStudio::Access", "RecordingStudioApi::ApiClient", "RecordingStudioApi::ApiCredential", "RecordingStudioApi::ApiAccessToken", "RecordingStudioApi::AdminApi"] if defined?(RecordingStudioApi)
+  # API 1.16 declares AdminApi only when an admin root type is loaded.
+  # This dummy has none, so listing AdminApi here fails boot.
+  config.recordable_types += ["RecordingStudio::Access", "RecordingStudioApi::ApiClient", "RecordingStudioApi::ApiCredential", "RecordingStudioApi::ApiAccessToken"] if defined?(RecordingStudioApi)
 
   # Require each configured ActiveRecord type to call recording_studio_recordable.
   config.require_recordable_declarations = true
