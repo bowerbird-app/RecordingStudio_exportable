@@ -4,11 +4,19 @@ require "test_helper"
 
 class RecordingStudioExportableTest < Minitest::Test
   def test_version_exists
-    assert_equal "0.7.1", ::RecordingStudioExportable::VERSION
+    assert_equal "0.8.0", ::RecordingStudioExportable::VERSION
   end
 
   def test_engine_exists
     assert_kind_of Class, ::RecordingStudioExportable::Engine
+  end
+
+  def test_dummy_importmap_drops_flat_pack_heroicons_pin
+    importmap = File.read(File.expand_path("dummy/config/importmap.rb", __dir__))
+
+    refute_includes importmap, "flat_pack/heroicons"
+    refute_includes importmap, "flat-pack--icon"
+    refute_includes importmap, "icon_controller"
   end
 
   def test_dummy_app_uses_flatpack_sidebar_layout

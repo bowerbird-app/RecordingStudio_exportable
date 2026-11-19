@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "csv", "< 4"
-  spec.add_dependency "flat_pack", ">= 0.1.315", "< 0.2"
+  spec.add_dependency "flat_pack", ">= 0.1.315", "< 1.0"
   spec.add_dependency "rails", "~> 8.1.0"
   spec.add_dependency "recording_studio", ">= 7.0", "< 8.0"
   spec.add_dependency "recording_studio_accessible", ">= 0.44.0", "< 1.0"

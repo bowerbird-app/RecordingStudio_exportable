@@ -31,7 +31,7 @@ The dummy app keeps a sidebar for the docs pages. Menu entries live in `test/dum
    ```
 4. Open port 3000 — you'll land on the dummy app home page and can sign in at `/users/sign_in`
 
-The dummy app is a host-app check for authentication, FlatPack rendering, Tailwind source scanning, and RecordingStudio route wiring. It pins RecordingStudio Accessible to `v0.54.1` and seeds access grants through `RecordingStudioAccessible.grant_access`. Hosts that install Recording Studio `v7.7.1` MUST run the 7.4, 7.5, and 7.7 core migrations. The dummy does not copy those migrations.
+The dummy app is a host-app check for authentication, FlatPack rendering, Tailwind source scanning, and RecordingStudio route wiring. It pins RecordingStudio Accessible to `v0.58.0` (`~> 0.58`) and seeds access grants through `RecordingStudioAccessible.grant_access`. Hosts that install Recording Studio `v7.8.0` MUST run the 7.4, 7.5, and 7.7 core migrations if they have not. The dummy does not copy those migrations. FlatPack `v0.2.0` is supported; hosts moving to 0.2 must remove the manual `flat_pack/heroicons` importmap pin and any `flat-pack--icon` controller registration.
 
 Dummy credentials (`test/dummy/config/credentials.yml.enc`) are encrypted with the shared RecordingStudio_* development master key. Set `RAILS_MASTER_KEY` or put that key in `test/dummy/config/master.key` (gitignored). Keep the encrypted file; do not generate a per-repo dummy key.
 
@@ -287,15 +287,18 @@ See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full do
 | Rails           | 8.1+    |
 | PostgreSQL      | 16      |
 | TailwindCSS     | 4       |
-| RecordingStudio | v7.7.1 (pinned to `v7.7.1` in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 7.0, < 8.0`). Hosts MUST run the 7.4, 7.5, and 7.7 migrations. |
-| RecordingStudio Accessible | v0.54.1 (pinned to `v0.54.1` in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 0.44.0, < 1.0`) |
-| RecordingStudio Trashable | v1.2.1 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
-| RecordingStudio Root Switchable | v0.16.0 (pinned in `test/dummy/Gemfile`) |
-| RecordingStudio Metrics | v0.9.2 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
-| RecordingStudio Cache | v0.7.1 (pinned in `test/dummy/Gemfile`) |
-| RecordingStudio API | v1.16.0 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
-| RecordingStudio Moveable | v6.0.2 (pinned in `Gemfile` and `test/dummy/Gemfile`) |
-| FlatPack        | v0.1.378 (pinned in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 0.1.315`, `< 0.2`) |
+| RecordingStudio | v7.8.0 (`~> 7.8` in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 7.0, < 8.0`). Hosts MUST run the 7.4, 7.5, and 7.7 migrations if they have not. |
+| RecordingStudio Accessible | v0.58.0 (`~> 0.58` in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 0.44.0, < 1.0`) |
+| RecordingStudio Trashable | v1.3.0 (`~> 1.3` in `Gemfile` and `test/dummy/Gemfile`) |
+| RecordingStudio Root Switchable | v0.17.0 (`~> 0.17` in `test/dummy/Gemfile`) |
+| RecordingStudio Metrics | v0.10.0 (`~> 0.10` in `Gemfile` and `test/dummy/Gemfile`) |
+| RecordingStudio Cache | v0.8.0 (`~> 0.8` in `test/dummy/Gemfile`) |
+| RecordingStudio API | v1.20.0 (`~> 1.20` in `Gemfile` and `test/dummy/Gemfile`) |
+| RecordingStudio Admin | v2.19.1 (`~> 2.19` in `test/dummy/Gemfile`) |
+| RecordingStudio Icons | v0.5.0 (`~> 0.5` in `Gemfile` and `test/dummy/Gemfile`) |
+| RecordingStudio Logs | v0.9.0 (`~> 0.9` in `Gemfile` and `test/dummy/Gemfile`) |
+| RecordingStudio Moveable | v6.1.0 (`~> 6.1` in `Gemfile` and `test/dummy/Gemfile`) |
+| FlatPack        | v0.2.0 (`~> 0.2` in `Gemfile` and `test/dummy/Gemfile`; gemspec `>= 0.1.315`, `< 1.0`) |
 | Devise          | latest  |
 
 ## Cloud Agent boot
